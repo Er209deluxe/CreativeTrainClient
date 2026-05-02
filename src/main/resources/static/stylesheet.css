@@ -1,0 +1,53 @@
+:root {
+  --main-bg-color: #2F2FE4;
+  --main-button-color: #1A1953;
+  --secondary-bg-color: #162E93;
+  --temp2-color: #080616;
+  --temp3-color: #776871;
+}
+body{
+    background-color: var(--main-bg-color);
+    font-family: Arial, sans-serif;
+    margin: 0;
+    padding: 20px;
+}
+button {
+    background-color: var(--main-button-color);
+    color: white;
+    padding: 10px 20px;
+    border: black;
+    border-radius: 5px;
+    cursor: pointer;
+    margin: 10px;
+}
+.centered {
+    display: flex;
+    align-items: center;   /* vertical centering */
+    height: 100vh;
+}
+.absoluteCenter {
+    margin: auto;
+
+}
+.main {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    min-height: 50vh;
+    background-color: var(--secondary-bg-color);
+    padding: 40px 10%;
+    border-radius: 10px;
+}
+input {
+    padding: 10px;
+    margin: 10px;
+    border: none;
+    border-radius: 5px;
+    background-color: var(--temp3-color);
+    color: white;
+}
+
+.inputs{
+    background-color: var(--temp3-color);
+}
