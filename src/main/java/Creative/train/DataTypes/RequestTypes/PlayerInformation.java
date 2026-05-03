@@ -5,22 +5,22 @@ import com.fasterxml.jackson.annotation.JsonProperty;
 
 import java.util.UUID;
 
-public class HostInformation {
+public class PlayerInformation {
     private final UUID sessionId;
-    private final UUID hostUuid;
+    private final UUID playerUuid;
     @JsonCreator
-    public HostInformation(
+    public PlayerInformation(
         @JsonProperty("sessionId") UUID sessionId,
         @JsonProperty("hostUuid") UUID hostUuid
 
     )
         {
             this.sessionId = sessionId;
-            this.hostUuid = hostUuid;
+            this.playerUuid = hostUuid;
         }
 
-    public UUID getHostUuid() {
-        return hostUuid;
+    public UUID getPlayerUuid() {
+        return playerUuid;
     }
 
     public UUID getSessionId() {

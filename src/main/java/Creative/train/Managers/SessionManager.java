@@ -2,14 +2,11 @@ package Creative.train.Managers;
 
 import Creative.train.DataTypes.Player;
 import Creative.train.DataTypes.RegisterPlayerResponse;
-import Creative.train.DataTypes.RequestTypes.HostInformation;
+import Creative.train.DataTypes.RequestTypes.PlayerInformation;
 import Creative.train.DataTypes.Session;
 import org.springframework.http.ResponseEntity;
 
-import java.util.HashMap;
-import java.util.Map;
-import java.util.Set;
-import java.util.UUID;
+import java.util.*;
 
 public class SessionManager {
     Map<UUID,Player> playerMap;
@@ -68,10 +65,10 @@ public class SessionManager {
 
         playerMap.put(player.getPlayerId(), player);
 
-        response.setHostInformation(
-                new HostInformation(newSession.getSessionId(), player.getPlayerId())
+        response.setPlayerInformation(
+                new PlayerInformation(newSession.getSessionId(), player.getPlayerId())
         );
-
+        response.setHost(true);
         return response;
     }
 
@@ -85,8 +82,8 @@ public class SessionManager {
         }
         playerMap.put(player.getPlayerId(), player);
 
-        response.setResponse(ResponseEntity.status(200).body("OK"));
-
+        response.setPlayerInformation(new PlayerInformation(sessionUuid,player.getPlayerId()));
+        response.setHost(false);
         return response;
     }
     public UUID getHostUuid(UUID session){
@@ -102,6 +99,11 @@ public class SessionManager {
     public Set<String> getAllNamesInSession(UUID sessionUuid){
         Session session = activeSessions.get(sessionUuid);
         if(session == null) return null;
-        return session.getPlayerMap().keySet();
+        return session.getAllNames();
     }
+    public List<UUID> getAllUuidsInSession(UUID sessionUuid){
+        Session session = activeSessions.get(sessionUuid);
+        if(session == null) return null;
+        return session.getAllPlayerUuids();
+        }
 }

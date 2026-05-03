@@ -3,7 +3,7 @@ package Creative.train.Api.Backend;
 import Creative.train.DataTypes.GlobalVariableHolder;
 import Creative.train.DataTypes.Player;
 import Creative.train.DataTypes.RegisterPlayerResponse;
-import Creative.train.DataTypes.RequestTypes.HostInformation;
+import Creative.train.DataTypes.RequestTypes.PlayerInformation;
 import Creative.train.Managers.QrManager;
 import Creative.train.Managers.SessionManager;
 import org.springframework.http.HttpStatus;
@@ -12,6 +12,7 @@ import org.springframework.web.bind.annotation.*;
 import org.springframework.web.multipart.MultipartFile;
 
 import java.awt.image.BufferedImage;
+import java.util.List;
 import java.util.Set;
 import java.util.UUID;
 
@@ -42,11 +43,17 @@ public class SessionApi {
         Player player = new Player(playerName, playerUuid, isHost);
 
         RegisterPlayerResponse result = sessionManager.registerPlayerToSession(joinedSession, player);
+        SseHandler websocketHandler= SseHandler.getInstance();
 
-        if (result.getHostInformation() != null) {
+
+        if (result.isHost()) {
             return ResponseEntity.ok(result.getHostInformation());
         }
-
+        if(result.getHostInformation()!=null) {
+            List<UUID> playersInSession = sessionManager.getAllUuidsInSession(joinedSession);
+            websocketHandler.sendNewPlayerInfo(playersInSession, playerName);
+            return ResponseEntity.ok(result.getHostInformation());
+        }
         return result.getResponse();
     }
     private static ResponseEntity<String> validate(String playerName, MultipartFile playerQr) {
@@ -59,7 +66,7 @@ public class SessionApi {
         return null;
     }
 
-    private static UUID getUuidFronQrCode(MultipartFile playerQr) throws Exception {
+    public static UUID getUuidFronQrCode(MultipartFile playerQr) throws Exception {
         BufferedImage qrImage;
         qrImage = QrManager.convertMultipartFileToBufferedImage(playerQr);
 
@@ -68,8 +75,8 @@ public class SessionApi {
     }
 
     @PostMapping("/start")
-    public ResponseEntity<?> startSession(@RequestBody HostInformation data){
-        UUID hostUuid = data.getHostUuid();
+    public ResponseEntity<?> startSession(@RequestBody PlayerInformation data){
+        UUID hostUuid = data.getPlayerUuid();
         UUID sessionUuid = data.getSessionId();
         if(sessionManager.getSession(sessionUuid)==null){
             return ResponseEntity.status(HttpStatus.NOT_FOUND).body("Session not found");

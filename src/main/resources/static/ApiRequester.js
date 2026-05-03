@@ -44,8 +44,31 @@ async function startSession() {
     console.log("Start session:", res);
     return res;
 }
+let eventSource;
 
+function startStream(playerUuid) {
+    const url = `/api/stream?playerUuid=${playerUuid}`;
+    const eventSource = new EventSource(url);
+    
+    eventSource.onmessage = (event) => {
+        console.log("Stream message:", event.data);
+    };
 
+    eventSource.onerror = () => {
+        console.log("Stream disconnected");
+    };
+}
+async function registerAndConnect() {
+    const result = await registerUser();
+
+    // Parse the response data into JSON
+    const data = JSON.parse(result.data);  // Parse the string to JSON
+
+    const playerUuid = data.playerUuid; // Access the playerUuid property
+
+    console.log("Registered player UUID:", playerUuid);
+    startStream(playerUuid);
+}
 async function registerUser() {
     const isHost = document.getElementById("isHost").checked;
     const playerUuidInput = document.getElementById("player-uuid");
