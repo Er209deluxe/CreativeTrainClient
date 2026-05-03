@@ -18,53 +18,52 @@ import java.util.UUID;
 @RequestMapping(GlobalVariableHolder.apiPrefix+"/session")
 public class SessionApi {
     static final SessionManager sessionManager=SessionManager.getInstance();
-    private String playerName;
-    private UUID joinedSession;
-    private MultipartFile playerQr;
 
-
-    @PostMapping("/registerUser")
-    public ResponseEntity<?> registerUser(
+    @PostMapping("/register")
+    public ResponseEntity<?> register(
             @RequestParam("playerName") String playerName,
-            @RequestParam(value = "joinedSession", required = false) UUID joinedSession,
-            @RequestParam("playerQr") MultipartFile playerQr // Accepting file upload via @RequestParam
+            @RequestParam("playerQr") MultipartFile playerQr,
+            @RequestParam(value = "joinedSession", required = false) UUID joinedSession
     ) {
-        this.playerName = playerName;
-        this.joinedSession = joinedSession;
-        this.playerQr = playerQr;
-        if (playerQr.isEmpty()) {
-            return ResponseEntity.status(HttpStatus.BAD_REQUEST).body("No file uploaded.");
-        }
 
-        // Convert the uploaded MultipartFile to BufferedImage for QR code processing
-        BufferedImage qrImage;
+        ResponseEntity<String> bad_request = validate(playerName, playerQr);
+        if (bad_request != null) return bad_request;
+
         UUID playerUuid;
         try {
-            qrImage = QrManager.convertMultipartFileToBufferedImage(playerQr);
-            // Read the QR code from the image
-            String result =QrManager.readQrCode(qrImage);
-            System.out.println(result);
-            playerUuid = UUID.fromString(result);
-
+            playerUuid = getUuidFronQrCode(playerQr);
         } catch (Exception e) {
-            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body("Couldn't process the QR Code.");
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body("Couldn't process QR Code");
         }
-        // Create the player object
-        Player player = new Player(
-                playerName,
-                playerUuid,
-                (joinedSession == null) // Assuming this is for host checking
-        );
 
-        // Register the player into the session
+        boolean isHost = (joinedSession == null);
+
+        Player player = new Player(playerName, playerUuid, isHost);
+
         RegisterPlayerResponse result = sessionManager.registerPlayerToSession(joinedSession, player);
 
-        // Return the response based on registration result
         if (result.getHostInformation() != null) {
             return ResponseEntity.ok(result.getHostInformation());
         }
 
         return result.getResponse();
+    }
+    private static ResponseEntity<String> validate(String playerName, MultipartFile playerQr) {
+        if (playerQr.isEmpty()) {
+            return ResponseEntity.status(HttpStatus.BAD_REQUEST).body("QrCode missing");
+        }
+        if (playerName.isEmpty()) {
+            return ResponseEntity.status(HttpStatus.BAD_REQUEST).body("Username missing");
+        }
+        return null;
+    }
+
+    private static UUID getUuidFronQrCode(MultipartFile playerQr) throws Exception {
+        BufferedImage qrImage;
+        qrImage = QrManager.convertMultipartFileToBufferedImage(playerQr);
+
+        String result =QrManager.readQrCode(qrImage);
+        return UUID.fromString(result);
     }
 
     @PostMapping("/start")

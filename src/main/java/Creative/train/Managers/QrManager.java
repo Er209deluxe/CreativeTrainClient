@@ -34,7 +34,6 @@ public class QrManager {
             }
         }
 
-        System.out.println("QR Code generated!");
         return image;
     }
 
