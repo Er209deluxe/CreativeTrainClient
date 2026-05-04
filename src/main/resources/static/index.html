@@ -1,0 +1,38 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Startpage</title>
+    <link rel="stylesheet" href="stylesheet.css">
+</head>
+<body>
+    <div class="centered">
+        <div class="main">
+            <button onclick="generatePlayerQr()">generate QR code</button>
+
+            <button onclick="startSession()">Host Session</button>
+            
+            <input type="text" id="start-session-uuid" placeholder="Session UUID">
+            <input type="text" id="host-uuid" placeholder="Host UUID">
+            
+            <button onclick="registerAndConnect()">Register</button>
+                <input type="checkbox" name="isHost" id="isHost">
+                <label for="isHost">I am the host</label>
+                <input class="fileUpload" type="file" id="player-uuid" accept="image/*">
+                <input type="text" id="player-name" placeholder="Player Name">
+                <input type="text" id="register-session-uuid" placeholder="Session UUID">
+
+
+            
+        </div>
+        <div class="absoluteCenter">
+            <img id="qrCode">
+        </div>
+        
+
+    </div>
+  
+</body>
+ <script src="ApiRequester.js"></script>
+</html>
