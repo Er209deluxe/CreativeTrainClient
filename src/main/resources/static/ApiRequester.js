@@ -47,12 +47,21 @@ async function startSession() {
 let eventSource;
 
 function startStream(playerUuid) {
-    const url = `/api/stream?playerUuid=${playerUuid}`;
+const url = `/api/stream?playerUuid=${playerUuid}&ts=${Date.now()}`;
     const eventSource = new EventSource(url);
     
-    eventSource.onmessage = (event) => {
-        console.log("Stream message:", event.data);
-    };
+    // Assuming `eventSource` is initialized as shown previously
+eventSource.onmessage = (event) => {
+    console.log("Stream message:", event.data);  // Log the raw message
+    const eventData = event.data;
+
+    if (eventData.includes('playerJoined')) {
+        console.log("New player joined:", eventData);
+        // Parse or handle the event data
+        const playerName = eventData.split('|')[1];  // Assuming the format is playerJoined|playerName
+        alert(`${playerName} has joined the session!`);
+    }
+};
 
     eventSource.onerror = () => {
         console.log("Stream disconnected");
@@ -66,7 +75,6 @@ async function registerAndConnect() {
 
     const playerUuid = data.playerUuid; // Access the playerUuid property
 
-    console.log("Registered player UUID:", playerUuid);
     startStream(playerUuid);
 }
 async function registerUser() {
