@@ -1,5 +1,7 @@
 package Creative.train.DataTypes;
 
+import org.springframework.web.servlet.mvc.method.annotation.SseEmitter;
+
 import java.util.UUID;
 
 public class Player {
@@ -7,10 +9,28 @@ public class Player {
     private final String name;
     private final UUID playerId;
     private final boolean isHost;
+    private SseEmitter connection;
+    private UUID sessionUUID;
     public Player(String name, UUID playerId,boolean isHost){
         this.name = name;
         this.playerId = playerId;
         this.isHost = isHost;
+    }
+
+    public void setSessionUUID(UUID sessionUUID) {
+        this.sessionUUID = sessionUUID;
+    }
+
+    public UUID getSessionUUID() {
+        return sessionUUID;
+    }
+
+    public void setConnection(SseEmitter connection) {
+        this.connection = connection;
+    }
+
+    public SseEmitter getConnection() {
+        return connection;
     }
 
     public boolean isHost() {

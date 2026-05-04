@@ -16,6 +16,12 @@ public class SessionManager {
         activeSessions = new HashMap<>();
         playerMap = new HashMap<>();
     }
+    public Player getPlayer(UUID playerUuid){
+        return playerMap.get(playerUuid);
+    }
+    public Map<UUID, Player> getPlayerMap() {
+        return playerMap;
+    }
 
     public static SessionManager getInstance() {
         return sessionManager;
@@ -36,7 +42,7 @@ public class SessionManager {
 
         // 1. VALIDATION
         if (playerMap.containsKey(player.getPlayerId())) {
-            return error(response, 409, "user already in a session");
+            return error(response, 409, "User already in a session");
         }
 
         if (!player.isHost() && !activeSessions.containsKey(sessionUuid)) {
@@ -105,5 +111,15 @@ public class SessionManager {
         Session session = activeSessions.get(sessionUuid);
         if(session == null) return null;
         return session.getAllPlayerUuids();
-        }
+    }
+    public void removePlayer(UUID playerUuid){
+        UUID sessionUuid=playerMap.get(playerUuid).getSessionUUID();
+
+        playerMap.remove(playerUuid);
+        Session session = activeSessions.get(sessionUuid);
+        if(session==null) return;
+        session.removePlayer(playerUuid);
+        System.out.println("removed:"+playerUuid);
+    }
+
 }
