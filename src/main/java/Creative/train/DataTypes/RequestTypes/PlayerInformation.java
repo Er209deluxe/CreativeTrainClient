@@ -10,14 +10,14 @@ public class PlayerInformation {
     private final UUID playerUuid;
     @JsonCreator
     public PlayerInformation(
-        @JsonProperty("sessionId") UUID sessionId,
-        @JsonProperty("hostUuid") UUID hostUuid
+            @JsonProperty("sessionId") UUID sessionId,
+            @JsonProperty("hostUuid") UUID hostUuid
 
     )
-        {
-            this.sessionId = sessionId;
-            this.playerUuid = hostUuid;
-        }
+    {
+        this.sessionId = sessionId;
+        this.playerUuid = hostUuid;
+    }
 
     public UUID getPlayerUuid() {
         return playerUuid;
