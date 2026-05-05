@@ -92,8 +92,8 @@ public class SessionManager {
         response.setHost(false);
         return response;
     }
-    public UUID getHostUuid(UUID session){
-        return activeSessions.get(session).getHostUuid();
+    public Player getHostUuid(UUID session){
+        return getPlayer(activeSessions.get(session).getHostUuid());
     }
 
     /**

@@ -45,21 +45,17 @@ async function startSession() {
     return res;
 }
 async function leaveSession() {
-    const playerUuid = sessionStorage.getItem("playerUuid");
-
-    if (!playerUuid) {
-        console.error("No playerUuid in sessionStorage");
-        return;
-    }
+     const playerUuid = sessionStorage.getItem("playerUuid");
+    if (!playerUuid) return;
 
     const url = `/api/session/leaveGame?playerUuid=${playerUuid}`;
 
-    const res = await makePostRequest(url, "POST");
+    navigator.sendBeacon(url);
 
     stopStream();
+    sessionStorage.clear();
 
     console.log("left session " + playerUuid);
-    return res;
 }
 let eventSource;
 const userElements = new Map();
@@ -76,7 +72,6 @@ function startStream(playerUuid) {
 
         const p = document.createElement("p");
         p.textContent = event.data;
-
         container.appendChild(p);
 
         // store reference so we can remove later
@@ -115,8 +110,12 @@ async function registerAndConnect() {
     //const sessionUuid= document.getElementById("register-session-uuid").value;
     if (sessionUuid && sessionUuid.length > 0) {
                 await getCurrentUsers({  sessionUuid});
+
     }
 }
+window.addEventListener("beforeunload", () => {
+    leaveSession();
+});
 async function registerUser() {
     const isHost = document.getElementById("isHost").checked;
     const playerUuidInput = document.getElementById("player-uuid");
@@ -159,12 +158,24 @@ async function registerUser() {
         data: text
     };
 }
-async function getCurrentUsers(params) {
+async function makeUserRequest(params){
+    const getHostUrl = `/api/session/hostName?${new URLSearchParams(params).toString()}`;
     const url = `/api/session/connectedUsers?${new URLSearchParams(params).toString()}`;
-    const response = await makeGetRequest(url);
 
+    const [response, hostResponse] = await Promise.all([
+        makeGetRequest(url),
+        makeGetRequest(getHostUrl)
+    ]);
+
+    return { response, hostResponse };
+}
+
+async function getCurrentUsers(params) {
+    //const response = await makeGetRequest(url);
+    const { response, hostResponse } = await makeUserRequest(params);
     const container = document.getElementById("currentUsers");
-
+    //p.style.color = "green"; // optional: highlight new joiners
+    //const hostResponse = await makeGetRequest(getHostUrl);
     // optional but recommended: prevent duplicates
     container.innerHTML = "";
 
@@ -176,13 +187,17 @@ async function getCurrentUsers(params) {
         console.error("Failed to parse users:", response.body);
         return response;
     }
-
+   
+    
     // If backend sends a Set serialized as array -> fine
     // If it's an object, convert accordingly
     if (Array.isArray(users)) {
         users.forEach(name => {
             const p = document.createElement("p");
             p.textContent = name;
+            if(name === hostResponse.body) {
+                p.style.color = "green";
+            }
             container.appendChild(p);
         });
     } else if (users && typeof users === "object") {

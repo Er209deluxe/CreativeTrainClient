@@ -87,7 +87,7 @@ public class SessionApi {
             return ResponseEntity.status(HttpStatus.NOT_FOUND).body("Session not found");
         }
 
-        if(!sessionManager.getHostUuid(sessionUuid).equals(hostUuid)){
+        if(!sessionManager.getHostUuid(sessionUuid).getPlayerId().equals(hostUuid)){
             return ResponseEntity.status(403).body("You are not the host");
         }
         return ResponseEntity.status(HttpStatus.OK).body("OK");
@@ -97,5 +97,11 @@ public class SessionApi {
         Set<String> names = sessionManager.getAllNamesInSession(sessionUuid);
         if(names==null) return ResponseEntity.status(HttpStatus.NOT_FOUND).body("Session not found");
         return ResponseEntity.status(HttpStatus.OK).body(names);
+    }
+    @GetMapping("/hostName")
+    public ResponseEntity<?> getHostName(@RequestParam("sessionUuid") UUID sessionUuid){
+        String name = sessionManager.getHostUuid(sessionUuid).getName();
+        if(name==null) return ResponseEntity.status(HttpStatus.NOT_FOUND).body("Host not found");
+        return ResponseEntity.status(HttpStatus.OK).body(name);
     }
 }

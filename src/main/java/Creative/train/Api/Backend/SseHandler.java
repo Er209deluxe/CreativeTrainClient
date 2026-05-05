@@ -62,6 +62,7 @@ public class SseHandler {
                 emitter.send(SseEmitter.event()
                         .name(event)
                         .data(data));
+
             } catch (IOException e) {
                 iterator.remove();
                 sendPlayerDisconnectInfo(playerUuids, playerData.getName());
