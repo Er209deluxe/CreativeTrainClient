@@ -33,8 +33,8 @@ async function generatePlayerQr() {
 
 // ---------------- START SESSION ----------------
 async function startSession() {
-    const sessionId = document.getElementById("start-session-uuid").value;
-    const hostUuid = document.getElementById("host-uuid").value;
+    const sessionId = sessionStorage.getItem("sessionUuid");
+    const hostUuid = sessionStorage.getItem("playerUuid");
 
     const res = await makePostRequest("/api/session/start", "POST", {
         sessionId,
@@ -95,6 +95,9 @@ function startStream(playerUuid) {
     };
 }
 async function registerAndConnect() {
+    if(sessionStorage.getItem("playerUuid") || sessionStorage.getItem("sessionUuid")) {
+        return; //already registered
+    }
     const result = await registerUser();
 
     // Parse the response data into JSON

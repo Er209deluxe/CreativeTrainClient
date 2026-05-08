@@ -32,9 +32,6 @@ public class Session {
         return sessionId;
     }
 
-    public Map<UUID,Player> getPlayerMap() {
-        return playerMap;
-    }
 
     public UUID getHostUuid() {
         return hostUuid;

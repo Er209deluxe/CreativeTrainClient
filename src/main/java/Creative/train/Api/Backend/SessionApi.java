@@ -46,12 +46,13 @@ public class SessionApi {
         SseHandler websocketHandler= SseHandler.getInstance();
 
         if (result.isHost()) {
+            player.setSessionUUID(result.getHostInformation().getSessionId());
             return ResponseEntity.ok(result.getHostInformation());
         }
         if(result.getHostInformation()!=null) {
             player.setSessionUUID(result.getHostInformation().getSessionId());
             List<UUID> playersInSession = sessionManager.getAllUuidsInSession(joinedSession);
-            websocketHandler.sendNewPlayerInfo(playersInSession, playerName);
+            SseHandler.sendNewPlayerInfo(playersInSession, playerName);
             return ResponseEntity.ok(result.getHostInformation());
         }
 
