@@ -40,6 +40,17 @@ async function startSession() {
         sessionId,
         hostUuid
     });
+    if(res.status == 404) {
+        alert("Session not found");
+        return;
+    } else if(res.status == 403) {
+        alert("Only the host can start the session");
+        return;
+    }
+    else if(!res.ok) {
+        alert("Failed to start session: " + res.body);
+        return;
+    }
 
     console.log("Start session:", res);
     return res;

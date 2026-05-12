@@ -4,6 +4,7 @@ import Creative.train.DataTypes.GlobalVariableHolder;
 import Creative.train.DataTypes.Player;
 import Creative.train.DataTypes.RegisterPlayerResponse;
 import Creative.train.DataTypes.RequestTypes.PlayerInformation;
+import Creative.train.DataTypes.Session;
 import Creative.train.Managers.QrManager;
 import Creative.train.Managers.SessionManager;
 import org.springframework.http.HttpStatus;
@@ -30,6 +31,8 @@ public class SessionApi {
 
         ResponseEntity<String> bad_request = validate(playerName, playerQr);
         if (bad_request != null) return bad_request;
+        if(joinedSession!=null&&sessionManager.isSessionActive(joinedSession))
+                return ResponseEntity.status(HttpStatus.FORBIDDEN).body("Session already started");
 
         UUID playerUuid;
         try {
@@ -43,7 +46,6 @@ public class SessionApi {
         Player player = new Player(playerName, playerUuid, isHost);
 
         RegisterPlayerResponse result = sessionManager.registerPlayerToSession(joinedSession, player);
-        SseHandler websocketHandler= SseHandler.getInstance();
 
         if (result.isHost()) {
             player.setSessionUUID(result.getHostInformation().getSessionId());
@@ -84,14 +86,17 @@ public class SessionApi {
     public ResponseEntity<?> startSession(@RequestBody PlayerInformation data){
         UUID hostUuid = data.getPlayerUuid();
         UUID sessionUuid = data.getSessionId();
-        if(sessionManager.getSession(sessionUuid)==null){
+        Session session = sessionManager.getSession(sessionUuid);
+        if(session==null){
             return ResponseEntity.status(HttpStatus.NOT_FOUND).body("Session not found");
         }
 
-        if(!sessionManager.getHostUuid(sessionUuid).getPlayerId().equals(hostUuid)){
+        if(!sessionManager.getHostUuid(sessionUuid).getPlayerId().equals(hostUuid)) {
             return ResponseEntity.status(403).body("You are not the host");
         }
-        return ResponseEntity.status(HttpStatus.OK).body("OK");
+
+        sessionManager.startSession(sessionUuid);
+        return ResponseEntity.status(HttpStatus.OK).build();
     }
     @GetMapping("/connectedUsers")
     public ResponseEntity<?> getConnectedUsers(@RequestParam("sessionUuid") UUID sessionUuid){
@@ -104,5 +109,20 @@ public class SessionApi {
         String name = sessionManager.getHostUuid(sessionUuid).getName();
         if(name==null) return ResponseEntity.status(HttpStatus.NOT_FOUND).body("Host not found");
         return ResponseEntity.status(HttpStatus.OK).body(name);
+    }
+    @PostMapping("/kill")
+    public ResponseEntity<?> killPlayer(@RequestParam UUID killerUuid,
+                                        @RequestParam MultipartFile playerQr,
+                                        @RequestParam String method){
+        Player killer =sessionManager.getPlayer(killerUuid);
+        UUID playerUuid;
+        try {
+             playerUuid = getUuidFronQrCode(playerQr);
+        } catch (Exception e){
+            return ResponseEntity.status(HttpStatus.NOT_FOUND).build();
+        }
+        Player victim = sessionManager.getPlayer(playerUuid);
+
+        return ResponseEntity.status(HttpStatus.OK).build();
     }
 }

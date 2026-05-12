@@ -1,10 +1,12 @@
 package Creative.train.DataTypes;
 
+import Creative.train.GameLogic.RoleAssigner;
+
 import java.util.*;
 import java.util.stream.Collectors;
 
 public class Session {
-    private boolean active;
+    private boolean active=false;
     private final UUID sessionId;
     private final Map<UUID,Player> playerMap = new HashMap<>();
     private final UUID hostUuid;
@@ -47,7 +49,12 @@ public class Session {
                 .map(Player::getName)
                 .collect(Collectors.toSet());
     }
-    public void kickPlayer(UUID playerUuid){
-        playerMap.remove(playerUuid);
+    public void start(){
+        setActive();
+
+    }
+
+    public boolean isActive() {
+        return active;
     }
 }
