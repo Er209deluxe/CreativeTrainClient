@@ -2,6 +2,7 @@ package Creative.train.Api.Backend;
 
 import Creative.train.DataTypes.Player;
 import Creative.train.DataTypes.Session;
+import Creative.train.GameLogic.Roles.Role;
 import Creative.train.Managers.SessionManager;
 import org.springframework.web.servlet.mvc.method.annotation.SseEmitter;
 
@@ -43,9 +44,19 @@ public class SseHandler {
         }
         player.setConnection(emitter);
     }
-    public void sendNewPlayerInfo(List<UUID> playerUuids, String player) {
+    public static void sendNewPlayerInfo(List<UUID> playerUuids, String player) {
        sendPlayer(playerUuids,"playerJoined",player);
     }
+    public static void sendDeathInfo(UUID playerUuid) {
+        sendPlayer(List.of(playerUuid),"deathEvent","");
+    }
+    public static void sendSessionStart(List<UUID> playerUuids) {
+        for (UUID playerUuid : playerUuids) {
+            Player player = SessionManager.getInstance().getPlayer(playerUuid);
+            sendPlayer(new ArrayList<>(List.of(player.getPlayerId())),"sessionStart",player.getRole());
+        }
+    }
+
     public static void sendPlayerDisconnectInfo(List<UUID> playerUuids,String player){
         sendPlayer(playerUuids,"playerDisconnected",player);
     }

@@ -1,5 +1,8 @@
 package Creative.train.DataTypes;
 
+import Creative.train.GameLogic.Roles.Innocent;
+import Creative.train.GameLogic.Roles.Killer;
+import Creative.train.GameLogic.Roles.Role;
 import org.springframework.web.servlet.mvc.method.annotation.SseEmitter;
 
 import java.util.UUID;
@@ -11,10 +14,20 @@ public class Player {
     private final boolean isHost;
     private SseEmitter connection;
     private UUID sessionUUID;
+    Role role;
     public Player(String name, UUID playerId,boolean isHost){
         this.name = name;
         this.playerId = playerId;
         this.isHost = isHost;
+
+
+    }
+    public void setRole(Role role){
+        this.role = role;
+    }
+
+    public Role getRole() {
+        return role;
     }
 
     public void setSessionUUID(UUID sessionUUID) {

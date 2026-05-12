@@ -33,13 +33,24 @@ async function generatePlayerQr() {
 
 // ---------------- START SESSION ----------------
 async function startSession() {
-    const sessionId = document.getElementById("start-session-uuid").value;
-    const hostUuid = document.getElementById("host-uuid").value;
+    const sessionId = sessionStorage.getItem("sessionUuid");
+    const hostUuid = sessionStorage.getItem("playerUuid");
 
     const res = await makePostRequest("/api/session/start", "POST", {
         sessionId,
         hostUuid
     });
+    if(res.status == 404) {
+        alert("Session not found");
+        return;
+    } else if(res.status == 403) {
+        alert("Only the host can start the session");
+        return;
+    }
+    else if(!res.ok) {
+        alert("Failed to start session: " + res.body);
+        return;
+    }
 
     console.log("Start session:", res);
     return res;
@@ -95,6 +106,9 @@ function startStream(playerUuid) {
     };
 }
 async function registerAndConnect() {
+    if(sessionStorage.getItem("playerUuid") || sessionStorage.getItem("sessionUuid")) {
+        return; //already registered
+    }
     const result = await registerUser();
 
     // Parse the response data into JSON
