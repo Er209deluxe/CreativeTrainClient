@@ -137,4 +137,8 @@ public class SessionManager {
     public boolean isSessionActive(UUID sessionUuid){
         return activeSessions.get(sessionUuid).isActive();
     }
+    public void killPlayer(Player player){
+        player.setAlive(false);
+        SseHandler.sendDeathInfo(player.getPlayerId());
+    }
 }

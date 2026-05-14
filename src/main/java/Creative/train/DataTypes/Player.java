@@ -1,5 +1,6 @@
 package Creative.train.DataTypes;
 
+import Creative.train.GameLogic.Items.Item;
 import Creative.train.GameLogic.Roles.Innocent;
 import Creative.train.GameLogic.Roles.Killer;
 import Creative.train.GameLogic.Roles.Role;
@@ -15,12 +16,38 @@ public class Player {
     private SseEmitter connection;
     private UUID sessionUUID;
     Role role;
+    Item[] inventory = new Item[9];
     public Player(String name, UUID playerId,boolean isHost){
         this.name = name;
         this.playerId = playerId;
         this.isHost = isHost;
 
 
+    }
+
+    public Item[] getInventory() {
+        return inventory;
+    }
+
+    /**
+     * Adds item to player inventory, O(n)
+     * @param item the item you want to add
+     * @return true if item got added false if not
+     */
+    public boolean addItem(Item item){
+        for(int i=0;i<inventory.length;i++){
+            if(inventory[i]==null){
+                inventory[i] = item;
+                return true;
+            }
+        }
+        return false;
+    }
+    public void removeItem(int slot){
+        inventory[slot] = null;
+    }
+    public Item getItemFromSlot(int slot){
+        return inventory[slot];
     }
     public void setRole(Role role){
         this.role = role;
