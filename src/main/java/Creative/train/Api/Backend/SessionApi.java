@@ -5,6 +5,7 @@ import Creative.train.DataTypes.Player;
 import Creative.train.DataTypes.RegisterPlayerResponse;
 import Creative.train.DataTypes.RequestTypes.PlayerInformation;
 import Creative.train.DataTypes.Session;
+import Creative.train.Managers.EncryptionManager;
 import Creative.train.Managers.QrManager;
 import Creative.train.Managers.SessionManager;
 import org.springframework.http.HttpStatus;
@@ -36,16 +37,18 @@ public class SessionApi {
 
         UUID playerUuid;
         try {
-            playerUuid = getUuidFronQrCode(playerQr);
+            playerUuid = getUuidFromQrCode(playerQr);
         } catch (Exception e) {
             return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body("Couldn't process QR Code");
         }
-
+        System.out.println(playerUuid);
         boolean isHost = (joinedSession == null);
+        String sessionToken =EncryptionManager.generateNewToken();
+        String hashedToken = EncryptionManager.sha256(sessionToken);
 
-        Player player = new Player(playerName, playerUuid, isHost);
+        Player player = new Player(playerName, playerUuid,hashedToken, isHost);
 
-        RegisterPlayerResponse result = sessionManager.registerPlayerToSession(joinedSession, player);
+        RegisterPlayerResponse result = sessionManager.registerPlayerToSession(joinedSession, player,sessionToken);
 
         if (result.isHost()) {
             player.setSessionUUID(result.getHostInformation().getSessionId());
@@ -70,7 +73,7 @@ public class SessionApi {
         return null;
     }
 
-    public static UUID getUuidFronQrCode(MultipartFile playerQr) throws Exception {
+    public static UUID getUuidFromQrCode(MultipartFile playerQr) throws Exception {
         BufferedImage qrImage;
         qrImage = QrManager.convertMultipartFileToBufferedImage(playerQr);
 
@@ -78,16 +81,22 @@ public class SessionApi {
         return UUID.fromString(result);
     }
     @PostMapping("/leaveGame")
-    public ResponseEntity<?> leaveGame(@RequestParam UUID playerUuid){
-        System.out.println("playerUuid: "+playerUuid);
+    public ResponseEntity<?> leaveGame(@RequestParam UUID playerUuid,@RequestParam("sessionToken") String sessionToken){
+        Player player = SessionManager.getInstance().getPlayer(playerUuid);
+        if(!player.isCorrectPass(sessionToken)) return ResponseEntity.status(HttpStatus.FORBIDDEN).body("Wrong password");
         SseHandler.disconnectPlayer(playerUuid);
         return ResponseEntity.status(HttpStatus.OK).build();
     }
     @PostMapping("/start")
-    public ResponseEntity<?> startSession(@RequestBody PlayerInformation data){
+    public ResponseEntity<?> startSession(@RequestBody PlayerInformation data,@RequestParam("sessionToken") String sessionToken){
         UUID hostUuid = data.getPlayerUuid();
         UUID sessionUuid = data.getSessionId();
+        Player host = SessionManager.getInstance().getPlayer(hostUuid);
+        if(host==null) return ResponseEntity.status(HttpStatus.NOT_FOUND).body("Host UUID not found");
+        if(!host.isCorrectPass(sessionToken))  return ResponseEntity.status(HttpStatus.FORBIDDEN).body("Wrong token");
+
         Session session = sessionManager.getSession(sessionUuid);
+
         if(session==null){
             return ResponseEntity.status(HttpStatus.NOT_FOUND).body("Session not found");
         }
@@ -107,18 +116,28 @@ public class SessionApi {
     }
     @GetMapping("/hostName")
     public ResponseEntity<?> getHostName(@RequestParam("sessionUuid") UUID sessionUuid){
-        String name = sessionManager.getHostUuid(sessionUuid).getName();
-        if(name==null) return ResponseEntity.status(HttpStatus.NOT_FOUND).body("Host not found");
-        return ResponseEntity.status(HttpStatus.OK).body(name);
+
+        Session session = sessionManager.getSession(sessionUuid);
+        if (session == null) {
+            return ResponseEntity.status(HttpStatus.NOT_FOUND).body("Session not found");
+        }
+
+        Player host = sessionManager.getHostUuid(sessionUuid);
+        if (host == null) {
+            return ResponseEntity.status(HttpStatus.NOT_FOUND).body("Host not found");
+        }
+
+        return ResponseEntity.ok(host.getName());
     }
     @PostMapping("/kill")
     public ResponseEntity<?> killPlayer(@RequestParam UUID killerUuid,
+                                        @CookieValue("password") String killerPassword,
                                         @RequestParam MultipartFile playerQr,
                                         @RequestParam String method){
         Player killer =sessionManager.getPlayer(killerUuid);
         UUID playerUuid;
         try {
-             playerUuid = getUuidFronQrCode(playerQr);
+             playerUuid = getUuidFromQrCode(playerQr);
         } catch (Exception e){
             return ResponseEntity.status(HttpStatus.NOT_FOUND).build();
         }

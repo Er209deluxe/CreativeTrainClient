@@ -43,18 +43,19 @@ async function startSession() {
     const sessionId =
         sessionStorage.getItem("sessionUuid");
 
-    const hostUuid =
+    const playerUuid =
         sessionStorage.getItem("playerUuid");
 
     const res = await makePostRequest(
-        "/api/session/start",
+        "/api/session/start?sessionToken=" + sessionStorage.getItem("sessionToken") + "&ts=" + Date.now(),
         "POST",
         {
             sessionId,
-            hostUuid
+            playerUuid
+            //sessionToken: sessionStorage.getItem("sessionToken")
         }
     );
-
+/*
     if (res.status === 404) {
         alert("Session not found");
         return;
@@ -64,9 +65,9 @@ async function startSession() {
         alert("Only the host can start the session");
         return;
     }
-
+*/
     if (!res.ok) {
-        alert("Failed to start session");
+        alert("Failed to start session: " + res.body);
         return;
     }
 
@@ -84,7 +85,7 @@ function startStream(playerUuid) {
     stopStream();
 
     const url =
-        `/api/stream?playerUuid=${playerUuid}&ts=${Date.now()}`;
+        `/api/stream?playerUuid=${playerUuid}&sessionToken=${sessionStorage.getItem("sessionToken")}&ts=${Date.now()}`;
 
     eventSource = new EventSource(url);
 
@@ -188,6 +189,7 @@ async function registerAndConnect() {
         sessionStorage.getItem("playerUuid") ||
         sessionStorage.getItem("sessionUuid")
     ) {
+        alert("Already registered in a session. Please leave the current session before registering again.");
         return;
     }
 
@@ -209,7 +211,11 @@ async function registerAndConnect() {
 
     const playerUuid = data.playerUuid;
     const sessionUuid = data.sessionId;
-
+    const sessionToken = data.sessionToken;
+    cookieStore.set("sessionToken", sessionToken, {
+        sameSite: "lax",
+        httpOnly: true
+    });
     sessionStorage.setItem(
         "playerUuid",
         playerUuid
@@ -218,6 +224,10 @@ async function registerAndConnect() {
     sessionStorage.setItem(
         "sessionUuid",
         sessionUuid
+    );
+       sessionStorage.setItem(
+        "sessionToken",
+        sessionToken
     );
 
     document.getElementById(
@@ -399,7 +409,7 @@ async function leaveSession() {
     }
 
     const url =
-        `/api/session/leaveGame?playerUuid=${playerUuid}`;
+        `/api/session/leaveGame?playerUuid=${playerUuid}&sessionToken=${sessionStorage.getItem("sessionToken")}&ts=${Date.now()}`;
 
     navigator.sendBeacon(url);
 

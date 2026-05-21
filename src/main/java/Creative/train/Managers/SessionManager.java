@@ -38,7 +38,7 @@ public class SessionManager {
         activeSessions.put(newSession.getSessionId(),newSession);
         return newSession;
     }
-    public RegisterPlayerResponse registerPlayerToSession(UUID sessionUuid, Player player) {
+    public RegisterPlayerResponse registerPlayerToSession(UUID sessionUuid, Player player,String token) {
 
         RegisterPlayerResponse response = new RegisterPlayerResponse();
 
@@ -53,17 +53,17 @@ public class SessionManager {
 
         // 2. ACTION
         if (player.isHost()) {
-            return handleHost(player, response);
+            return handleHost(player, response,token);
         }
 
-        return handleJoin(sessionUuid, player, response);
+        return handleJoin(sessionUuid, player, response,token);
     }
     private RegisterPlayerResponse error(RegisterPlayerResponse response, int code, String msg) {
         response.setResponse(ResponseEntity.status(code).body(msg));
         return response;
 
     }
-    private RegisterPlayerResponse handleHost(Player player, RegisterPlayerResponse response) {
+    private RegisterPlayerResponse handleHost(Player player, RegisterPlayerResponse response,String token) {
 
         Session newSession = registerSession(player.getPlayerId());
 
@@ -74,13 +74,13 @@ public class SessionManager {
         playerMap.put(player.getPlayerId(), player);
 
         response.setPlayerInformation(
-                new PlayerInformation(newSession.getSessionId(), player.getPlayerId())
+                new PlayerInformation(newSession.getSessionId(), player.getPlayerId(),token)
         );
         response.setHost(true);
         return response;
     }
 
-    private RegisterPlayerResponse handleJoin(UUID sessionUuid, Player player, RegisterPlayerResponse response) {
+    private RegisterPlayerResponse handleJoin(UUID sessionUuid, Player player, RegisterPlayerResponse response,String token) {
 
         Session session = activeSessions.get(sessionUuid);
 
@@ -90,14 +90,19 @@ public class SessionManager {
         }
         playerMap.put(player.getPlayerId(), player);
 
-        response.setPlayerInformation(new PlayerInformation(sessionUuid,player.getPlayerId()));
+        response.setPlayerInformation(new PlayerInformation(sessionUuid,player.getPlayerId(),token));
         response.setHost(false);
         return response;
     }
-    public Player getHostUuid(UUID session){
-        return getPlayer(activeSessions.get(session).getHostUuid());
-    }
+    public Player getHostUuid(UUID sessionUuid){
+        Session session = activeSessions.get(sessionUuid);
+        if (session == null) return null;
 
+        UUID hostUuid = session.getHostUuid();
+        if (hostUuid == null) return null;
+
+        return playerMap.get(hostUuid);
+    }
     /**
      *
      * @param sessionUuid sessionUuid

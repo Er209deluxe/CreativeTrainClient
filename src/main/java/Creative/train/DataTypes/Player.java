@@ -4,6 +4,7 @@ import Creative.train.GameLogic.Items.Item;
 import Creative.train.GameLogic.Roles.Innocent;
 import Creative.train.GameLogic.Roles.Killer;
 import Creative.train.GameLogic.Roles.Role;
+import Creative.train.Managers.EncryptionManager;
 import org.springframework.web.servlet.mvc.method.annotation.SseEmitter;
 
 import java.util.UUID;
@@ -15,14 +16,20 @@ public class Player {
     private final boolean isHost;
     private SseEmitter connection;
     private UUID sessionUUID;
-    Role role;
+    private Role role;
+    private String passwordHash;
     Item[] inventory = new Item[9];
-    public Player(String name, UUID playerId,boolean isHost){
+    public Player(String name, UUID playerId,String passwordHash,boolean isHost){
         this.name = name;
         this.playerId = playerId;
         this.isHost = isHost;
+        this.passwordHash = passwordHash;
 
+    }
 
+    public boolean isCorrectPass(String password){
+        String hashedPassword = EncryptionManager.sha256(password);
+        return passwordHash.equals(hashedPassword);
     }
 
     public Item[] getInventory() {

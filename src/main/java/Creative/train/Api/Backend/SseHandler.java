@@ -18,7 +18,7 @@ public class SseHandler {
         return INSTANCE;
     }
 
-    public SseEmitter stream(UUID playerUUID) {
+    public SseEmitter stream(UUID playerUUID,String password) {
         SseEmitter emitter = new SseEmitter(0L); // no timeout
 
         System.out.println("Player UUID: " + playerUUID + " connected.");
