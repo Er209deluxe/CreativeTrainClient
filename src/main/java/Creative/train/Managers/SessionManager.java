@@ -1,6 +1,6 @@
 package Creative.train.Managers;
 
-import Creative.train.Api.Backend.SseHandler;
+import Creative.train.Backend.api.SseHandler;
 import Creative.train.DataTypes.Player;
 import Creative.train.DataTypes.RegisterPlayerResponse;
 import Creative.train.DataTypes.Wrappers.PlayerInformation;

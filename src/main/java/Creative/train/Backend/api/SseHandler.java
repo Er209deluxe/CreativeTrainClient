@@ -1,8 +1,7 @@
-package Creative.train.Api.Backend;
+package Creative.train.Backend.api;
 
 import Creative.train.DataTypes.Player;
 import Creative.train.DataTypes.Session;
-import Creative.train.GameLogic.Roles.Role;
 import Creative.train.Managers.SessionManager;
 import org.springframework.web.servlet.mvc.method.annotation.SseEmitter;
 

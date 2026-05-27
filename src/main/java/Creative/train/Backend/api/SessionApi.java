@@ -1,4 +1,4 @@
-package Creative.train.Api.Backend;
+package Creative.train.Backend.api;
 
 import Creative.train.DataTypes.GlobalVariableHolder;
 import Creative.train.DataTypes.Player;
