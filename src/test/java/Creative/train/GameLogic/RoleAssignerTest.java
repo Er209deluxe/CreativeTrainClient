@@ -1,20 +1,30 @@
 package Creative.train.GameLogic;
 
+import Creative.train.ConfigManagement.RoleDataManager;
 import Creative.train.DataTypes.GlobalVariableHolder;
+import Creative.train.DataTypes.Session;
 import Creative.train.GameLogic.Roles.*;
 
+import Creative.train.Managers.SessionManager;
+import ch.qos.logback.core.testUtil.MockInitialContext;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 
+import java.io.IOException;
+import java.io.InputStream;
+import java.net.URL;
+import java.nio.charset.StandardCharsets;
 import java.util.List;
+import java.util.UUID;
 
 import static org.junit.jupiter.api.Assertions.*;
 
 class RoleAssignerTest {
     int playersNeededForNewSpecialRole = RoleAssigner.playersNeededForNewSpecialRole;
     int specialRolesPerCount = 3;
+    UUID sessionUuid = UUID.randomUUID();
     @BeforeEach
-    void setup() {
+    void setup() throws IOException {
 
         // deterministic role pools for testing
         GlobalVariableHolder.killerClasses =
@@ -25,13 +35,24 @@ class RoleAssignerTest {
 
         GlobalVariableHolder.innocentClasses =
                 List.of(Innocent.class, Vigilante.class);
+
+        InputStream stream = getClass().getResourceAsStream("/testData/test.json");
+        assertNotNull(stream);
+
+        String json = new String(
+                stream.readAllBytes(),
+                StandardCharsets.UTF_8
+        );
+
+        SessionManager.roleLoader(json,sessionUuid);
+
     }
 
 
     @Test
     void createRoles_when_I_SpecialSets_creates_I_OfEachSpecialRole() {
         for (long i = 0; i < 5; i++) {
-            List<Role> roles = RoleAssigner.createRoles((int) (playersNeededForNewSpecialRole * i));
+            List<Role> roles = RoleAssigner.createRoles((int) (playersNeededForNewSpecialRole * i), sessionUuid);
 
 
             long vigilantes = roles.stream()
@@ -61,7 +82,7 @@ class RoleAssignerTest {
     void createRoles_whenBelow_I_SpecialSets_returnsOnlyIMinus1FillRoles() {
         for (int i = 1; i < 10; i++) {
 
-            List<Role> roles = RoleAssigner.createRoles(i * playersNeededForNewSpecialRole - 1);
+            List<Role> roles = RoleAssigner.createRoles(i * playersNeededForNewSpecialRole - 1,sessionUuid);
 
             long vigilantes = roles.stream()
                     .filter(r -> r instanceof Vigilante)
@@ -91,7 +112,7 @@ class RoleAssignerTest {
 
         for (int players = 1; players <= 20; players++) {
 
-            List<Role> roles = RoleAssigner.createRoles(players);
+            List<Role> roles = RoleAssigner.createRoles(players,sessionUuid);
 
             assertEquals(players, roles.size());
         }

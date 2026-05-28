@@ -1,10 +1,12 @@
 package Creative.train.GameLogic.Roles;
 
-import Creative.train.DataTypes.Wrappers.RoleData;
+import Creative.train.ConfigManagement.RoleDataManager;
+import Creative.train.ConfigManagement.Wrappers.RoleData;
 import Creative.train.GameLogic.Items.Item;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.UUID;
 
 public abstract class Role {
 
@@ -17,10 +19,12 @@ public abstract class Role {
     final List<Item> itemShop = new ArrayList<>();
     final List<Item> baseInventory = new ArrayList<>();
 
-    public Role(String name,Team team,String hex) {
-        this.name = name;
-        this.team = team;
-        this.hex = hex;
+    public Role(UUID sessionUuid,String name) {
+        RoleDataManager roleDataManager = RoleDataManager.getInstance();
+        RoleData data = roleDataManager.getRoleData(sessionUuid,name);
+        this.name = data.name;
+        this.team = data.team;
+        this.hex = data.hex;
         //this.enableShop = data.enableShop;
         //this.passiveIncome = data.passiveIncome;
         //this.taskIncome = data.taskIncome;

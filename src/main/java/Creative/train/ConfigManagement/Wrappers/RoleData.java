@@ -1,4 +1,4 @@
-package Creative.train.DataTypes.Wrappers;
+package Creative.train.ConfigManagement.Wrappers;
 
 
 import Creative.train.GameLogic.Roles.Role.Team;

@@ -1,7 +1,9 @@
 package Creative.train.GameLogic.Roles;
 
+import java.util.UUID;
+
 public class Neutral extends Role{
-    public Neutral() {
-        super("Neutral", Team.NEUTRAL, "#fff");
+    public Neutral(UUID sessionUuid) {
+        super( sessionUuid ,"Neutral");
     }
 }

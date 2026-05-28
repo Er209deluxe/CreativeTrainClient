@@ -23,4 +23,33 @@ public class GlobalVariableHolder {
                     Innocent.class,
                     Vigilante.class
             );
+
+    /**
+     *
+     * @param team The classes allignment
+     * @param className the class youre searching
+     * @return the class extending Role returns null if no class with that name is found
+     */
+    public static Class<?> getRoleClass(Role.Team team,String className){
+        switch(team){
+            case CIVILIAN -> {
+                return searchClass(innocentClasses,className);
+            }
+            case NEUTRAL -> {
+                return searchClass(neutralClasses,className);
+            }
+            case KILLER -> {
+                return searchClass(killerClasses,className);
+            }
+        }
+        return null;
+    }
+    private static Class<?> searchClass(List<Class<? extends Role>> classList,String className){
+        for(Class<? extends Role> classItem : classList ){
+            if(classItem.getName().equals(className)){
+                return classItem;
+            }
+        }
+        return null;
+    }
 }

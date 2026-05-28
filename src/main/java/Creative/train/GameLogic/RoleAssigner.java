@@ -15,12 +15,12 @@ import java.util.UUID;
 
 public class RoleAssigner {
     static SessionManager sessionManager = SessionManager.getInstance();
-    public static int playersNeededForNewSpecialRole=6; //for testing, real value should be 6
+    public static int playersNeededForNewSpecialRole=3; //for testing, real value should be 6
 
     public static void assignAllRoles(Session session){
         List<UUID> uuids = session.getAllPlayerUuids();
 
-        List<Role> roles = createRoles(uuids.size());
+        List<Role> roles = createRoles(uuids.size(),session.getSessionId());
         for(UUID uuid : uuids){
             Player player = sessionManager.getPlayer(uuid);
             int max = roles.size();
@@ -29,20 +29,22 @@ public class RoleAssigner {
             roles.remove(index);
         }
     }
-    private static Role getRandomRole(List<Class<? extends Role>> classList){
+    private static Role getRandomRole(List<Class<? extends Role>> classList,UUID sessionUuid){
         int max = classList.size();
         int index = (int) (Math.random() * max);
 
 
         try {
-            return classList.get(index).getDeclaredConstructor().newInstance();
+
+            return classList.get(index).getDeclaredConstructor(UUID.class).newInstance(sessionUuid);
         } catch (Exception e) {
+            //dont start session
             return null;
         }
 
     }
 
-    static List<Role> createRoles(int playerCount) {
+    static List<Role> createRoles(int playerCount,UUID sessionUuid) {
         List<Role> roleList=new ArrayList<>();
         var killers = GlobalVariableHolder.killerClasses;
         var neutrals = GlobalVariableHolder.neutralClasses;
@@ -53,19 +55,19 @@ public class RoleAssigner {
         //add a new killer/neutral for every playersNeededForNewSpecialRole players
         for (int i = 0; i < sets; i++) {
 
-            Role killer = getRandomRole(killers);
-            Role neutral = getRandomRole(neutrals);
+            Role killer = getRandomRole(killers,sessionUuid);
+            Role neutral = getRandomRole(neutrals,sessionUuid);
 
             if (killer != null) roleList.add(killer);
             if (neutral != null) roleList.add(neutral);
 
-            roleList.add(new Vigilante());
+            roleList.add(new Vigilante(sessionUuid));
         }
 
 
         var noVigiInnocents = innocents.stream().filter(aClass -> !aClass.equals(Vigilante.class)).toList();
         while (roleList.size() < playerCount) {
-            roleList.add(getRandomRole(noVigiInnocents));
+            roleList.add(getRandomRole(noVigiInnocents,sessionUuid));
         }
         return roleList;
     }

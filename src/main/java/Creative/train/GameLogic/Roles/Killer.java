@@ -1,14 +1,15 @@
 package Creative.train.GameLogic.Roles;
 
-import Creative.train.Api.Backend.SseHandler;
-import Creative.train.DataTypes.GlobalVariableHolder;
+import Creative.train.Backend.api.SseHandler;
 import Creative.train.DataTypes.Player;
 import Creative.train.DataTypes.Session;
 
+import java.util.UUID;
+
 public class Killer extends Role{
 
-    public Killer() {
-        super("Killer", Team.KILLER,"#d90408");
+    public Killer(UUID sessionUuid) {
+        super( sessionUuid,"Killer");
     }
     public void killPlayer(Session session, Player player){
         player.setAlive(false);

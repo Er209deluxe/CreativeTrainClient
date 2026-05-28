@@ -41,7 +41,6 @@ public class SessionApi {
         } catch (Exception e) {
             return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body("Couldn't process QR Code");
         }
-        System.out.println(playerUuid);
         boolean isHost = (joinedSession == null);
         String sessionToken =EncryptionManager.generateNewToken();
         String hashedToken = EncryptionManager.sha256(sessionToken);
@@ -88,7 +87,9 @@ public class SessionApi {
         return ResponseEntity.status(HttpStatus.OK).build();
     }
     @PostMapping("/start")
-    public ResponseEntity<?> startSession(@RequestBody PlayerInformation data,@RequestParam("sessionToken") String sessionToken){
+    public ResponseEntity<?> startSession(@RequestBody PlayerInformation data,
+                                          @RequestParam("sessionToken") String sessionToken,
+                                          @RequestParam("RoleConfig") String roleConfig){
         UUID hostUuid = data.getPlayerUuid();
         UUID sessionUuid = data.getSessionId();
         Player host = SessionManager.getInstance().getPlayer(hostUuid);
@@ -105,7 +106,8 @@ public class SessionApi {
             return ResponseEntity.status(403).body("You are not the host");
         }
 
-        sessionManager.startSession(sessionUuid);
+        if(!sessionManager.startSession(sessionUuid,roleConfig))
+            return ResponseEntity.status(HttpStatus.BAD_REQUEST).body("Could not read JSON");
         return ResponseEntity.status(HttpStatus.OK).build();
     }
     @GetMapping("/connectedUsers")

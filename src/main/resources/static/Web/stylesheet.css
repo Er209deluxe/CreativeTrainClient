@@ -1,4 +1,5 @@
 :root {
+
     --main-bg-color: #2f2fe4;
     --main-button-color: #1a1953;
     --secondary-bg-color: #162e93;
@@ -6,8 +7,11 @@
     --temp3-color: #776871;
 
     --text-color: #ffffff;
+
     --border-color: rgba(255, 255, 255, 0.08);
-    --shadow: 0 12px 35px rgba(0, 0, 0, 0.35);
+
+    --shadow:
+        0 12px 35px rgba(0, 0, 0, 0.35);
 }
 
 * {
@@ -15,14 +19,26 @@
 }
 
 body {
+
     background:
-        radial-gradient(circle at top left, #3d3dff, transparent 35%),
-        radial-gradient(circle at bottom right, #11114d, transparent 35%),
+        radial-gradient(
+            circle at top left,
+            #3d3dff,
+            transparent 35%
+        ),
+        radial-gradient(
+            circle at bottom right,
+            #11114d,
+            transparent 35%
+        ),
         var(--main-bg-color);
 
     font-family: Arial, sans-serif;
+
     margin: 0;
+
     min-height: 100vh;
+
     color: var(--text-color);
 
     display: flex;
@@ -34,13 +50,18 @@ body {
 
 /* Main layout */
 .centered {
+
     display: flex;
-    flex-wrap: wrap;
+    flex-wrap: nowrap;
 
     width: 100%;
     max-width: 1100px;
 
+    min-height: 700px;
+    max-height: 90vh;
+
     border-radius: 18px;
+
     overflow: hidden;
 
     box-shadow: var(--shadow);
@@ -48,44 +69,61 @@ body {
 
 /* Left side */
 .main {
+
     flex: 1;
-    min-width: 320px;
+
+    min-width: 0;
 
     display: flex;
     flex-direction: column;
-    justify-content: center;
 
     gap: 14px;
 
-    background: rgba(22, 46, 147, 0.95);
+    background:
+        rgba(22, 46, 147, 0.95);
 
     padding: 45px;
 
     backdrop-filter: blur(10px);
+
+    overflow-y: auto;
 }
 
 /* Right side */
 .currentUsers {
-    width: 320px;
 
-    background: rgba(8, 6, 22, 0.95);
+    width: 320px;
+    min-width: 320px;
+
+    background:
+        rgba(8, 6, 22, 0.95);
 
     padding: 45px 30px;
 
     display: flex;
     flex-direction: column;
+
     gap: 14px;
 
-    border-left: 1px solid var(--border-color);
+    border-left:
+        1px solid var(--border-color);
+
+    overflow: hidden;
 }
 
 /* Buttons */
 button {
-    background: linear-gradient(
-        135deg,
-        var(--main-button-color),
-        #292884
-    );
+
+    width: 100%;
+
+    flex-shrink: 0;
+
+    background:
+        linear-gradient(
+            135deg,
+            var(--main-button-color),
+            #292884
+        );
 
     color: white;
 
@@ -104,11 +142,14 @@ button {
         opacity 0.15s ease,
         box-shadow 0.15s ease;
 
-    box-shadow: 0 6px 18px rgba(0, 0, 0, 0.25);
+    box-shadow:
+        0 6px 18px rgba(0, 0, 0, 0.25);
 }
 
 button:hover {
+
     transform: translateY(-2px);
+
     opacity: 0.95;
 }
 
@@ -119,14 +160,18 @@ button:active {
 /* Inputs */
 input[type="text"],
 input[type="file"] {
+
     width: 100%;
 
     padding: 13px 14px;
 
-    border: 1px solid rgba(255, 255, 255, 0.08);
+    border:
+        1px solid rgba(255, 255, 255, 0.08);
+
     border-radius: 10px;
 
-    background-color: rgba(255, 255, 255, 0.08);
+    background-color:
+        rgba(255, 255, 255, 0.08);
 
     color: white;
 
@@ -138,54 +183,95 @@ input[type="file"] {
 }
 
 input::placeholder {
-    color: rgba(255, 255, 255, 0.6);
+
+    color:
+        rgba(255, 255, 255, 0.6);
 }
 
 input:focus {
+
     border-color: #7ea3ff;
-    background-color: rgba(255, 255, 255, 0.12);
+
+    background-color:
+        rgba(255, 255, 255, 0.12);
+}
+
+/* Registration + Host Config */
+#registrationSection,
+#hostConfigSection {
+
+    display: flex;
+    flex-direction: column;
+
+    gap: 12px;
+
+    transition:
+        opacity 0.25s ease,
+        transform 0.25s ease;
+}
+
+#startSessionButton {
+
+    transition:
+        opacity 0.25s ease,
+        transform 0.25s ease;
 }
 
 /* Checkbox row */
 .checkboxRow {
+
     display: flex;
     align-items: center;
+
     gap: 10px;
 
     margin-top: 5px;
 }
 
 input[type="checkbox"] {
+
     width: 18px;
     height: 18px;
+
     cursor: pointer;
 }
 
 /* QR Code section */
 .absoluteCenter {
+
     width: 100%;
+
     display: flex;
     justify-content: center;
+    align-items: center;
+
+    min-height: 260px;
 
     padding-top: 20px;
 }
 
 #qrCode {
+
     max-width: 220px;
 
     border-radius: 16px;
+
     background: white;
 
     padding: 12px;
 
-    box-shadow: 0 8px 20px rgba(0, 0, 0, 0.25);
+    box-shadow:
+        0 8px 20px rgba(0, 0, 0, 0.25);
 }
 
 /* Session display */
 .sessionDisplay {
-    background: rgba(255, 255, 255, 0.08);
 
-    border: 1px solid rgba(255, 255, 255, 0.06);
+    background:
+        rgba(255, 255, 255, 0.08);
+
+    border:
+        1px solid rgba(255, 255, 255, 0.06);
 
     border-radius: 10px;
 
@@ -201,30 +287,75 @@ input[type="checkbox"] {
 
 /* Users list */
 .currentUsers h3 {
+
     margin: 0;
+
     font-size: 20px;
 }
 
 .currentUsers ul {
+
     list-style: none;
+
     padding: 0;
     margin: 0;
+
+    display: flex;
+    flex-direction: column;
+
+    gap: 8px;
+
+    overflow-y: auto;
+
+    flex: 1;
+
+    min-height: 0;
+
+    padding-right: 4px;
 }
 
 .currentUsers li {
+
     padding: 10px 12px;
 
-    background: rgba(255, 255, 255, 0.06);
+    background:
+        rgba(255, 255, 255, 0.06);
 
     border-radius: 8px;
 
-    margin-bottom: 8px;
-}
-.transition-screen {
-    position: fixed;
-    inset: 0; /* top:0 right:0 bottom:0 left:0 */
+    display: flex;
+    align-items: center;
 
-    background: rgba(0, 0, 0, 0.85);
+    min-width: 0;
+
+    overflow: hidden;
+
+    text-overflow: ellipsis;
+
+    white-space: nowrap;
+
+    animation:
+        fadeIn 0.2s ease;
+}
+
+.emptyState {
+
+    opacity: 0.6;
+
+    text-align: center;
+
+    padding: 18px;
+}
+
+/* Transition screen */
+.transition-screen {
+
+    position: fixed;
+
+    inset: 0;
+
+    background:
+        rgba(0, 0, 0, 0.85);
 
     display: flex;
     align-items: center;
@@ -234,46 +365,106 @@ input[type="checkbox"] {
     font-weight: bold;
 
     opacity: 0;
+
     pointer-events: none;
 
     z-index: 99999;
 
-    transition: opacity 0.4s ease;
+    transition:
+        opacity 0.4s ease;
 }
 
-/* visible state */
 .transition-screen.active {
+
     opacity: 1;
+
     pointer-events: all;
 }
 
-/* optional text animation */
 .transition-screen::after {
+
     content: attr(data-text);
-    animation: pulse 1s infinite;
+
+    animation:
+        pulse 1s infinite;
 }
 
+/* Animations */
 @keyframes pulse {
-    0% { opacity: 0.4; transform: scale(1); }
-    50% { opacity: 1; transform: scale(1.05); }
-    100% { opacity: 0.4; transform: scale(1); }
+
+    0% {
+        opacity: 0.4;
+        transform: scale(1);
+    }
+
+    50% {
+        opacity: 1;
+        transform: scale(1.05);
+    }
+
+    100% {
+        opacity: 0.4;
+        transform: scale(1);
+    }
 }
 
+@keyframes fadeIn {
+
+    from {
+
+        opacity: 0;
+
+        transform: translateY(4px);
+    }
+
+    to {
+
+        opacity: 1;
+
+        transform: translateY(0);
+    }
+}
 
 /* Mobile */
 @media (max-width: 850px) {
+
+    body {
+
+        padding: 12px;
+
+        align-items: stretch;
+    }
+
     .centered {
+
         flex-direction: column;
+
+        max-height: none;
+
+        min-height: 100vh;
     }
 
     .currentUsers {
+
         width: 100%;
+        min-width: 0;
+
         border-left: none;
-        border-top: 1px solid var(--border-color);
+
+        border-top:
+            1px solid var(--border-color);
+
+        max-height: 40vh;
     }
 
     .main,
     .currentUsers {
-        padding: 30px 22px;
+
+        padding: 24px 18px;
+    }
+
+    #qrCode {
+
+        max-width: 180px;
     }
 }

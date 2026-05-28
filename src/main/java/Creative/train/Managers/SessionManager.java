@@ -1,13 +1,19 @@
 package Creative.train.Managers;
 
 import Creative.train.Backend.api.SseHandler;
+import Creative.train.ConfigManagement.RoleLoader;
 import Creative.train.DataTypes.Player;
 import Creative.train.DataTypes.RegisterPlayerResponse;
 import Creative.train.DataTypes.Wrappers.PlayerInformation;
 import Creative.train.DataTypes.Session;
 import Creative.train.GameLogic.RoleAssigner;
+import Creative.train.GameLogic.Roles.Role;
+import com.fasterxml.jackson.databind.ObjectMapper;
+import com.fasterxml.jackson.databind.module.SimpleModule;
 import org.springframework.http.ResponseEntity;
 
+import java.io.File;
+import java.io.IOException;
 import java.util.*;
 
 public class SessionManager {
@@ -130,14 +136,27 @@ public class SessionManager {
         session.removePlayer(playerUuid);
         System.out.println("removed:"+playerUuid);
     }
-    public void startSession(UUID sessionUuid){
+    public boolean startSession(UUID sessionUuid,String json) {
         Session session = getSession(sessionUuid);
+
+        if(!roleLoader(json,sessionUuid)) return false;
 
         RoleAssigner.assignAllRoles(session);
 
         session.start();
 
         SseHandler.sendSessionStart(getAllUuidsInSession(sessionUuid));
+        return true;
+    }
+    public static boolean roleLoader(String json,UUID sessionUuid){
+        RoleLoader loader = new RoleLoader();
+        try {
+            loader.load(json, sessionUuid);
+        } catch (IOException e){
+            //failed to parse json
+            return false;
+        }
+        return true;
     }
     public boolean isSessionActive(UUID sessionUuid){
         return activeSessions.get(sessionUuid).isActive();

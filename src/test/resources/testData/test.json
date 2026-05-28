@@ -1,0 +1,36 @@
+{
+  "roleConfig": [
+    {
+      "name": "Innocent",
+      "team": "CIVILIAN",
+      "hex": "#00FF00",
+      "enableShop": false,
+      "passiveIncome": true,
+      "taskIncome": 50
+    },
+    {
+      "name": "Vigilante",
+      "team": "CIVILIAN",
+      "hex": "#FFD700",
+      "enableShop": true,
+      "passiveIncome": false,
+      "taskIncome": 75
+    },
+    {
+      "name": "Killer",
+      "team": "KILLER",
+      "hex": "#FF0000",
+      "enableShop": true,
+      "passiveIncome": true,
+      "taskIncome": 100
+    },
+    {
+      "name": "Neutral",
+      "team": "NEUTRAL",
+      "hex": "#FF0000",
+      "enableShop": true,
+      "passiveIncome": true,
+      "taskIncome": 100
+    }
+  ]
+}

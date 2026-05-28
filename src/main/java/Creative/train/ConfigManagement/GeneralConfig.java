@@ -1,4 +1,4 @@
-package Creative.train.DataTypes.Wrappers.Configs;
+package Creative.train.ConfigManagement;
 
 import java.util.concurrent.TimeUnit;
 

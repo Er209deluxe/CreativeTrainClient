@@ -29,6 +29,7 @@ public class Player {
 
     public boolean isCorrectPass(String password){
         String hashedPassword = EncryptionManager.sha256(password);
+
         return passwordHash.equals(hashedPassword);
     }
 

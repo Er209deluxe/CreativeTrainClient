@@ -2,9 +2,11 @@ package Creative.train.GameLogic.Roles;
 
 import Creative.train.DataTypes.GlobalVariableHolder;
 
+import java.util.UUID;
+
 public class Innocent extends Role{
 
-    public Innocent() {
-        super("Innocent", Team.CIVILIAN,"#02d926");
+    public Innocent(UUID sessionUuid) {
+        super(sessionUuid,"Innocent");
     }
 }

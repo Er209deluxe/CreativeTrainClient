@@ -1,4 +1,5 @@
-    async function makePostRequest(url, method, data = null) {
+async function makePostRequest(url, method, data = null) {
+
     const response = await fetch(url, {
         method,
         headers: data
@@ -19,6 +20,7 @@
 }
 
 async function makeGetRequest(url) {
+
     const response = await fetch(url);
 
     const text = await response.text();
@@ -33,6 +35,7 @@ async function makeGetRequest(url) {
 /* ---------------- QR ---------------- */
 
 async function generatePlayerQr() {
+
     document.getElementById("qrCode").src =
         "/api/newPlayerQr?ts=" + Date.now();
 }
@@ -40,32 +43,33 @@ async function generatePlayerQr() {
 /* ---------------- SESSION ---------------- */
 
 async function startSession() {
+
     const sessionId =
         sessionStorage.getItem("sessionUuid");
 
     const playerUuid =
         sessionStorage.getItem("playerUuid");
 
+    const roleConfig =
+        encodeURIComponent(uploadedRoleConfig || "");
+
     const res = await makePostRequest(
-        "/api/session/start?sessionToken=" + sessionStorage.getItem("sessionToken") + "&ts=" + Date.now(),
+        "/api/session/start" +
+        "?sessionToken=" +
+        sessionStorage.getItem("sessionToken") +
+        "&RoleConfig=" +
+        roleConfig +
+        "&ts=" +
+        Date.now(),
         "POST",
         {
             sessionId,
             playerUuid
-            //sessionToken: sessionStorage.getItem("sessionToken")
         }
     );
-/*
-    if (res.status === 404) {
-        alert("Session not found");
-        return;
-    }
 
-    if (res.status === 403) {
-        alert("Only the host can start the session");
-        return;
-    }
-*/
+    console.log(res);
+
     if (!res.ok) {
         alert("Failed to start session: " + res.body);
         return;
@@ -92,7 +96,6 @@ function startStream(playerUuid) {
     const userList =
         document.getElementById("userList");
 
-    // Player joined
     eventSource.addEventListener(
         "playerJoined",
         (event) => {
@@ -115,7 +118,6 @@ function startStream(playerUuid) {
         }
     );
 
-    // Player left
     eventSource.addEventListener(
         "playerDisconnected",
         (event) => {
@@ -133,48 +135,65 @@ function startStream(playerUuid) {
             }
         }
     );
-eventSource.addEventListener("sessionStart", (event) => {
 
-    const role = JSON.parse(event.data);
+    eventSource.addEventListener(
+        "sessionStart",
+        (event) => {
 
-    showTransition(role.name, role.hex);
+            const role = JSON.parse(event.data);
 
-    showTransition(`Session Started! Role: ${role.name}`, role.hex);
+            showTransition(
+                `Session Started! Role: ${role.name}`,
+                role.hex
+            );
 
-    setTimeout(() => {
-        let shouldLeaveSession = true;
-        shouldLeaveSession = false;
+            setTimeout(() => {
 
-        window.location.href =
-            "activeGame?sessionUuid=" +
-            sessionStorage.getItem("sessionUuid");
+                shouldLeaveSession = false;
 
-        hideTransition();
+                window.location.href =
+                    "activeGame?sessionUuid=" +
+                    sessionStorage.getItem("sessionUuid");
 
-    }, 10000);
-});
-        
-    
+                hideTransition();
+
+            }, 10000);
+        }
+    );
+
     eventSource.onerror = () => {
         console.log("Stream disconnected");
     };
 }
-function showTransition(text = "Loading...", color = "#fff") {
-    const screen = document.getElementById("transitionScreen");
-    
+
+function showTransition(
+    text = "Loading...",
+    color = "#fff"
+) {
+
+    const screen =
+        document.getElementById("transitionScreen");
+
     screen.textContent = text;
     screen.style.color = color;
+
     screen.classList.add("active");
 }
 
 function hideTransition() {
-    const screen = document.getElementById("transitionScreen");
+
+    const screen =
+        document.getElementById("transitionScreen");
 
     screen.classList.remove("active");
 }
+
 function stopStream() {
+
     if (eventSource) {
+
         eventSource.close();
+
         eventSource = null;
 
         console.log("Stream stopped");
@@ -182,40 +201,61 @@ function stopStream() {
 }
 
 /* ---------------- REGISTER ---------------- */
-
 async function registerAndConnect() {
 
     if (
         sessionStorage.getItem("playerUuid") ||
         sessionStorage.getItem("sessionUuid")
     ) {
-        alert("Already registered in a session. Please leave the current session before registering again.");
+
+        alert(
+            "Already registered in a session."
+        );
+
         return;
     }
+
+    // Save host state at registration time
+    const isHost =
+        document.getElementById("isHost").checked;
 
     const result = await registerUser();
 
     if (!result || !result.ok) {
-        alert("Registration failed: " + (result ? result.data : "Unknown error"));
+
+        alert(
+            "Registration failed: " +
+            (result ? result.data : "Unknown error")
+        );
+        
         return;
     }
 
     let data;
 
     try {
+
         data = JSON.parse(result.data);
+
     } catch (err) {
-        console.error("Invalid JSON:", result.data);
+
+        console.error(
+            "Invalid JSON:",
+            result.data
+        );
+
         return;
     }
 
-    const playerUuid = data.playerUuid;
-    const sessionUuid = data.sessionId;
-    const sessionToken = data.sessionToken;
-    cookieStore.set("sessionToken", sessionToken, {
-        sameSite: "lax",
-        httpOnly: true
-    });
+    const playerUuid =
+        data.playerUuid;
+
+    const sessionUuid =
+        data.sessionId;
+
+    const sessionToken =
+        data.sessionToken;
+
     sessionStorage.setItem(
         "playerUuid",
         playerUuid
@@ -225,15 +265,33 @@ async function registerAndConnect() {
         "sessionUuid",
         sessionUuid
     );
-       sessionStorage.setItem(
+
+    sessionStorage.setItem(
         "sessionToken",
         sessionToken
     );
 
     document.getElementById(
         "sessionUuidDisplay"
-    ).innerText =
-        sessionUuid;
+    ).innerText = sessionUuid;
+
+    // Hide registration UI after successful register
+    document.getElementById(
+        "registrationSection"
+    ).style.display = "none";
+
+    // If user registered as host,
+    // show host controls permanently
+    if (isHost) {
+
+        document.getElementById(
+            "hostConfigSection"
+        ).style.display = "block";
+
+        document.getElementById(
+            "startSessionButton"
+        ).style.display = "block";
+    }
 
     console.log("Connected:", playerUuid);
 
@@ -286,6 +344,7 @@ async function registerUser() {
     formData.append("playerName", playerName);
 
     if (!isHost) {
+
         formData.append(
             "joinedSession",
             joinedSession
@@ -350,18 +409,16 @@ async function getCurrentUsers(params) {
     let users = [];
 
     try {
+
         users = JSON.parse(response.body);
+
     } catch (err) {
+
         console.error(
             "Failed to parse users:",
             response.body
         );
 
-        return;
-    }
-
-    if (!Array.isArray(users)) {
-        console.warn("Invalid user format");
         return;
     }
 
@@ -372,24 +429,25 @@ async function getCurrentUsers(params) {
 
         li.textContent = name;
 
-if (name === hostResponse.body) {
+        if (name === hostResponse.body) {
 
-    const crownImg = document.createElement("img");
+            const crownImg =
+                document.createElement("img");
 
-    crownImg.src = "crown.png";
+            crownImg.src = "/Web/crown.png";
 
-    crownImg.style.width = "18px";
-    crownImg.style.height = "18px";
-    crownImg.style.marginLeft = "8px";
+            crownImg.style.width = "18px";
+            crownImg.style.height = "18px";
+            crownImg.style.marginLeft = "8px";
 
-    li.style.color = "#6dff8b";
-    li.style.fontWeight = "bold";
+            li.style.color = "#6dff8b";
+            li.style.fontWeight = "bold";
 
-    li.style.display = "flex";
-    li.style.alignItems = "center";
+            li.style.display = "flex";
+            li.style.alignItems = "center";
 
-    li.appendChild(crownImg);
-}
+            li.appendChild(crownImg);
+        }
 
         userList.appendChild(li);
 
@@ -400,7 +458,7 @@ if (name === hostResponse.body) {
 /* ---------------- LEAVE ---------------- */
 
 async function leaveSession() {
-
+    confirm("You are about to leave the session"); 
     const playerUuid =
         sessionStorage.getItem("playerUuid");
 
@@ -416,13 +474,18 @@ async function leaveSession() {
     stopStream();
 
     sessionStorage.clear();
-
+    location.reload();
     console.log("Left session");
 }
 
 let shouldLeaveSession = true;
-window.addEventListener("beforeunload", () => {
-    if (shouldLeaveSession) {
-        leaveSession();
+
+window.addEventListener(
+    "beforeunload",
+    () => {
+
+        if (shouldLeaveSession) {
+            leaveSession();
+        }
     }
-});
+);
