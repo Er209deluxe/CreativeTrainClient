@@ -24,7 +24,8 @@ public class ApiHandler {
     @GetMapping("/stream")
     public SseEmitter stream(@RequestParam("playerUuid") UUID playerUuid,@RequestParam("sessionToken") String sessionToken) {
         Player player = SessionManager.getInstance().getPlayer(playerUuid);
-        if(!player.isCorrectPass(sessionToken)) throw new ResponseStatusException(HttpStatus.FORBIDDEN);;
+        if(player==null) throw new ResponseStatusException(HttpStatus.NOT_FOUND);
+        if(!player.isCorrectPass(sessionToken)) throw new ResponseStatusException(HttpStatus.FORBIDDEN);
         return SseHandler.getInstance().stream(playerUuid,sessionToken);
     }
     @GetMapping(path="/newPlayerQr",produces = MediaType.IMAGE_JPEG_VALUE)

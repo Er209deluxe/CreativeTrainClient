@@ -6,10 +6,11 @@ import java.util.*;
 import java.util.stream.Collectors;
 
 public class Session {
-    private boolean active=false;
+    private boolean active = false;
     private final UUID sessionId;
     private final Map<UUID,Player> playerMap = new HashMap<>();
     private final UUID hostUuid;
+
     public Session(UUID hostUuid){
         sessionId = UUID.randomUUID();
         this.hostUuid = hostUuid;
@@ -51,7 +52,6 @@ public class Session {
     }
     public void start(){
         setActive();
-
     }
 
     public boolean isActive() {

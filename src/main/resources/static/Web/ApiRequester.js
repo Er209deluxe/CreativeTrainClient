@@ -93,6 +93,36 @@ function startStream(playerUuid) {
 
     eventSource = new EventSource(url);
 
+    
+    eventSource.onerror = async (err) => {
+
+        console.log("SSE error", err);
+
+        try {
+
+            const response = await fetch(url, {
+                method: "GET"
+            });
+
+            if (response.status === 404) {
+                console.log("Player not found");
+            }
+            else if (response.status === 403) {
+                console.log("Forbidden");
+            }
+            else {
+                console.log("Unknown SSE error");
+            }
+
+        } catch (e) {
+            console.error("Network error", e);
+        }
+
+        window.location.href="/";
+
+        eventSource.close();
+    };
+
     const userList =
         document.getElementById("userList");
 
@@ -461,16 +491,24 @@ async function leaveSession() {
     confirm("You are about to leave the session"); 
     const playerUuid =
         sessionStorage.getItem("playerUuid");
-
+    const sessionToken = sessionStorage.getItem("sessionToken");
     if (!playerUuid) {
         return;
     }
 
-    const url =
-        `/api/session/leaveGame?playerUuid=${playerUuid}&sessionToken=${sessionStorage.getItem("sessionToken")}&ts=${Date.now()}`;
+    const url = `/api/session/leaveGame?playerUuid=${playerUuid}&sessionToken=${sessionToken}&ts=${Date.now()}`;
 
-    navigator.sendBeacon(url);
+      const response = await fetch(url, {
+            method: "POST", 
+            keepalive: true
+        });
 
+        if (response.status === 404) {
+            alert("You are not in a session")
+
+        } else if (response.status === 403) {
+            alert("Incorrect session token");
+        } 
     stopStream();
 
     sessionStorage.clear();
