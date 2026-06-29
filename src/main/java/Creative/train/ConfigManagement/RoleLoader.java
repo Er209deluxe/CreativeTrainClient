@@ -26,7 +26,7 @@ public class RoleLoader {
 
             RoleData roleData = mapper.treeToValue(role, RoleData.class);
 
-            RoleDataManager.getInstance().addRoleData(sessionUuid, roleData.name, roleData);
+            RoleDataManager.addRoleData(sessionUuid, roleData.name, roleData);
         }
     }
 }

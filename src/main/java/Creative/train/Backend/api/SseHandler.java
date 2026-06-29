@@ -26,15 +26,9 @@ public class SseHandler {
         System.out.println("Player UUID: " + playerUUID + " connected.");
         handleNewConnection(playerUUID, emitter);
 
-        emitter.onCompletion(() -> {
-            System.out.println("Connection closed for player UUID: " + playerUUID);
-        });
-        emitter.onTimeout(() -> {
-            System.out.println("Connection timed out for player UUID: " + playerUUID);
-        });
-        emitter.onError((e) -> {
-            System.out.println("Error occurred for player UUID: " + playerUUID);
-        });
+        emitter.onCompletion(() -> System.out.println("Connection closed for player UUID: " + playerUUID));
+        emitter.onTimeout(() -> System.out.println("Connection timed out for player UUID: " + playerUUID));
+        emitter.onError((e) -> System.out.println("Error occurred for player UUID: " + playerUUID));
 
         return emitter;
     }
@@ -61,6 +55,9 @@ public class SseHandler {
 
     public static void sendPlayerDisconnectInfo(List<UUID> playerUuids,String player){
         sendPlayer(playerUuids,"playerDisconnected",player);
+    }
+    public static void sendCoinUpdate(UUID playerUuid,int coinCount){
+        sendPlayer(new ArrayList<>(List.of(playerUuid)),"coinUpdate",coinCount);
     }
     private static void sendPlayer(List<UUID> playerUuids,String event,Object data){
         Iterator<UUID> iterator = playerUuids.iterator();

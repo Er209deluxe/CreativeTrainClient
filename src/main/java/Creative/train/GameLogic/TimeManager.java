@@ -13,15 +13,16 @@ public class TimeManager {
     private ScheduledFuture<?> timerTask;
     private final Session session;
     private int remainingSeconds;
+
+
     public TimeManager(Session session) {
         this.session = session;
-        remainingSeconds = session.getBaseTimer();
+        remainingSeconds = session.getGeneralConfig().getBaseTimer();
         System.out.println("remainingsecs: "+remainingSeconds);
     }
     public void startCountdown(){
         timerTask = ThreadManager.getScheduler().scheduleAtFixedRate(() -> {
             try {
-                System.out.println("tick " + remainingSeconds);
 
                 if (remainingSeconds <= 0) {
                     SessionManager.getInstance().endSession(
@@ -37,22 +38,38 @@ public class TimeManager {
 
                 String display = String.format("%02d:%02d", minutes, seconds);
 
-                remainingSeconds--;
-
                 System.out.println(display);
 
                 SseHandler.sendTimerUpdates(
                         session.getAllPlayerUuids(),
                         display
                 );
+                handlePassiveIncome(remainingSeconds);
 
-                System.out.println("t2");
+                remainingSeconds--;
+
             } catch (Throwable t) {
                 System.err.println("TIMER FAILED");
                 t.printStackTrace();
             }
         }, 0, 1, TimeUnit.SECONDS);
     }
+
+    private void handlePassiveIncome(int remainingSeconds){
+
+        if(remainingSeconds==0){
+            return;
+        }
+
+        session.getAllPlayers().forEach(player -> {
+            if (player.getRole().isPassiveIncomeEnabled()) {
+                player.earnPassiveIncome();
+            }
+        });
+
+
+    }
+
     public void stopCountdown() {
         if (timerTask != null && !timerTask.isCancelled()) {
             timerTask.cancel(false);

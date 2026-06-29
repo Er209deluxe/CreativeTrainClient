@@ -1,20 +1,22 @@
 package Creative.train.DataTypes;
 
+import Creative.train.Backend.api.SseHandler;
 import Creative.train.DataTypes.Wrappers.BasePlayerData;
 import Creative.train.DataTypes.Wrappers.PlayerData;
 import Creative.train.GameLogic.Items.Item;
-import Creative.train.GameLogic.Roles.Innocent;
-import Creative.train.GameLogic.Roles.Killer;
 import Creative.train.GameLogic.Roles.Role;
 import Creative.train.Managers.EncryptionManager;
+import Creative.train.Managers.SessionManager;
 import org.springframework.web.servlet.mvc.method.annotation.SseEmitter;
 
 import java.util.UUID;
 
 public class Player {
+
     private final BasePlayerData baseData = new BasePlayerData();
     private final PlayerData data = new PlayerData();
     private final Item[] inventory = new Item[9];
+    private int coins=0;
 
     public Player(String name, UUID playerId,String passwordHash,boolean isHost){
         baseData.name = name;
@@ -59,10 +61,26 @@ public class Player {
     public Item getItemFromSlot(int slot){
         return inventory[slot];
     }
-    public void setRole(Role role){
-        baseData.role = role;
+
+    /**
+     * Assigns a role if role has already been assigned do nothing
+     */
+    public void assignRole(Role role){
+        if(baseData.role==null) {
+            baseData.role = role;
+        }
     }
 
+    private void changeCoins(int amount){
+        coins+=amount;
+        SseHandler.sendCoinUpdate(data.playerId,coins);
+    }
+
+    public void earnPassiveIncome(){
+            int passiveIncome = SessionManager.getInstance().getSession(getSessionUUID()).getGeneralConfig().getPassiveIncome();
+            changeCoins(passiveIncome);
+            System.out.println(getName()+"_coins: "+coins);
+    }
     public Role getRole() {
         return baseData.role;
     }

@@ -31,6 +31,17 @@ public abstract class Role {
 
     }
 
+    public boolean isShopEnabled() {
+        return enableShop;
+    }
+
+    public int getTaskIncome() {
+        return taskIncome;
+    }
+
+    public boolean isPassiveIncomeEnabled() {
+        return passiveIncome;
+    }
 
     public List<Item> getItemShop() {
         return itemShop;

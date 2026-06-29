@@ -1,37 +1,41 @@
-package Creative.train.ConfigManagement;
+package Creative.train.GameLogic;
+
+import Creative.train.ConfigManagement.Wrappers.DepressionData;
 
 import java.util.concurrent.TimeUnit;
 
 public class GeneralConfig {
 
-    private final boolean depressionKilling;
+    private final int baseTimerMins;
+    private final int baseTimerSecs;
 
-    // Time it takes for depression to kill you
-    private final int depressedKillingTimerInSeconds;
-
-    // Time before depression activates
-    private final int depressionActivationInSeconds;
-
+    private final DepressionData depressionData;
+    private final int passiveIncome;
     public GeneralConfig(
-            boolean depressionKilling,
-            int depressedKillingTimerInSeconds,
-            int depressionActivationInSeconds
+            DepressionData depressionData,
+            int passiveIncome,
+            int baseTimerMins,
+            int baseTimerSecs
     ) {
-        this.depressionKilling = depressionKilling;
-        this.depressedKillingTimerInSeconds =
-                depressedKillingTimerInSeconds;
+        this.depressionData = depressionData;
+        this.passiveIncome = passiveIncome;
 
-        this.depressionActivationInSeconds =
-                depressionActivationInSeconds;
+        this.baseTimerMins = baseTimerMins;
+        this.baseTimerSecs = baseTimerSecs;
+    }
+    public int getBaseTimer() {
+        return baseTimerMins * 60 + baseTimerSecs;
+    }
+    public int getPassiveIncome() {
+        return passiveIncome;
     }
 
     public boolean isDepressionKillingEnabled() {
-        return depressionKilling;
+        return depressionData!=null;
     }
 
     /**
      * Returns the depression kill timer in the requested unit.
-     *
      * Supported:
      * - "s"  = seconds
      * - "ms" = milliseconds
@@ -45,16 +49,16 @@ public class GeneralConfig {
         return switch (unit.toLowerCase()) {
 
             case "s" ->
-                    depressedKillingTimerInSeconds;
+                    depressionData.depressedKillingTimerInSeconds;
 
             case "ms" ->
                     TimeUnit.SECONDS.toMillis(
-                            depressedKillingTimerInSeconds
+                            depressionData.depressedKillingTimerInSeconds
                     );
 
             case "m" ->
                     TimeUnit.SECONDS.toMinutes(
-                            depressedKillingTimerInSeconds
+                            depressionData.depressedKillingTimerInSeconds
                     );
 
             default ->
@@ -67,7 +71,6 @@ public class GeneralConfig {
     /**
      * Returns the depression activation timer
      * in the requested unit.
-     *
      * Supported:
      * - "s"  = seconds
      * - "ms" = milliseconds
@@ -81,16 +84,16 @@ public class GeneralConfig {
         return switch (unit.toLowerCase()) {
 
             case "s" ->
-                    depressionActivationInSeconds;
+                    depressionData.depressionActivationInSeconds;
 
             case "ms" ->
                     TimeUnit.SECONDS.toMillis(
-                            depressionActivationInSeconds
+                            depressionData.depressionActivationInSeconds
                     );
 
             case "m" ->
                     TimeUnit.SECONDS.toMinutes(
-                            depressionActivationInSeconds
+                            depressionData.depressionActivationInSeconds
                     );
 
             default ->

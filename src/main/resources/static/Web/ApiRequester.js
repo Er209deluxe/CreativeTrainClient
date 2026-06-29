@@ -109,7 +109,6 @@ async function startSession() {
         return;
     }
 
-    console.log("Session started");
 }
 
 /* ---------------- STREAM ---------------- */
@@ -227,6 +226,18 @@ function startStream() {
                     name
                 );
             }
+        }
+    );
+      eventSource.addEventListener(
+        "coinUpdate",
+        (event) => {
+            document.getElementById("coinCount").textContent = event.data;
+        }
+    );
+          eventSource.addEventListener(
+        "timerUpdate",
+        (event) => {
+            document.getElementById("timer").textContent = event.data;
         }
     );
 

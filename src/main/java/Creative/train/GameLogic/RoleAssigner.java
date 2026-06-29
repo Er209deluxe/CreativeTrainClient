@@ -3,12 +3,10 @@ package Creative.train.GameLogic;
 import Creative.train.DataTypes.GlobalVariableHolder;
 import Creative.train.DataTypes.Player;
 import Creative.train.DataTypes.Session;
-import Creative.train.GameLogic.Roles.Innocent;
 import Creative.train.GameLogic.Roles.Role;
 import Creative.train.GameLogic.Roles.Vigilante;
 import Creative.train.Managers.SessionManager;
 
-import java.lang.reflect.InvocationTargetException;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.UUID;
@@ -25,7 +23,7 @@ public class RoleAssigner {
             Player player = sessionManager.getPlayer(uuid);
             int max = roles.size();
             int index = (int) Math.floor((Math.random() * max));
-            player.setRole(roles.get(index));
+            player.assignRole(roles.get(index));
             roles.remove(index);
         }
     }
