@@ -14,7 +14,7 @@ import java.util.List;
 import java.util.UUID;
 
 public class RoleAssigner {
-    static SessionManager sessionManager = SessionManager.getInstance();
+    private final static SessionManager sessionManager = SessionManager.getInstance();
     public static int playersNeededForNewSpecialRole=3; //for testing, real value should be 6
 
     public static void assignAllRoles(Session session){

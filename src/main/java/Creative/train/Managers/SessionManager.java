@@ -4,24 +4,23 @@ import Creative.train.Backend.api.SseHandler;
 import Creative.train.ConfigManagement.RoleLoader;
 import Creative.train.DataTypes.Player;
 import Creative.train.DataTypes.RegisterPlayerResponse;
+import Creative.train.DataTypes.Wrappers.BasePlayerData;
 import Creative.train.DataTypes.Wrappers.PlayerInformation;
 import Creative.train.DataTypes.Session;
+import Creative.train.DataTypes.Wrappers.SessionEndData;
 import Creative.train.GameLogic.RoleAssigner;
 import Creative.train.GameLogic.Roles.Role;
-import com.fasterxml.jackson.databind.ObjectMapper;
-import com.fasterxml.jackson.databind.module.SimpleModule;
 import org.springframework.http.ResponseEntity;
 
-import java.io.File;
 import java.io.IOException;
 import java.util.*;
 
 public class SessionManager {
-    Map<UUID,Player> playerMap;
-    private final Map<UUID, Session> activeSessions;
+    private final Map<UUID,Player> playerMap;
+    private final Map<UUID, Session> sessions;
     private static final SessionManager sessionManager = new SessionManager();
     private SessionManager(){
-        activeSessions = new HashMap<>();
+        sessions = new HashMap<>();
         playerMap = new HashMap<>();
     }
     public Player getPlayer(UUID playerUuid){
@@ -36,12 +35,12 @@ public class SessionManager {
     }
 
     public Session getSession(UUID uuid){
-        return activeSessions.get(uuid);
+        return sessions.get(uuid);
     }
     public Session registerSession(UUID playerUuid){
         Session newSession = new Session(playerUuid);
 
-        activeSessions.put(newSession.getSessionId(),newSession);
+        sessions.put(newSession.getSessionId(),newSession);
         return newSession;
     }
     public RegisterPlayerResponse registerPlayerToSession(UUID sessionUuid, Player player,String token) {
@@ -53,7 +52,7 @@ public class SessionManager {
             return error(response, 409, "User already in a session");
         }
 
-        if (!player.isHost() && !activeSessions.containsKey(sessionUuid)) {
+        if (!player.isHost() && !sessions.containsKey(sessionUuid)) {
             return error(response, 404, "Session not found");
         }
 
@@ -73,7 +72,7 @@ public class SessionManager {
 
         Session newSession = registerSession(player.getPlayerId());
 
-        if(!activeSessions.get(newSession.getSessionId()).addPlayer(player)){
+        if(!sessions.get(newSession.getSessionId()).addPlayer(player)){
             return error(response,409,"Username already joined");
         }
 
@@ -88,7 +87,7 @@ public class SessionManager {
 
     private RegisterPlayerResponse handleJoin(UUID sessionUuid, Player player, RegisterPlayerResponse response,String token) {
 
-        Session session = activeSessions.get(sessionUuid);
+        Session session = sessions.get(sessionUuid);
 
         if(!session.addPlayer(player)){
             return error(response,409,"Username already joined");
@@ -101,7 +100,7 @@ public class SessionManager {
         return response;
     }
     public Player getHostUuid(UUID sessionUuid){
-        Session session = activeSessions.get(sessionUuid);
+        Session session = sessions.get(sessionUuid);
         if (session == null) return null;
 
         UUID hostUuid = session.getHostUuid();
@@ -116,12 +115,12 @@ public class SessionManager {
      * @throws NullPointerException when no session is found
      */
     public Set<String> getAllNamesInSession(UUID sessionUuid){
-        Session session = activeSessions.get(sessionUuid);
+        Session session = sessions.get(sessionUuid);
         if(session == null) return null;
         return session.getAllNames();
     }
     public List<UUID> getAllUuidsInSession(UUID sessionUuid){
-        Session session = activeSessions.get(sessionUuid);
+        Session session = sessions.get(sessionUuid);
         if(session == null) return null;
         return session.getAllPlayerUuids();
     }
@@ -131,7 +130,7 @@ public class SessionManager {
         UUID sessionUuid=player.getSessionUUID();
 
         playerMap.remove(playerUuid);
-        Session session = activeSessions.get(sessionUuid);
+        Session session = sessions.get(sessionUuid);
         if(session==null) return;
         session.removePlayer(playerUuid);
         System.out.println("removed:"+playerUuid);
@@ -148,6 +147,24 @@ public class SessionManager {
         SseHandler.sendSessionStart(getAllUuidsInSession(sessionUuid));
         return true;
     }
+    public void endSession(UUID sessionUuid, Role.Team winners,String reason){
+        SessionEndData sessionEndData = new SessionEndData();
+        Session session = getSession(sessionUuid);
+        session.stop();
+        sessionEndData.winnerTeam = winners;
+        sessionEndData.reason = reason;
+
+
+        List<BasePlayerData> basePlayerDataList = new ArrayList<>();
+        List<UUID> playerUuids=session.getAllPlayerUuids();
+        for(UUID playerUuid : playerUuids){
+            Player player = SessionManager.getInstance().getPlayer(playerUuid);
+            basePlayerDataList.add(player.getBaseData());
+        }
+        sessionEndData.playerDataList = basePlayerDataList;
+        sessions.remove(sessionUuid);
+        SseHandler.sendSessionEnd(playerUuids,sessionEndData);
+    }
     public static boolean roleLoader(String json,UUID sessionUuid){
         RoleLoader loader = new RoleLoader();
         try {
@@ -159,7 +176,7 @@ public class SessionManager {
         return true;
     }
     public boolean isSessionActive(UUID sessionUuid){
-        return activeSessions.get(sessionUuid).isActive();
+        return sessions.get(sessionUuid).isActive();
     }
     public void killPlayer(Player player){
         player.setAlive(false);

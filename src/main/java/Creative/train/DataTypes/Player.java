@@ -1,5 +1,7 @@
 package Creative.train.DataTypes;
 
+import Creative.train.DataTypes.Wrappers.BasePlayerData;
+import Creative.train.DataTypes.Wrappers.PlayerData;
 import Creative.train.GameLogic.Items.Item;
 import Creative.train.GameLogic.Roles.Innocent;
 import Creative.train.GameLogic.Roles.Killer;
@@ -10,27 +12,27 @@ import org.springframework.web.servlet.mvc.method.annotation.SseEmitter;
 import java.util.UUID;
 
 public class Player {
-    private boolean isAlive=true;
-    private final String name;
-    private final UUID playerId;
-    private final boolean isHost;
-    private SseEmitter connection;
-    private UUID sessionUUID;
-    private Role role;
-    private String passwordHash;
-    Item[] inventory = new Item[9];
-    public Player(String name, UUID playerId,String passwordHash,boolean isHost){
-        this.name = name;
-        this.playerId = playerId;
-        this.isHost = isHost;
-        this.passwordHash = passwordHash;
+    private final BasePlayerData baseData = new BasePlayerData();
+    private final PlayerData data = new PlayerData();
+    private final Item[] inventory = new Item[9];
 
+    public Player(String name, UUID playerId,String passwordHash,boolean isHost){
+        baseData.name = name;
+        baseData.isAlive = true;
+        data.playerId = playerId;
+        data.isHost = isHost;
+        data.passwordHash = passwordHash;
+
+    }
+
+    public BasePlayerData getBaseData() {
+        return baseData;
     }
 
     public boolean isCorrectPass(String password){
         String hashedPassword = EncryptionManager.sha256(password);
 
-        return passwordHash.equals(hashedPassword);
+        return data.passwordHash.equals(hashedPassword);
     }
 
     public Item[] getInventory() {
@@ -58,45 +60,45 @@ public class Player {
         return inventory[slot];
     }
     public void setRole(Role role){
-        this.role = role;
+        baseData.role = role;
     }
 
     public Role getRole() {
-        return role;
+        return baseData.role;
     }
 
     public void setSessionUUID(UUID sessionUUID) {
-        this.sessionUUID = sessionUUID;
+        data.sessionUUID = sessionUUID;
     }
 
     public UUID getSessionUUID() {
-        return sessionUUID;
+        return data.sessionUUID;
     }
 
     public void setConnection(SseEmitter connection) {
-        this.connection = connection;
+        data.connection = connection;
     }
 
     public SseEmitter getConnection() {
-        return connection;
+        return data.connection;
     }
 
     public boolean isHost() {
-        return isHost;
+        return data.isHost;
     }
 
     public String getName() {
-        return name;
+        return baseData.name;
     }
 
     public UUID getPlayerId() {
-        return playerId;
+        return data.playerId;
     }
     public void setAlive(boolean alive){
-        isAlive=alive;
+        baseData.isAlive=alive;
     }
 
     public boolean isAlive() {
-        return isAlive;
+        return baseData.isAlive;
     }
 }

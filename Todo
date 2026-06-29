@@ -1,0 +1,17 @@
+- Optimise sending SSEs
+    - multithreaded
+    - start timestamp (startGame)
+
+- Items
+    -
+
+- Roles
+    -
+
+
+- use rfid (Radio Frequency id) and or nfc
+    - for player tracking instead of QR codes
+        -
+
+    - techtarget.com/iotagenda/definition/RFID-radio-frequency-identification
+    - www.quora.com/How-can-I-receive-transmit-RFID-signals-from-my-Android-phone

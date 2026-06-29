@@ -1,6 +1,7 @@
 package Creative.train.DataTypes;
 
 import Creative.train.GameLogic.RoleAssigner;
+import Creative.train.GameLogic.TimeManager;
 
 import java.util.*;
 import java.util.stream.Collectors;
@@ -10,15 +11,19 @@ public class Session {
     private final UUID sessionId;
     private final Map<UUID,Player> playerMap = new HashMap<>();
     private final UUID hostUuid;
-
+    private final int baseTimerMins=0;
+    private final int baseTimerSecs=10;
+    private final TimeManager timeManager = new TimeManager(this);
     public Session(UUID hostUuid){
         sessionId = UUID.randomUUID();
         this.hostUuid = hostUuid;
     }
 
-    public void setActive() {
-        this.active = true;
+    public int getBaseTimer() {
+        return baseTimerMins * 60 + baseTimerSecs;
     }
+
+
     public boolean addPlayer(Player player){
         if(playerMap.containsKey(player.getPlayerId())) return false;
 
@@ -51,9 +56,13 @@ public class Session {
                 .collect(Collectors.toSet());
     }
     public void start(){
-        setActive();
+        active=true;
+        timeManager.startCountdown();
     }
-
+    public void stop(){
+        active=false;
+        timeManager.stopCountdown();
+    }
     public boolean isActive() {
         return active;
     }

@@ -24,8 +24,7 @@ class SessionManagerTest {
         // use the same instance each test
         sessionManager = SessionManager.getInstance();
 
-        // cleanup previous test state
-        sessionManager.getPlayerMap().clear();
+
     }
 
     @Test
