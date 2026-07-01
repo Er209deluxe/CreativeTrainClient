@@ -1,5 +1,7 @@
 package Creative.train.DataTypes;
 
+import Creative.train.Backend.ExceptionTypes.UserAlreadyInSessionExcepion;
+import Creative.train.Backend.ExceptionTypes.UsernameAlreadyExistsException;
 import Creative.train.GameLogic.GeneralConfig;
 import Creative.train.GameLogic.RoleAssigner;
 import Creative.train.GameLogic.TimeManager;
@@ -8,7 +10,7 @@ import java.util.*;
 import java.util.stream.Collectors;
 
 public class Session {
-    private GeneralConfig generalConfig=new GeneralConfig(null,50,3,30);
+    private GeneralConfig generalConfig=new GeneralConfig(null,50,1,15);
 
     private boolean active = false;
     private final UUID sessionId;
@@ -28,16 +30,15 @@ public class Session {
         return generalConfig;
     }
 
-    public boolean addPlayer(Player player){
-        if(playerMap.containsKey(player.getPlayerId())) return false;
+    public void addPlayer(Player player){
+        if(playerMap.containsKey(player.getPlayerId())) throw new UserAlreadyInSessionExcepion(player.getPlayerId()); // User already joined
 
         boolean nameExists = playerMap.values().stream()
                 .anyMatch(p -> p.getName().equals(player.getName()));
 
-        if(nameExists) return false;
+        if(nameExists) throw new UsernameAlreadyExistsException(player.getName());
 
         playerMap.put(player.getPlayerId(), player);
-        return true;
     }
 
     public UUID getSessionId() {

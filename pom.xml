@@ -27,13 +27,13 @@
             <artifactId>spring-boot-starter-web</artifactId>
         </dependency>
 
-        <!-- 🔄 DevTools -->
+        <!-- 🔄 DevTools
         <dependency>
             <groupId>org.springframework.boot</groupId>
             <artifactId>spring-boot-devtools</artifactId>
             <scope>runtime</scope>
         </dependency>
-
+        -->
         <!-- 🔥 Firebase -->
        <!-- <dependency>
             <groupId>com.google.firebase</groupId>

@@ -433,10 +433,10 @@ async function registerAndConnect() {
         data.playerUuid;
 
     const sessionUuid =
-        data.sessionId;
+        data.sessionUuid;
 
     const sessionToken =
-        data.sessionToken;
+        data.token;
 
     sessionStorage.setItem(
         "playerUuid",

@@ -2,7 +2,7 @@ package Creative.train.Backend.api;
 
 import Creative.train.DataTypes.GlobalVariableHolder;
 import Creative.train.DataTypes.Player;
-import Creative.train.DataTypes.RegisterPlayerResponse;
+import Creative.train.DataTypes.Wrappers.PlayerData;
 import Creative.train.DataTypes.Wrappers.PlayerInformation;
 import Creative.train.DataTypes.Session;
 import Creative.train.Managers.EncryptionManager;
@@ -47,21 +47,20 @@ public class SessionApi {
 
         Player player = new Player(playerName, playerUuid,hashedToken, isHost);
 
-        RegisterPlayerResponse result = sessionManager.registerPlayerToSession(joinedSession, player,sessionToken);
+        PlayerData result = sessionManager.registerPlayerToSession(joinedSession, player,sessionToken);
 
-        if (result.isHost()) {
-            player.setSessionUUID(result.getHostInformation().getSessionId());
-            return ResponseEntity.ok(result.getHostInformation());
-        }
-        if(result.getHostInformation()!=null) {
-            player.setSessionUUID(result.getHostInformation().getSessionId());
-            List<UUID> playersInSession = sessionManager.getAllUuidsInSession(joinedSession);
-            SseHandler.sendNewPlayerInfo(playersInSession, playerName);
-            return ResponseEntity.ok(result.getHostInformation());
+        if (result.isHost) {
+            player.setSessionUUID(result.sessionUuid);
+            return ResponseEntity.ok(result);
         }
 
-        return result.getResponse();
+        player.setSessionUUID(result.sessionUuid);
+        List<UUID> playersInSession = sessionManager.getAllUuidsInSession(joinedSession);
+        SseHandler.sendNewPlayerInfo(playersInSession, playerName);
+        return ResponseEntity.ok(result);
     }
+
+
     private static ResponseEntity<String> validate(String playerName, MultipartFile playerQr) {
         if (playerQr.isEmpty()) {
             return ResponseEntity.status(HttpStatus.BAD_REQUEST).body("QrCode missing");
@@ -147,5 +146,21 @@ public class SessionApi {
         Player victim = sessionManager.getPlayer(playerUuid);
 
         return ResponseEntity.status(HttpStatus.OK).build();
+    }
+    @PostMapping("/testusers")
+    public ResponseEntity<?> testUsers(@RequestParam int amount){
+
+        SessionManager sm = SessionManager.getInstance();
+
+        Player host = new Player("Host", UUID.randomUUID(),"",true);
+        PlayerData data = sm.registerPlayerToSession(null, host, "token");
+
+        UUID sessionId = data.sessionUuid;
+
+        for (int i = 0; i < amount; i++) {
+            Player p = new Player("Player" + i, UUID.randomUUID(),"",false);
+            sm.registerPlayerToSession(sessionId, p, "");
+        }
+        return ResponseEntity.status(200).build();
     }
 }

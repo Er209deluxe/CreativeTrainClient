@@ -21,9 +21,9 @@ public class Player {
     public Player(String name, UUID playerId,String passwordHash,boolean isHost){
         baseData.name = name;
         baseData.isAlive = true;
-        data.playerId = playerId;
+        data.playerUuid = playerId;
         data.isHost = isHost;
-        data.passwordHash = passwordHash;
+        data.token = passwordHash;
 
     }
 
@@ -34,7 +34,7 @@ public class Player {
     public boolean isCorrectPass(String password){
         String hashedPassword = EncryptionManager.sha256(password);
 
-        return data.passwordHash.equals(hashedPassword);
+        return data.token.equals(hashedPassword);
     }
 
     public Item[] getInventory() {
@@ -73,24 +73,23 @@ public class Player {
 
     private void changeCoins(int amount){
         coins+=amount;
-        SseHandler.sendCoinUpdate(data.playerId,coins);
+        SseHandler.sendCoinUpdate(data.playerUuid,coins);
     }
 
     public void earnPassiveIncome(){
             int passiveIncome = SessionManager.getInstance().getSession(getSessionUUID()).getGeneralConfig().getPassiveIncome();
             changeCoins(passiveIncome);
-            System.out.println(getName()+"_coins: "+coins);
     }
     public Role getRole() {
         return baseData.role;
     }
 
     public void setSessionUUID(UUID sessionUUID) {
-        data.sessionUUID = sessionUUID;
+        data.sessionUuid = sessionUUID;
     }
 
     public UUID getSessionUUID() {
-        return data.sessionUUID;
+        return data.sessionUuid;
     }
 
     public void setConnection(SseEmitter connection) {
@@ -110,7 +109,7 @@ public class Player {
     }
 
     public UUID getPlayerId() {
-        return data.playerId;
+        return data.playerUuid;
     }
     public void setAlive(boolean alive){
         baseData.isAlive=alive;
