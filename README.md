@@ -1,3 +1,5 @@
+This is an Client for the game 🚆 CreativeTrain.
+
 # 🚆 CreativeTrain
 
 CreativeTrain is a real-life social deduction game where players interact in person while a backend system tracks the game in real time. It uses QR codes and a Spring Boot backend to handle player actions, eliminations, and game state.
