@@ -10,7 +10,7 @@ class MyApp extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return MaterialApp(
-      title: 'Simple Material App',
+      title: 'Creative Train',
       theme: ThemeData(primarySwatch: Colors.blue),
       home: const Scaffold(body: Center(child: Text('Welcome to Flutter'))),
     );
