@@ -3,14 +3,13 @@ package Creative.train.DataTypes;
 import Creative.train.Backend.ExceptionTypes.UserAlreadyInSessionExcepion;
 import Creative.train.Backend.ExceptionTypes.UsernameAlreadyExistsException;
 import Creative.train.GameLogic.GeneralConfig;
-import Creative.train.GameLogic.RoleAssigner;
 import Creative.train.GameLogic.TimeManager;
 
 import java.util.*;
 import java.util.stream.Collectors;
 
 public class Session {
-    private GeneralConfig generalConfig=new GeneralConfig(null,50,1,15);
+    private GeneralConfig generalConfig=new GeneralConfig(null,50,7,1);
 
     private boolean active = false;
     private final UUID sessionId;

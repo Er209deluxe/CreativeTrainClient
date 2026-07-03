@@ -1,21 +1,45 @@
 package Creative.train.GameLogic.Items;
 
-import Creative.train.DataTypes.Player;
+import com.fasterxml.jackson.annotation.JsonSubTypes;
+import com.fasterxml.jackson.annotation.JsonTypeInfo;
 
+import java.util.UUID;
+
+@JsonTypeInfo(
+        use = JsonTypeInfo.Id.NAME,
+        include = JsonTypeInfo.As.PROPERTY,
+        property = "type"
+)
+@JsonSubTypes({
+        @JsonSubTypes.Type(value = Knife.class, name = "Knife"),
+        @JsonSubTypes.Type(value = Gun.class, name = "Gun"),
+        @JsonSubTypes.Type(value = Food.class, name = "Food")
+})
 public abstract class Item {
+    protected UUID itemUuid;
     protected int price;
-    protected final String name;
-    public Item(String name){
+    protected String name;
+    protected Item(String name){
         this.name=name;
+        itemUuid = UUID.randomUUID();
     }
     public void setPrice(int price) {
         this.price = price;
     }
 
+    public UUID getItemUuid() {
+        return itemUuid;
+    }
+
+    public void setItemUuid(UUID itemUuid) {
+        this.itemUuid = itemUuid;
+    }
+
     public int getPrice() {
         return price;
     }
-    public void buyItem(Player player){
 
+    public String getName() {
+        return name;
     }
 }

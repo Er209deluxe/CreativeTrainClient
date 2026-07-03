@@ -1,5 +1,8 @@
 package Creative.train.DataTypes;
 
+import Creative.train.Backend.ExceptionTypes.InventoryFullException;
+import Creative.train.Backend.ExceptionTypes.NotEnoughCoinsException;
+import Creative.train.Backend.ExceptionTypes.NotFoundException;
 import Creative.train.Backend.api.SseHandler;
 import Creative.train.DataTypes.Wrappers.BasePlayerData;
 import Creative.train.DataTypes.Wrappers.PlayerData;
@@ -71,7 +74,31 @@ public class Player {
         }
     }
 
-    private void changeCoins(int amount){
+    public int getCoins() {
+        return coins;
+    }
+
+    public boolean buyItem(String name) throws NotFoundException,NotEnoughCoinsException,InventoryFullException {
+        Item item;
+
+        try {
+            item = getRole().getItemShop().get(name);
+        } catch (Exception e) {
+            throw new NotFoundException("Item", name);
+        }
+
+        if (getCoins() < item.getPrice()) {
+            throw new NotEnoughCoinsException();
+        }
+        boolean didBuy = addItem(item);
+        if (!didBuy) {
+            throw new InventoryFullException();
+        }
+
+        changeCoins(-item.getPrice());
+        return true;
+    }
+    public void changeCoins(int amount){
         coins+=amount;
         SseHandler.sendCoinUpdate(data.playerUuid,coins);
     }

@@ -1,6 +1,6 @@
 package Creative.train.Managers;
 
-import Creative.train.Backend.ExceptionTypes.SessionNotFoundException;
+import Creative.train.Backend.ExceptionTypes.NotFoundException;
 import Creative.train.Backend.ExceptionTypes.UserAlreadyInSessionExcepion;
 import Creative.train.Backend.api.SseHandler;
 import Creative.train.ConfigManagement.RoleLoader;
@@ -40,25 +40,25 @@ public class SessionManager {
         sessions.put(newSession.getSessionId(),newSession);
         return newSession;
     }
-    public void addPlayer(Session session,Player player){
+    public void addPlayer(Session session,Player player) throws NotFoundException {
 
         if (getPlayer(player.getPlayerId())!=null) {
             throw new UserAlreadyInSessionExcepion(player.getPlayerId());
         }
 
         if (!player.isHost() && getSession(session.getSessionId())==null) {
-            throw new SessionNotFoundException(session.getSessionId());
+            throw new NotFoundException("Session",session.getSessionId());
         }
         session.addPlayer(player);
 
         playerMap.put(player.getPlayerId(),player);
     }
 
-    public PlayerData registerPlayerToSession(UUID sessionUuid, Player player,String token) {
+    public PlayerData registerPlayerToSession(UUID sessionUuid, Player player,String token) throws NotFoundException {
 
         Session session = getSession(sessionUuid);
         if (session == null&&!player.isHost()) {
-            throw new SessionNotFoundException(sessionUuid);
+            throw new NotFoundException("Session",sessionUuid);
         }
         if (player.isHost()) {
             session = registerSession(player.getPlayerId());
@@ -75,9 +75,9 @@ public class SessionManager {
     }
 
 
-    public Player getHostUuid(UUID sessionUuid){
+    public Player getHostUuid(UUID sessionUuid) throws NotFoundException {
         Session session = getSession(sessionUuid);
-        if (session == null) throw new SessionNotFoundException(sessionUuid);
+        if (session == null) throw new NotFoundException("Session",sessionUuid);
 
         UUID hostUuid = session.getHostUuid();
         if (hostUuid == null) return null;

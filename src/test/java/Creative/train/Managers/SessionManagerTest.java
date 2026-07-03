@@ -1,6 +1,6 @@
 package Creative.train.Managers;
 
-import Creative.train.Backend.ExceptionTypes.SessionNotFoundException;
+import Creative.train.Backend.ExceptionTypes.NotFoundException;
 import Creative.train.Backend.ExceptionTypes.UserAlreadyInSessionExcepion;
 import Creative.train.DataTypes.Wrappers.PlayerData;
 import org.junit.jupiter.api.Test;
@@ -8,15 +8,9 @@ import org.junit.jupiter.api.Test;
 import static org.junit.jupiter.api.Assertions.*;
 
 import Creative.train.DataTypes.Player;
-import Creative.train.DataTypes.RegisterPlayerResponse;
-import Creative.train.Managers.SessionManager;
 import org.junit.jupiter.api.BeforeEach;
-import org.junit.jupiter.api.Test;
 
 import java.util.UUID;
-import java.util.concurrent.Executor;
-
-import static org.junit.jupiter.api.Assertions.*;
 
 class SessionManagerTest {
 
@@ -32,7 +26,7 @@ class SessionManagerTest {
     }
 
     @Test
-    void shouldRegisterHostSuccessfully() {
+    void shouldRegisterHostSuccessfully() throws NotFoundException {
         String token = EncryptionManager.generateNewToken();
         String tokenHash = EncryptionManager.sha256(token);
         Player host = new Player("name",UUID.randomUUID(),tokenHash,true);
@@ -60,7 +54,7 @@ class SessionManagerTest {
     }
 
     @Test
-    void validateSpecialSymbols(){
+    void validateSpecialSymbols() throws NotFoundException {
         String token = EncryptionManager.generateNewToken();
         String tokenHash = EncryptionManager.sha256(token);
         String[] names = { "!", "@", "#", "#", "$", "%", "^", "&", "*", "(", ")", "_", "+", "{", "}"," ",null};
@@ -91,7 +85,7 @@ class SessionManagerTest {
     }
 
     @Test
-    void shouldFailWhenPlayerAlreadyExists() {
+    void shouldFailWhenPlayerAlreadyExists() throws NotFoundException {
 
         String tokenHash = EncryptionManager.sha256(EncryptionManager.generateNewToken());
         Player host = new Player("name",UUID.randomUUID(),tokenHash,true);
@@ -109,12 +103,12 @@ class SessionManagerTest {
         String tokenHash = EncryptionManager.sha256(EncryptionManager.generateNewToken());
         Player player = new Player("name",UUID.randomUUID(),tokenHash,false);
 
-        assertThrowsExactly(SessionNotFoundException.class, () -> sessionManager.registerPlayerToSession(UUID.randomUUID(), player, tokenHash));
+        assertThrowsExactly(NotFoundException.class, () -> sessionManager.registerPlayerToSession(UUID.randomUUID(), player, tokenHash));
 
     }
 
     @Test
-    void shouldJoinExistingSessionSuccessfully() {
+    void shouldJoinExistingSessionSuccessfully() throws NotFoundException {
 
         // create host/session
         String tokenHash = EncryptionManager.sha256(EncryptionManager.generateNewToken());
@@ -128,7 +122,7 @@ class SessionManagerTest {
                         tokenHash
                 );
 
-        UUID sessionId = hostResponse.sessionUuid;;
+        UUID sessionId = hostResponse.sessionUuid;
 
         // joining player
         Player joiningPlayer = new Player("name2",UUID.randomUUID(),tokenHash,false);
