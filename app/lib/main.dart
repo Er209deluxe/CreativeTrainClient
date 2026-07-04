@@ -14,11 +14,7 @@ class MyApp extends StatelessWidget {
     return MaterialApp(
       debugShowCheckedModeBanner: false,
       theme: ThemeData(textTheme: GoogleFonts.poppinsTextTheme()),
-      home: Banner(
-        message: 'CTC',
-        location: BannerLocation.topEnd,
-        child: const AnimatedSplashPage(),
-      ),
+      home: const AnimatedSplashPage(),
     );
   }
 }

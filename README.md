@@ -1,5 +1,15 @@
 This is an Client for the game 🚆 CreativeTrain.
 
+<img width="256" height="256" alt="grafik" src="app/lib/assets/images/icon.png" />
+
+## Current Goals:
+- [ ] implement all requests
+- [ ] Material 3 you Design
+- [ ] Remember last connections
+- [ ] Tutorial to run Server(Termux)
+- [ ] iOS, Android main plattform(maybe desktop plattforms aswell)
+- [ ] Dark Design
+
 # 🚆 CreativeTrain
 
 CreativeTrain is a real-life social deduction game where players interact in person while a backend system tracks the game in real time. It uses QR codes and a Spring Boot backend to handle player actions, eliminations, and game state.
@@ -97,8 +107,11 @@ mvn spring-boot:run
 - Match history and stats
 - Better API documentation
 
-## 👨‍💻 Author
-
+## Thanks to:
 
 CreativeN025
 https://github.com/CreativeN025
+
+AmirBayat0
+https://github.com/AmirBayat0/
+
