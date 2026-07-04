@@ -4,6 +4,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <link rel="stylesheet" href="/Web/stylesheet.css" />
+      <link rel="icon" type="image/x-icon" href="/TrainFavicon.ico">
 
     <title>Active Game</title>
 </head>
@@ -19,11 +20,21 @@
             <h1>🪙 <span id="coinCount">0</span></h1>
         </div>
     </div>
+    <div id="Inventory">
+
+    </div>
+    <div id="Shop">
+
+    </div>
     <button onclick="leaveSession()">
-        Leave Game
-    </button>
+    Leave Game
+</button>
+
+<button onclick="loadInventory()">
+    Refresh Inventory
+</button>
 </body>
 
-    <script src="/Web/ApiRequester.js"></script>
+    <script src="/Web/ApiRequester.js?ts=1"></script>
 
 </html>

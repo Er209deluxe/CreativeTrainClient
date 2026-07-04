@@ -198,7 +198,7 @@ function startStream() {
             );
         }
     );
-
+   
     /* ---------- DISCONNECT ---------- */
 
     eventSource.addEventListener(
@@ -340,7 +340,80 @@ function stopStream() {
         );
     }
 }
+ async function getInventory() {
+    const playerUuid = sessionStorage.getItem("playerUuid");
+    const sessionToken = sessionStorage.getItem("sessionToken");
 
+    const res = await makeGetRequest(
+        `/api/session/inventory?playerUuid=${playerUuid}&sessionToken=${sessionToken}&ts=${Date.now()}`
+    );
+
+    if (!res.ok) {
+        console.error("Failed to get inventory:", res.body);
+        return null;
+    }
+
+    return JSON.parse(res.body);
+}
+async function loadInventory() {
+    const data = await getInventory();
+    if (!data) return;
+
+    const inventoryDiv = document.getElementById("Inventory");
+    const shopDiv = document.getElementById("Shop");
+
+    if (!inventoryDiv || !shopDiv) return;
+
+    inventoryDiv.innerHTML = "<h2>Inventory</h2>";
+    shopDiv.innerHTML = "<h2>Shop</h2>";
+
+    // Inventory
+    data.inventory.forEach((item, index) => {
+        const div = document.createElement("div");
+        div.className = "inventory-slot";
+
+        div.textContent = item
+            ? `${item.name}`
+            : `Slot ${index + 1}: Empty`;
+
+        inventoryDiv.appendChild(div);
+    });
+
+    // Shop
+    data.shop.forEach(item => {
+    const div = document.createElement("div");
+    div.className = "shop-item";
+
+    div.textContent = `${item.name} - 🪙 ${item.price}`;
+
+    div.onclick = async () => {
+        if (await buyItem(item.name)) {
+            await loadInventory();
+        }
+    };
+
+    shopDiv.appendChild(div);
+});
+}
+async function buyItem(item) {
+    const playerUuid = sessionStorage.getItem("playerUuid");
+    const sessionToken = sessionStorage.getItem("sessionToken");
+
+    const res = await makePostRequest(
+        `/api/session/buyItem?playerUuid=${playerUuid}` +
+        `&sessionToken=${sessionToken}` +
+        `&item=${encodeURIComponent(item)}` +
+        `&ts=${Date.now()}`,
+        "POST"
+    );
+
+    if (!res.ok) {
+        alert(res.body);
+        return false;
+    }
+
+    return true;
+}
 /* ---------------- TRANSITION ---------------- */
 
 function showTransition(
@@ -433,10 +506,10 @@ async function registerAndConnect() {
         data.playerUuid;
 
     const sessionUuid =
-        data.sessionId;
+        data.sessionUuid;
 
     const sessionToken =
-        data.sessionToken;
+        data.token;
 
     sessionStorage.setItem(
         "playerUuid",

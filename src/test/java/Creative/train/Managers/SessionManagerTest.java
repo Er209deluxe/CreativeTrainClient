@@ -1,18 +1,16 @@
 package Creative.train.Managers;
 
+import Creative.train.Backend.ExceptionTypes.NotFoundException;
+import Creative.train.Backend.ExceptionTypes.UserAlreadyInSessionExcepion;
+import Creative.train.DataTypes.Wrappers.PlayerData;
 import org.junit.jupiter.api.Test;
 
 import static org.junit.jupiter.api.Assertions.*;
 
 import Creative.train.DataTypes.Player;
-import Creative.train.DataTypes.RegisterPlayerResponse;
-import Creative.train.Managers.SessionManager;
 import org.junit.jupiter.api.BeforeEach;
-import org.junit.jupiter.api.Test;
 
 import java.util.UUID;
-
-import static org.junit.jupiter.api.Assertions.*;
 
 class SessionManagerTest {
 
@@ -28,43 +26,35 @@ class SessionManagerTest {
     }
 
     @Test
-    void shouldRegisterHostSuccessfully() {
+    void shouldRegisterHostSuccessfully() throws NotFoundException {
         String token = EncryptionManager.generateNewToken();
         String tokenHash = EncryptionManager.sha256(token);
         Player host = new Player("name",UUID.randomUUID(),tokenHash,true);
 
-        RegisterPlayerResponse response =
+        PlayerData response =
                 sessionManager.registerPlayerToSession(
                         null,
                         host,
                         tokenHash
                 );
 
-        assertNotNull(response.getHostInformation());
+        assertNotNull(response);
 
-        assertTrue(response.isHost());
+        assertTrue(response.isHost);
 
-        assertEquals(
-                host.getPlayerId(),
-                response.getHostInformation().getPlayerUuid()
-        );
+        assertEquals(host.getPlayerId(), response.playerUuid);
 
-        assertNotNull(
-                response.getHostInformation().getSessionId()
-        );
+        assertNotNull(response.sessionUuid);
 
         assertNotNull(tokenHash);
         assertNotNull(token);
         assertTrue(host.isCorrectPass(token));
 
-        assertEquals(
-                host,
-                sessionManager.getPlayer(host.getPlayerId())
-        );
+        assertEquals(host, sessionManager.getPlayer(host.getPlayerId()));
     }
 
     @Test
-    void validateSpecialSymbols(){
+    void validateSpecialSymbols() throws NotFoundException {
         String token = EncryptionManager.generateNewToken();
         String tokenHash = EncryptionManager.sha256(token);
         String[] names = { "!", "@", "#", "#", "$", "%", "^", "&", "*", "(", ")", "_", "+", "{", "}"," ",null};
@@ -72,58 +62,38 @@ class SessionManagerTest {
         for(String name : names) {
             Player host = new Player(name,UUID.randomUUID(),tokenHash,true);
 
-            RegisterPlayerResponse response =
+            PlayerData response =
                     sessionManager.registerPlayerToSession(
                             null,
                             host,
                             tokenHash
                     );
-            assertNotNull(response.getHostInformation());
+            assertNotNull(response);
 
-            assertTrue(response.isHost());
+            assertTrue(response.isHost);
 
-            assertEquals(
-                    host.getPlayerId(),
-                    response.getHostInformation().getPlayerUuid()
-            );
+            assertEquals(host.getPlayerId(), response.playerUuid);
 
-            assertNotNull(
-                    response.getHostInformation().getSessionId()
-            );
+            assertNotNull(response.sessionUuid);
 
             assertNotNull(tokenHash);
             assertNotNull(token);
             assertTrue(host.isCorrectPass(token));
 
-            assertEquals(
-                    host,
-                    sessionManager.getPlayer(host.getPlayerId())
-            );
+            assertEquals(host, sessionManager.getPlayer(host.getPlayerId()));
         }
     }
+
     @Test
-    void shouldFailWhenPlayerAlreadyExists() {
+    void shouldFailWhenPlayerAlreadyExists() throws NotFoundException {
 
         String tokenHash = EncryptionManager.sha256(EncryptionManager.generateNewToken());
         Player host = new Player("name",UUID.randomUUID(),tokenHash,true);
 
 
-        sessionManager.registerPlayerToSession(
-                null,
-                host,
-                tokenHash
-        );
+        sessionManager.registerPlayerToSession(null, host, tokenHash);
 
-        RegisterPlayerResponse secondResponse =
-                sessionManager.registerPlayerToSession(
-                        null,
-                        host,
-                        tokenHash
-                );
-
-        assertEquals(
-                409,
-                secondResponse.getResponse().getStatusCode().value()
+        assertThrowsExactly(UserAlreadyInSessionExcepion.class, () -> sessionManager.registerPlayerToSession(null, host, tokenHash)
         );
     }
 
@@ -133,59 +103,42 @@ class SessionManagerTest {
         String tokenHash = EncryptionManager.sha256(EncryptionManager.generateNewToken());
         Player player = new Player("name",UUID.randomUUID(),tokenHash,false);
 
+        assertThrowsExactly(NotFoundException.class, () -> sessionManager.registerPlayerToSession(UUID.randomUUID(), player, tokenHash));
 
-        RegisterPlayerResponse response =
-                sessionManager.registerPlayerToSession(
-                        UUID.randomUUID(),
-                        player,
-                        tokenHash
-                );
-
-        assertEquals(
-                404,
-                response.getResponse().getStatusCode().value()
-        );
     }
 
     @Test
-    void shouldJoinExistingSessionSuccessfully() {
+    void shouldJoinExistingSessionSuccessfully() throws NotFoundException {
 
         // create host/session
         String tokenHash = EncryptionManager.sha256(EncryptionManager.generateNewToken());
         Player host = new Player("name",UUID.randomUUID(),tokenHash,true);
 
 
-        RegisterPlayerResponse hostResponse =
+        PlayerData hostResponse =
                 sessionManager.registerPlayerToSession(
                         null,
                         host,
                         tokenHash
                 );
 
-        UUID sessionId =
-                hostResponse.getHostInformation().getSessionId();;
+        UUID sessionId = hostResponse.sessionUuid;
 
         // joining player
         Player joiningPlayer = new Player("name2",UUID.randomUUID(),tokenHash,false);
 
 
-        RegisterPlayerResponse joinResponse =
+        PlayerData joinResponse =
                 sessionManager.registerPlayerToSession(
                         sessionId,
                         joiningPlayer,
                         tokenHash
                 );
 
-        assertFalse(joinResponse.isHost());
+        assertFalse(joinResponse.isHost);
 
-        assertEquals(
-                joiningPlayer.getPlayerId(),
-                joinResponse.getHostInformation().getPlayerUuid()
-        );
+        assertEquals(joiningPlayer.getPlayerId(), joinResponse.playerUuid);
 
-        assertEquals(
-                sessionId,
-                joinResponse.getHostInformation().getSessionId()
-        );
+        assertEquals(sessionId, joinResponse.sessionUuid);
     }
 }

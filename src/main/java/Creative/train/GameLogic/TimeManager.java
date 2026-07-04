@@ -44,7 +44,7 @@ public class TimeManager {
                         session.getAllPlayerUuids(),
                         display
                 );
-                handlePassiveIncome(remainingSeconds);
+                handlePassiveIncome(seconds);
 
                 remainingSeconds--;
 
@@ -55,9 +55,9 @@ public class TimeManager {
         }, 0, 1, TimeUnit.SECONDS);
     }
 
-    private void handlePassiveIncome(int remainingSeconds){
+    private void handlePassiveIncome(int seconds){
 
-        if(remainingSeconds==0){
+        if(seconds!=0){
             return;
         }
 

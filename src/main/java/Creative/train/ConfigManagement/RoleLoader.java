@@ -5,8 +5,6 @@ import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 
-import java.io.File;
-import java.io.IOException;
 import java.util.UUID;
 
 public class RoleLoader {
@@ -17,6 +15,7 @@ public class RoleLoader {
 
         JsonNode root = mapper.readTree(json);
         JsonNode roleNode = root.get("roleConfig");
+        System.out.println(root.toPrettyString());
 
         if (roleNode == null || !roleNode.isArray()) {
             throw new IllegalArgumentException("roleConfig missing or not an array");

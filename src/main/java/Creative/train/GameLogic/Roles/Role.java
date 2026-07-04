@@ -4,9 +4,7 @@ import Creative.train.ConfigManagement.RoleDataManager;
 import Creative.train.ConfigManagement.Wrappers.RoleData;
 import Creative.train.GameLogic.Items.Item;
 
-import java.util.ArrayList;
-import java.util.List;
-import java.util.UUID;
+import java.util.*;
 
 public abstract class Role {
 
@@ -17,8 +15,9 @@ public abstract class Role {
     protected boolean enableShop;
     protected boolean passiveIncome;
     protected int taskIncome;
-    final List<Item> itemShop = new ArrayList<>();
-    final List<Item> baseInventory = new ArrayList<>();
+
+    private final Map<String,Item>  itemShop = new HashMap<>();
+    List<Item> baseInventory = new ArrayList<>();
 
     public Role(UUID sessionUuid,String name,Team team,String hex) {
         RoleData data = RoleDataManager.getRoleData(sessionUuid,name);
@@ -29,6 +28,9 @@ public abstract class Role {
         this.passiveIncome = data.passiveIncome;
         this.taskIncome = data.taskIncome;
 
+        data.itemShop.forEach(item -> {
+            this.itemShop.put(item.getName(),  item);
+        });
     }
 
     public boolean isShopEnabled() {
@@ -43,7 +45,7 @@ public abstract class Role {
         return passiveIncome;
     }
 
-    public List<Item> getItemShop() {
+    public Map<String, Item> getItemShop() {
         return itemShop;
     }
 
