@@ -1,5 +1,6 @@
 import 'dart:math' as math;
 
+import 'package:creativetrainclient/UI/Handler/handleButtonsClientConfig.dart';
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
@@ -15,7 +16,7 @@ class ClientConfigPage extends StatefulWidget {
 }
 
 class _ClientConfigPageState extends State<ClientConfigPage> {
-  int? _selected = 0;
+  final int _selected = 0;
 
   @override
   Widget build(BuildContext context) {
@@ -33,19 +34,7 @@ class _ClientConfigPageState extends State<ClientConfigPage> {
               //Center Content
               children: [
                 BtnForIPOrDomain(initialIndex: _selected),
-                TextField(
-                  style: const TextStyle(color: Colors.white),
-                  inputFormatters: [
-                    FilteringTextInputFormatter.allow(
-                      RegExp(r'^[a-zA-Z0-9.\-]*$'),
-                    ),
-                  ],
-                  decoration: InputDecoration(
-                    labelText: 'IP address of Server',
-                    labelStyle: TextStyle(color: Colors.white, fontSize: 16),
-                    border: OutlineInputBorder(),
-                  ),
-                ),
+                HandleTextField(),
               ],
             ),
           ),
@@ -100,16 +89,137 @@ class _BtnForIPOrDomainState extends State<BtnForIPOrDomain> {
     return M3EToggleButtonGroup(
       type: M3EButtonGroupType.connected,
       selectedIndex: _selected,
-      onSelectedIndexChanged: (index) => setState(() => _selected = index),
+      onSelectedIndexChanged: (index) {
+        index ??= 0;
+        setState(() => _selected = index);
+        DomainPressAction(selectedWidget: null); //Change Text field
+      },
       actions: const [
         M3EToggleButtonGroupAction(
-          icon: Icon(Icons.format_bold),
-          semanticLabel: 'Bold',
+          label: Text('Domain', style: TextStyle(fontSize: 18)),
         ),
         M3EToggleButtonGroupAction(
-          icon: Icon(Icons.format_italic),
-          semanticLabel: 'Italic',
+          label: Text('IP', style: TextStyle(fontSize: 18)),
         ),
+      ],
+    );
+  }
+}
+
+class HandleTextField extends StatelessWidget {
+  const HandleTextField({super.key});
+
+  @override
+  Widget build(BuildContext context) {
+    return Row(
+      mainAxisAlignment: MainAxisAlignment.spaceEvenly, // or start, end, center
+      children: [
+        const SizedBox(width: 15),
+        Expanded(
+          child: TextField(
+            maxLength: 3,
+            style: const TextStyle(color: Colors.white),
+            inputFormatters: [FilteringTextInputFormatter.digitsOnly],
+            decoration: InputDecoration(
+              labelText: '0',
+              labelStyle: TextStyle(color: Colors.white, fontSize: 16),
+              border: OutlineInputBorder(),
+            ),
+          ),
+        ),
+        const SizedBox(width: 5),
+        Text(
+          '.',
+          textAlign: TextAlign.center,
+          style: Theme.of(context).textTheme.displaySmall?.copyWith(
+            color: Colors.white,
+            fontWeight: FontWeight.w200,
+            letterSpacing: 0,
+          ),
+        ),
+        const SizedBox(width: 5),
+        Expanded(
+          child: TextField(
+            maxLength: 3,
+            style: const TextStyle(color: Colors.white),
+            inputFormatters: [FilteringTextInputFormatter.digitsOnly],
+            decoration: InputDecoration(
+              labelText: '-',
+              labelStyle: TextStyle(color: Colors.white, fontSize: 16),
+              border: OutlineInputBorder(),
+            ),
+          ),
+        ),
+        const SizedBox(width: 5),
+        Text(
+          '.',
+          textAlign: TextAlign.center,
+          style: Theme.of(context).textTheme.displaySmall?.copyWith(
+            color: Colors.white,
+            fontWeight: FontWeight.w200,
+            letterSpacing: 0,
+          ),
+        ),
+        const SizedBox(width: 5),
+        Expanded(
+          child: TextField(
+            maxLength: 3,
+            style: const TextStyle(color: Colors.white),
+            inputFormatters: [FilteringTextInputFormatter.digitsOnly],
+            decoration: InputDecoration(
+              labelText: '256',
+              labelStyle: TextStyle(color: Colors.white, fontSize: 16),
+              border: OutlineInputBorder(),
+            ),
+          ),
+        ),
+        const SizedBox(width: 5),
+        Text(
+          '.',
+          textAlign: TextAlign.center,
+          style: Theme.of(context).textTheme.displaySmall?.copyWith(
+            color: Colors.white,
+            fontWeight: FontWeight.w200,
+            letterSpacing: 0,
+          ),
+        ),
+        const SizedBox(width: 5),
+        Expanded(
+          child: TextField(
+            maxLength: 3,
+            style: const TextStyle(color: Colors.white),
+            inputFormatters: [FilteringTextInputFormatter.digitsOnly],
+            decoration: InputDecoration(
+              labelText: 'IP',
+              labelStyle: TextStyle(color: Colors.white, fontSize: 16),
+              border: OutlineInputBorder(),
+            ),
+          ),
+        ),
+        const SizedBox(width: 5),
+        Text(
+          ':',
+          textAlign: TextAlign.center,
+          style: Theme.of(context).textTheme.displaySmall?.copyWith(
+            color: Colors.white,
+            fontWeight: FontWeight.w200,
+            letterSpacing: 0,
+          ),
+        ),
+        const SizedBox(width: 5),
+        Expanded(
+          child: TextField(
+            maxLength: 10,
+            style: const TextStyle(color: Colors.white),
+            inputFormatters: [FilteringTextInputFormatter.digitsOnly],
+            decoration: InputDecoration(
+              labelText: 'Port',
+              labelStyle: TextStyle(color: Colors.white, fontSize: 16),
+              border: OutlineInputBorder(),
+            ),
+          ),
+        ),
+        const SizedBox(width: 15),
       ],
     );
   }
