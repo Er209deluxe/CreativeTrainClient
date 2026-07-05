@@ -151,10 +151,11 @@ public class SessionApi {
     @PostMapping("/buyItem")
     public ResponseEntity<?> buyItem(@RequestParam UUID playerUuid,
                                      @RequestParam String sessionToken,
-                                     @RequestParam String item) throws AuthenticationException, NotFoundException, NotEnoughCoinsException, InventoryFullException {
+                                     @RequestParam UUID itemUuid) throws AuthenticationException, NotFoundException, NotEnoughCoinsException, InventoryFullException {
         validatePlayer(playerUuid,sessionToken);
         Player player = sessionManager.getPlayer(playerUuid);
-        if(player.buyItem(item)) return ResponseEntity.ok().build();
+        if(!player.isAlive()) return ResponseEntity.status(HttpStatus.FORBIDDEN).body("You are already dead");
+        if(player.buyItem(itemUuid)) return ResponseEntity.ok().build();
         return ResponseEntity.status(HttpStatus.FORBIDDEN).body("That item is not in your item shop");
     }
     @GetMapping("/connectedUsers")
@@ -180,19 +181,20 @@ public class SessionApi {
     }
     @PostMapping("/kill")
     public ResponseEntity<?> killPlayer(@RequestParam UUID killerUuid,
-                                        @CookieValue("password") String killerPassword,
-                                        @RequestParam MultipartFile playerQr,
-                                        @RequestParam String method){
+                                        @RequestParam("sessionToken") String killerToken,
+                                        @RequestParam MultipartFile victimQr,
+                                        @RequestParam UUID itemUuid){
         Player killer =sessionManager.getPlayer(killerUuid);
-        UUID playerUuid;
+        UUID victimUuid;
         try {
-             playerUuid = getUuidFromQrCode(playerQr);
+             victimUuid = getUuidFromQrCode(victimQr);
         } catch (Exception e){
             return ResponseEntity.status(HttpStatus.NOT_FOUND).build();
         }
-        Player victim = sessionManager.getPlayer(playerUuid);
+        Player victim = sessionManager.getPlayer(victimUuid);
 
-        return ResponseEntity.status(HttpStatus.OK).build();
+        return sessionManager.killPlayer(killer,victim,itemUuid);
+
     }
     @PostMapping("/testusers")
     public ResponseEntity<?> testUsers(@RequestParam int amount) throws NotFoundException {

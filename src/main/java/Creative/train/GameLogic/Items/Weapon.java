@@ -1,27 +1,35 @@
 package Creative.train.GameLogic.Items;
 
 import Creative.train.DataTypes.Player;
-import Creative.train.Managers.SessionManager;
+import Creative.train.Managers.ThreadManager;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.concurrent.TimeUnit;
 
 public class Weapon extends Item{
     protected final int cooldownInSeconds;
     protected long cooldownEnd;
-    public Weapon(String name,int cooldownInSeconds){
+    protected int killDelay;
+    public Weapon(String name,int cooldownInSeconds,int killDelay){
         super(name,new ArrayList<>(List.of("Weapon")));
         this.cooldownInSeconds = cooldownInSeconds;
     }
-    public boolean killAbility(Player player,int killDelay) {
-        if(System.currentTimeMillis()>=cooldownEnd) return false;
-        try {
-            Thread.sleep(killDelay);
-        } catch (InterruptedException e) {
-            throw new RuntimeException(e);
+
+    public boolean killAbility(Player player) {
+        if (System.currentTimeMillis() < cooldownEnd) {
+            return false;
         }
-        SessionManager.getInstance().killPlayer(player);
-        cooldownEnd = System.currentTimeMillis() + cooldownInSeconds * 1000L;
+
+        ThreadManager.getScheduler().schedule(() -> {
+            killPlayer(player);
+            cooldownEnd = System.currentTimeMillis() + cooldownInSeconds * 1000L;
+        }, killDelay, TimeUnit.SECONDS);
+
         return true;
+    }
+    private void killPlayer(Player player){
+        player.setAlive(false);
+
     }
 }

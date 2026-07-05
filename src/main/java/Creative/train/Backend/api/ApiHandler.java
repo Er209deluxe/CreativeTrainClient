@@ -26,7 +26,7 @@ public class ApiHandler {
         Player player = SessionManager.getInstance().getPlayer(playerUuid);
         if(player==null) throw new ResponseStatusException(HttpStatus.NOT_FOUND);
         if(!player.isCorrectPass(sessionToken)) throw new ResponseStatusException(HttpStatus.FORBIDDEN);
-        return SseHandler.getInstance().stream(playerUuid,sessionToken);
+        return SseHandler.getInstance().stream(playerUuid);
     }
     @GetMapping(path="/newPlayerQr",produces = MediaType.IMAGE_JPEG_VALUE)
     public ResponseEntity<byte[]> getQrCode() throws Exception {

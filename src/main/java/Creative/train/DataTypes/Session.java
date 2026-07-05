@@ -3,14 +3,23 @@ package Creative.train.DataTypes;
 import Creative.train.Backend.ExceptionTypes.UserAlreadyInSessionExcepion;
 import Creative.train.Backend.ExceptionTypes.UsernameAlreadyExistsException;
 import Creative.train.GameLogic.GeneralConfig;
+import Creative.train.GameLogic.Roles.Role;
 import Creative.train.GameLogic.TimeManager;
+import Creative.train.Managers.SessionManager;
 
 import java.util.*;
 import java.util.stream.Collectors;
 
 public class Session {
-    private GeneralConfig generalConfig=new GeneralConfig(null,50,7,1);
-
+    private GeneralConfig generalConfig=
+            new GeneralConfig(
+                    null,
+                    50,
+                    7,1,
+                    50,
+                    30);
+    private int aliveCivilians;
+    private int aliveKillers;
     private boolean active = false;
     private final UUID sessionId;
     private final Map<UUID,Player> playerMap = new HashMap<>();
@@ -23,6 +32,26 @@ public class Session {
     }
     public Collection<Player> getAllPlayers(){
         return playerMap.values();
+    }
+
+    public void setAliveCivilians(int aliveCivilians) {
+        this.aliveCivilians = aliveCivilians;
+    }
+
+    public void setAliveKillers(int aliveKillers) {
+        this.aliveKillers = aliveKillers;
+    }
+
+    public void decrementAlivePlayers(Player player){
+        if(player.getRole().getTeam().equals(Role.Team.CIVILIAN)){
+            aliveCivilians--;
+            if(aliveCivilians<=0) SessionManager.getInstance().endSession(getSessionId(), Role.Team.KILLER,"All Civilians died");
+            return;
+        }
+        if(player.getRole().getTeam().equals(Role.Team.KILLER)){
+            aliveKillers--;
+            if(aliveKillers<=0) SessionManager.getInstance().endSession(getSessionId(), Role.Team.CIVILIAN,"All Killers died");
+        }
     }
 
     public GeneralConfig getGeneralConfig() {
@@ -51,6 +80,11 @@ public class Session {
     public List<UUID> getAllPlayerUuids(){
         return new ArrayList<>(playerMap.keySet());
     }
+
+    public TimeManager getTimeManager() {
+        return timeManager;
+    }
+
     public void removePlayer(UUID playerUuid){
         playerMap.remove(playerUuid);
     }

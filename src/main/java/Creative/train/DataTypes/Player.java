@@ -61,8 +61,13 @@ public class Player {
     public void removeItem(int slot){
         inventory[slot] = null;
     }
-    public Item getItemFromSlot(int slot){
-        return inventory[slot];
+    public Item getItem(UUID itemUuid) {
+        for (Item item : inventory) {
+            if (item != null && item.getItemUuid().equals(itemUuid)) {
+                return item;
+            }
+        }
+        return null;
     }
 
     /**
@@ -78,13 +83,13 @@ public class Player {
         return coins;
     }
 
-    public boolean buyItem(String name) throws NotFoundException,NotEnoughCoinsException,InventoryFullException {
+    public boolean buyItem(UUID itemUuid) throws NotFoundException,NotEnoughCoinsException,InventoryFullException {
         Item item;
 
         try {
-            item = getRole().getItemShop().get(name);
+            item = getRole().getItemShop().get(itemUuid).copy();
         } catch (Exception e) {
-            throw new NotFoundException("Item", name);
+            throw new NotFoundException("Item", itemUuid);
         }
 
         if (getCoins() < item.getPrice()) {

@@ -8,23 +8,23 @@ import Creative.train.Managers.SessionManager;
 
 import java.util.concurrent.ScheduledFuture;
 import java.util.concurrent.TimeUnit;
+import java.util.concurrent.atomic.AtomicInteger;
 
 public class TimeManager {
     private ScheduledFuture<?> timerTask;
     private final Session session;
-    private int remainingSeconds;
+    private final AtomicInteger remainingSeconds;
 
 
     public TimeManager(Session session) {
         this.session = session;
-        remainingSeconds = session.getGeneralConfig().getBaseTimer();
+        remainingSeconds = new AtomicInteger(session.getGeneralConfig().getBaseTimer());
         System.out.println("remainingsecs: "+remainingSeconds);
     }
     public void startCountdown(){
         timerTask = ThreadManager.getScheduler().scheduleAtFixedRate(() -> {
-            try {
 
-                if (remainingSeconds <= 0) {
+                if (remainingSeconds.get() <= 0) {
                     SessionManager.getInstance().endSession(
                             session.getSessionId(),
                             Role.Team.CIVILIAN,
@@ -33,8 +33,8 @@ public class TimeManager {
                     return;
                 }
 
-                int minutes = remainingSeconds / 60;
-                int seconds = remainingSeconds % 60;
+                int minutes = remainingSeconds.get() / 60;
+                int seconds = remainingSeconds.get() % 60;
 
                 String display = String.format("%02d:%02d", minutes, seconds);
 
@@ -46,13 +46,15 @@ public class TimeManager {
                 );
                 handlePassiveIncome(seconds);
 
-                remainingSeconds--;
+                remainingSeconds.decrementAndGet();
 
-            } catch (Throwable t) {
-                System.err.println("TIMER FAILED");
-                t.printStackTrace();
-            }
+
         }, 0, 1, TimeUnit.SECONDS);
+    }
+
+    public void changeRemainingSecondsBy(int changeBy) {
+        remainingSeconds.addAndGet(changeBy);
+
     }
 
     private void handlePassiveIncome(int seconds){

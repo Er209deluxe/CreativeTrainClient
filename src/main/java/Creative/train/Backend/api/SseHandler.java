@@ -2,7 +2,6 @@ package Creative.train.Backend.api;
 
 import Creative.train.DataTypes.Player;
 import Creative.train.DataTypes.Session;
-import Creative.train.DataTypes.Wrappers.BasePlayerData;
 import Creative.train.DataTypes.Wrappers.SessionEndData;
 import Creative.train.GameLogic.Roles.Role;
 import Creative.train.Managers.SessionManager;
@@ -20,7 +19,7 @@ public class SseHandler {
         return INSTANCE;
     }
 
-    public SseEmitter stream(UUID playerUUID,String password) {
+    public SseEmitter stream(UUID playerUUID) {
         SseEmitter emitter = new SseEmitter(0L); // no timeout
 
         System.out.println("Player UUID: " + playerUUID + " connected.");
@@ -44,7 +43,7 @@ public class SseHandler {
        sendPlayer(playerUuids,"playerJoined",player);
     }
     public static void sendDeathInfo(UUID playerUuid) {
-        sendPlayer(List.of(playerUuid),"deathEvent","");
+        sendPlayer(List.of(playerUuid),"deathEvent","you died");
     }
     public static void sendSessionStart(List<UUID> playerUuids) {
         for (UUID playerUuid : playerUuids) {
