@@ -11,9 +11,8 @@ public class RoleLoader {
 
     private final ObjectMapper mapper = new ObjectMapper();
 
-    public void load(String json, UUID sessionUuid) throws JsonProcessingException {
+    public void load(JsonNode root, UUID sessionUuid) throws JsonProcessingException {
 
-        JsonNode root = mapper.readTree(json);
         JsonNode roleNode = root.get("roleConfig");
         System.out.println(root.toPrettyString());
 

@@ -63,52 +63,30 @@ async function generatePlayerQr() {
 /* ---------------- SESSION ---------------- */
 
 async function startSession() {
+    const sessionUuid = sessionStorage.getItem("sessionUuid");
+    const playerUuid = sessionStorage.getItem("playerUuid");
 
-    const sessionId =
-        sessionStorage.getItem(
-            "sessionUuid"
-        );
+    const params = new URLSearchParams({
+        token: sessionStorage.getItem("sessionToken"),
+        ts: Date.now().toString(),
+        sessionUuid,
+        playerUuid,
+    });
 
-    const playerUuid =
-        sessionStorage.getItem(
-            "playerUuid"
-        );
+    // Parse the uploaded JSON file into an object
+    const roleConfig = JSON.parse(uploadedRoleConfig);
 
-    const roleConfig =
-        encodeURIComponent(
-            uploadedRoleConfig || ""
-        );
-
-    const res =
-        await makePostRequest(
-            "/api/session/start" +
-                "?sessionToken=" +
-                sessionStorage.getItem(
-                    "sessionToken"
-                ) +
-                "&RoleConfig=" +
-                roleConfig +
-                "&ts=" +
-                Date.now(),
-            "POST",
-            {
-                sessionId,
-                playerUuid
-            }
-        );
+    const res = await makePostRequest(
+        `/api/session/start?${params.toString()}`,
+        "POST",
+        roleConfig
+    );
 
     console.log(res);
 
     if (!res.ok) {
-
-        alert(
-            "Failed to start session: " +
-                res.body
-        );
-
-        return;
+        alert("Failed to start session: " + res.body);
     }
-
 }
 
 /* ---------------- STREAM ---------------- */
@@ -267,7 +245,7 @@ function startStream() {
                         "sessionUuid"
                     );
 
-            }, 3000);
+            }, 10000);
         }
     );
 
@@ -340,12 +318,12 @@ function stopStream() {
         );
     }
 }
- async function getInventory() {
+ async function getInventory(isShop) {
     const playerUuid = sessionStorage.getItem("playerUuid");
     const sessionToken = sessionStorage.getItem("sessionToken");
 
     const res = await makeGetRequest(
-        `/api/session/inventory?playerUuid=${playerUuid}&sessionToken=${sessionToken}&ts=${Date.now()}`
+        `/api/session/inventory?playerUuid=${playerUuid}&sessionToken=${sessionToken}&isShop=${isShop}&ts=${Date.now()}`
     );
 
     if (!res.ok) {
@@ -356,8 +334,9 @@ function stopStream() {
     return JSON.parse(res.body);
 }
 async function loadInventory() {
-    const data = await getInventory();
-    if (!data) return;
+    const inventoryData = await getInventory(false);
+    const shopData = await getInventory(true);
+    if (!inventoryData) return;
 
     const inventoryDiv = document.getElementById("Inventory");
     const shopDiv = document.getElementById("Shop");
@@ -368,7 +347,7 @@ async function loadInventory() {
     shopDiv.innerHTML = "<h2>Shop</h2>";
 
     // Inventory
-    data.inventory.forEach((item, index) => {
+    inventoryData.forEach((item, index) => {
         const div = document.createElement("div");
         div.className = "inventory-slot";
 
@@ -380,7 +359,7 @@ async function loadInventory() {
     });
 
     // Shop
-    data.shop.forEach(item => {
+    shopData.forEach(item => {
     const div = document.createElement("div");
     div.className = "shop-item";
 

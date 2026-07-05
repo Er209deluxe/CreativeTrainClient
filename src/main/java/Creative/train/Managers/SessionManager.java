@@ -11,6 +11,7 @@ import Creative.train.DataTypes.Session;
 import Creative.train.DataTypes.Wrappers.SessionEndData;
 import Creative.train.GameLogic.RoleAssigner;
 import Creative.train.GameLogic.Roles.Role;
+import com.fasterxml.jackson.databind.JsonNode;
 
 import java.io.IOException;
 import java.util.*;
@@ -111,7 +112,7 @@ public class SessionManager {
         session.removePlayer(playerUuid);
         System.out.println("removed:"+playerUuid);
     }
-    public boolean startSession(UUID sessionUuid,String json) {
+    public boolean startSession(UUID sessionUuid,JsonNode json) {
         Session session = getSession(sessionUuid);
 
         if(!roleLoader(json,sessionUuid)) return false;
@@ -148,7 +149,7 @@ public class SessionManager {
         session.getAllPlayerUuids().forEach(this::removePlayer);
         sessions.remove(session.getSessionId());
     }
-    public static boolean roleLoader(String json,UUID sessionUuid){
+    public static boolean roleLoader(JsonNode json, UUID sessionUuid){
         RoleLoader loader = new RoleLoader();
         try {
             loader.load(json, sessionUuid);

@@ -6,13 +6,12 @@ import Creative.train.Backend.ExceptionTypes.NotEnoughCoinsException;
 import Creative.train.Backend.ExceptionTypes.NotFoundException;
 import Creative.train.DataTypes.GlobalVariableHolder;
 import Creative.train.DataTypes.Player;
-import Creative.train.DataTypes.Wrappers.InventoryRequestData;
 import Creative.train.DataTypes.Wrappers.PlayerData;
-import Creative.train.DataTypes.Wrappers.PlayerInformation;
 import Creative.train.DataTypes.Session;
 import Creative.train.Managers.EncryptionManager;
 import Creative.train.Managers.QrManager;
 import Creative.train.Managers.SessionManager;
+import com.fasterxml.jackson.databind.JsonNode;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
@@ -89,7 +88,8 @@ public class SessionApi {
         return UUID.fromString(result);
     }
     @PostMapping("/leaveGame")
-    public ResponseEntity<?> leaveGame(@RequestParam UUID playerUuid,@RequestParam("sessionToken") String sessionToken){
+    public ResponseEntity<?> leaveGame(@RequestParam UUID playerUuid,
+                                       @RequestParam("sessionToken") String sessionToken){
         Player player = SessionManager.getInstance().getPlayer(playerUuid);
         if(player==null) return ResponseEntity.status(HttpStatus.NOT_FOUND).body("Player not found");
         if(!player.isCorrectPass(sessionToken)) return ResponseEntity.status(HttpStatus.FORBIDDEN).body("Wrong token");
@@ -97,38 +97,40 @@ public class SessionApi {
         return ResponseEntity.status(HttpStatus.OK).build();
     }
     @PostMapping("/start")
-    public ResponseEntity<?> startSession(@RequestBody PlayerInformation data,
-                                          @RequestParam("sessionToken") String sessionToken,
-                                          @RequestParam("RoleConfig") String roleConfig){
-        UUID hostUuid = data.getPlayerUuid();
-        UUID sessionUuid = data.getSessionId();
-        Player host = SessionManager.getInstance().getPlayer(hostUuid);
-        if(host==null) return ResponseEntity.status(HttpStatus.NOT_FOUND).body("Host UUID not found");
-        if(!host.isCorrectPass(sessionToken))  return ResponseEntity.status(HttpStatus.FORBIDDEN).body("Wrong token");
+    public ResponseEntity<?> startSession(@RequestParam("token") String token,
+                                          @RequestParam("sessionUuid") UUID sessionUuid,
+                                          @RequestParam("playerUuid") UUID playerUuid,
+                                          @RequestBody JsonNode roleConfig){
+
+        Player host = SessionManager.getInstance().getPlayer(playerUuid);
+        if(host==null) return ResponseEntity.status(HttpStatus.NOT_FOUND).body("Player UUID not found");
+        if(!host.isCorrectPass(token))  return ResponseEntity.status(HttpStatus.FORBIDDEN).body("Wrong token");
 
         Session session = sessionManager.getSession(sessionUuid);
-
         if(session==null){
             return ResponseEntity.status(HttpStatus.NOT_FOUND).body("Session not found");
         }
+        if(session.isActive()) return ResponseEntity.status(HttpStatus.CONFLICT).body("Session already started");
+
         try{
-            if(!sessionManager.getHostUuid(sessionUuid).getPlayerId().equals(hostUuid)) {
+            if(!sessionManager.getHostUuid(sessionUuid).getPlayerId().equals(playerUuid)) {
                 return ResponseEntity.status(HttpStatus.FORBIDDEN).body("You are not the host");
             }
         } catch (NotFoundException e) {
-            return ResponseEntity.status(404).body("Host not found");
+            return ResponseEntity.status(404).body("Player not found");
         }
 
 
-        if(!sessionManager.startSession(sessionUuid,roleConfig))
+        if(!sessionManager.startSession(sessionUuid, roleConfig))
             return ResponseEntity.status(HttpStatus.BAD_REQUEST).body("Could not read JSON");
         return ResponseEntity.status(HttpStatus.OK).build();
     }
     @GetMapping("/inventory")
     public ResponseEntity<?> getInventory(@RequestParam UUID playerUuid,
-                                          @RequestParam String sessionToken)
-    {
+                                          @RequestParam String sessionToken,
+                                          @RequestParam boolean isShop) throws NotFoundException {
         Player player = sessionManager.getPlayer(playerUuid);
+        if(player==null) throw new NotFoundException("Player",playerUuid);
         try {
             validatePlayer(player.getPlayerId(), sessionToken);
         } catch (AuthenticationException e){
@@ -137,11 +139,13 @@ public class SessionApi {
             return ResponseEntity.status(HttpStatus.NOT_FOUND).body(e.getMessage());
         }
 
-        InventoryRequestData inventoryRequestData = new InventoryRequestData();
-        inventoryRequestData.inventory = player.getInventory();
-        inventoryRequestData.shop = player.getRole().getItemShop().values();
+        if(isShop)
+            return ResponseEntity.status(HttpStatus.OK).body(
+                    player.getRole().getItemShop().values()
+            );
 
-        return ResponseEntity.status(HttpStatus.OK).body(inventoryRequestData);
+        return ResponseEntity.status(HttpStatus.OK).body(player.getInventory());
+
     }
 
     @PostMapping("/buyItem")

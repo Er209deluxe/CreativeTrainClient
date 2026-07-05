@@ -1,18 +1,16 @@
 package Creative.train.GameLogic;
 
-import Creative.train.ConfigManagement.RoleDataManager;
 import Creative.train.DataTypes.GlobalVariableHolder;
-import Creative.train.DataTypes.Session;
 import Creative.train.GameLogic.Roles.*;
 
 import Creative.train.Managers.SessionManager;
-import ch.qos.logback.core.testUtil.MockInitialContext;
+import com.fasterxml.jackson.databind.JsonNode;
+import com.fasterxml.jackson.databind.ObjectMapper;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 
 import java.io.IOException;
 import java.io.InputStream;
-import java.net.URL;
 import java.nio.charset.StandardCharsets;
 import java.util.List;
 import java.util.UUID;
@@ -43,8 +41,10 @@ class RoleAssignerTest {
                 stream.readAllBytes(),
                 StandardCharsets.UTF_8
         );
+        ObjectMapper mapper = new ObjectMapper();
 
-        SessionManager.roleLoader(json,sessionUuid);
+            JsonNode root = mapper.readTree(json);
+        SessionManager.roleLoader(root,sessionUuid);
 
     }
 

@@ -4,7 +4,7 @@ import Creative.train.GameLogic.Roles.Role;
 
 public class BasePlayerData {
     public Role role;
-    public String name;
+    public String playerName;
     public boolean isAlive;
 
 }

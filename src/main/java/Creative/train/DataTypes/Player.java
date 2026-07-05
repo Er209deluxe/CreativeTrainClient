@@ -22,7 +22,7 @@ public class Player {
     private int coins=0;
 
     public Player(String name, UUID playerId,String passwordHash,boolean isHost){
-        baseData.name = name;
+        baseData.playerName = name;
         baseData.isAlive = true;
         data.playerUuid = playerId;
         data.isHost = isHost;
@@ -132,7 +132,7 @@ public class Player {
     }
 
     public String getName() {
-        return baseData.name;
+        return baseData.playerName;
     }
 
     public UUID getPlayerId() {
