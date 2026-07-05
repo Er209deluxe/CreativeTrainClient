@@ -1,10 +1,7 @@
-import 'dart:math' as math;
-
 import 'package:creativetrainclient/UI/renderClientConfig.dart';
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:m3e_buttons/m3e_buttons.dart';
-import 'package:creativetrainclient/UI/renderSplashScreen.dart';
 
 class HomePage extends StatefulWidget {
   const HomePage({super.key});

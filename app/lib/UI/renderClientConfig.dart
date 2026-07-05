@@ -1,12 +1,6 @@
-import 'dart:math' as math;
-
 import 'package:creativetrainclient/UI/Handler/handleButtonsClientConfig.dart';
-import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
-import 'package:flutter/services.dart';
 import 'package:m3e_buttons/m3e_buttons.dart';
-import 'package:creativetrainclient/UI/renderSplashScreen.dart';
-import 'package:m3e_collection/m3e_collection.dart';
 
 class ClientConfigPage extends StatefulWidget {
   const ClientConfigPage({super.key});
@@ -16,7 +10,7 @@ class ClientConfigPage extends StatefulWidget {
 }
 
 class _ClientConfigPageState extends State<ClientConfigPage> {
-  final int _selected = 0;
+  int? _selected = 1;
 
   @override
   Widget build(BuildContext context) {
@@ -31,10 +25,18 @@ class _ClientConfigPageState extends State<ClientConfigPage> {
               mainAxisAlignment: MainAxisAlignment.center,
               crossAxisAlignment: CrossAxisAlignment.center,
               mainAxisSize: MainAxisSize.min,
-              //Center Content
+              //Center Content Client Configuration UI
               children: [
-                BtnForIPOrDomain(initialIndex: _selected),
-                HandleTextField(),
+                BtnForIPOrDomain(
+                  initialIndex: _selected,
+                  onSelectionChanged: (int? newIndex) {
+                    // 2. Update parent state when child notifies
+                    setState(() {
+                      _selected = newIndex;
+                    });
+                  },
+                ),
+                DomainPressAction(actionNr: _selected),
               ],
             ),
           ),
@@ -68,8 +70,13 @@ class _GradientHomeBG extends StatelessWidget {
 
 class BtnForIPOrDomain extends StatefulWidget {
   final int? initialIndex;
+  final Function(int?) onSelectionChanged;
 
-  const BtnForIPOrDomain({super.key, required this.initialIndex});
+  const BtnForIPOrDomain({
+    super.key,
+    required this.initialIndex,
+    required this.onSelectionChanged,
+  });
 
   @override
   State<BtnForIPOrDomain> createState() => _BtnForIPOrDomainState();
@@ -89,10 +96,16 @@ class _BtnForIPOrDomainState extends State<BtnForIPOrDomain> {
     return M3EToggleButtonGroup(
       type: M3EButtonGroupType.connected,
       selectedIndex: _selected,
+      size: M3EButtonSize.md,
+      decoration: M3EToggleButtonDecoration.styleFrom(
+        backgroundColor: const Color.fromARGB(255, 3, 59, 143),
+        foregroundColor: const Color.fromARGB(255, 255, 255, 255),
+        checkedBackgroundColor: const Color.fromARGB(255, 130, 142, 215),
+        checkedForegroundColor: Colors.white,
+      ),
       onSelectedIndexChanged: (index) {
-        index ??= 0;
         setState(() => _selected = index);
-        DomainPressAction(selectedWidget: null); //Change Text field
+        widget.onSelectionChanged(index);
       },
       actions: const [
         M3EToggleButtonGroupAction(
@@ -101,125 +114,6 @@ class _BtnForIPOrDomainState extends State<BtnForIPOrDomain> {
         M3EToggleButtonGroupAction(
           label: Text('IP', style: TextStyle(fontSize: 18)),
         ),
-      ],
-    );
-  }
-}
-
-class HandleTextField extends StatelessWidget {
-  const HandleTextField({super.key});
-
-  @override
-  Widget build(BuildContext context) {
-    return Row(
-      mainAxisAlignment: MainAxisAlignment.spaceEvenly, // or start, end, center
-      children: [
-        const SizedBox(width: 15),
-        Expanded(
-          child: TextField(
-            maxLength: 3,
-            style: const TextStyle(color: Colors.white),
-            inputFormatters: [FilteringTextInputFormatter.digitsOnly],
-            decoration: InputDecoration(
-              labelText: '0',
-              labelStyle: TextStyle(color: Colors.white, fontSize: 16),
-              border: OutlineInputBorder(),
-            ),
-          ),
-        ),
-        const SizedBox(width: 5),
-        Text(
-          '.',
-          textAlign: TextAlign.center,
-          style: Theme.of(context).textTheme.displaySmall?.copyWith(
-            color: Colors.white,
-            fontWeight: FontWeight.w200,
-            letterSpacing: 0,
-          ),
-        ),
-        const SizedBox(width: 5),
-        Expanded(
-          child: TextField(
-            maxLength: 3,
-            style: const TextStyle(color: Colors.white),
-            inputFormatters: [FilteringTextInputFormatter.digitsOnly],
-            decoration: InputDecoration(
-              labelText: '-',
-              labelStyle: TextStyle(color: Colors.white, fontSize: 16),
-              border: OutlineInputBorder(),
-            ),
-          ),
-        ),
-        const SizedBox(width: 5),
-        Text(
-          '.',
-          textAlign: TextAlign.center,
-          style: Theme.of(context).textTheme.displaySmall?.copyWith(
-            color: Colors.white,
-            fontWeight: FontWeight.w200,
-            letterSpacing: 0,
-          ),
-        ),
-        const SizedBox(width: 5),
-        Expanded(
-          child: TextField(
-            maxLength: 3,
-            style: const TextStyle(color: Colors.white),
-            inputFormatters: [FilteringTextInputFormatter.digitsOnly],
-            decoration: InputDecoration(
-              labelText: '256',
-              labelStyle: TextStyle(color: Colors.white, fontSize: 16),
-              border: OutlineInputBorder(),
-            ),
-          ),
-        ),
-        const SizedBox(width: 5),
-        Text(
-          '.',
-          textAlign: TextAlign.center,
-          style: Theme.of(context).textTheme.displaySmall?.copyWith(
-            color: Colors.white,
-            fontWeight: FontWeight.w200,
-            letterSpacing: 0,
-          ),
-        ),
-        const SizedBox(width: 5),
-        Expanded(
-          child: TextField(
-            maxLength: 3,
-            style: const TextStyle(color: Colors.white),
-            inputFormatters: [FilteringTextInputFormatter.digitsOnly],
-            decoration: InputDecoration(
-              labelText: 'IP',
-              labelStyle: TextStyle(color: Colors.white, fontSize: 16),
-              border: OutlineInputBorder(),
-            ),
-          ),
-        ),
-        const SizedBox(width: 5),
-        Text(
-          ':',
-          textAlign: TextAlign.center,
-          style: Theme.of(context).textTheme.displaySmall?.copyWith(
-            color: Colors.white,
-            fontWeight: FontWeight.w200,
-            letterSpacing: 0,
-          ),
-        ),
-        const SizedBox(width: 5),
-        Expanded(
-          child: TextField(
-            maxLength: 10,
-            style: const TextStyle(color: Colors.white),
-            inputFormatters: [FilteringTextInputFormatter.digitsOnly],
-            decoration: InputDecoration(
-              labelText: 'Port',
-              labelStyle: TextStyle(color: Colors.white, fontSize: 16),
-              border: OutlineInputBorder(),
-            ),
-          ),
-        ),
-        const SizedBox(width: 15),
       ],
     );
   }
