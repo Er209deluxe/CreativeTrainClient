@@ -1,4 +1,4 @@
-import 'package:creativetrainclient/UI/renderClientConfig.dart';
+import 'package:creativetrainclient/UI/render_clientconfig.dart';
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:m3e_buttons/m3e_buttons.dart';
@@ -11,7 +11,7 @@ class HomePage extends StatefulWidget {
 }
 
 class _HomePageState extends State<HomePage> {
-  int? _selected = null;
+  int? _selected;
 
   @override
   Widget build(BuildContext context) {
@@ -33,7 +33,6 @@ class _HomePageState extends State<HomePage> {
                       _selected = index;
                     });
                     // Press Action
-                    print('Button $index pressed');
                     if (index == 1) {
                       Navigator.of(context).pushReplacement(
                         CupertinoPageRoute(builder: (_) => ClientConfigPage()),

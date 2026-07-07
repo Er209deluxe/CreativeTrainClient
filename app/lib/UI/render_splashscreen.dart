@@ -1,6 +1,6 @@
 import 'dart:math' as math;
 
-import 'package:creativetrainclient/UI/renderHomePage.dart';
+import 'package:creativetrainclient/UI/render_homepage.dart';
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 
@@ -171,9 +171,7 @@ class SplashLogo extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final double blur = 18 + glowValue * 28;
-    final double spread = 2 + glowValue + 10;
-    final Color glowColor = Color(
+    Color(
       0xFF7B2CBF,
     ).withValues(alpha: (.55 + glowValue * .25).clamp(0.0, 1.0));
     return AnimatedContainer(

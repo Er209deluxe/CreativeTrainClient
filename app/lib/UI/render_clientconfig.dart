@@ -1,4 +1,5 @@
-import 'package:creativetrainclient/UI/Handler/handleButtonsClientConfig.dart';
+import 'package:creativetrainclient/Handler/handle_buttons_clientconfig.dart';
+import 'package:creativetrainclient/configs/UI/standartm3edesign.dart';
 import 'package:flutter/material.dart';
 import 'package:m3e_buttons/m3e_buttons.dart';
 
@@ -10,7 +11,7 @@ class ClientConfigPage extends StatefulWidget {
 }
 
 class _ClientConfigPageState extends State<ClientConfigPage> {
-  int? _selected = 1;
+  int? _selected;
 
   @override
   Widget build(BuildContext context) {
@@ -27,6 +28,7 @@ class _ClientConfigPageState extends State<ClientConfigPage> {
               mainAxisSize: MainAxisSize.min,
               //Center Content Client Configuration UI
               children: [
+                M3EHeader(headerText: 'Choose Connection Method'),
                 BtnForIPOrDomain(
                   initialIndex: _selected,
                   onSelectionChanged: (int? newIndex) {

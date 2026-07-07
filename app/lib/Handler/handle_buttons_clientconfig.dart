@@ -1,7 +1,5 @@
-// ignore_for_file: unnecessary_null_comparison
-
-import 'dart:ffi';
-
+import 'package:creativetrainclient/Handler/handle_client_api_requests.dart';
+import 'package:creativetrainclient/configs/UI/standartm3edesign.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:m3e_buttons/m3e_buttons.dart';
@@ -16,14 +14,11 @@ bool validateInput(int? validationType, String pInput) {
       );
 
       return domainRegex.hasMatch(pInput.toLowerCase());
-      break;
     case 1: //IP
-      final RegExp ipRegex = RegExp(
-        r'^(\d{1,3}\.\d{1,3}\.\d{1,3}\.\d{1,3}):\d{1,5}$',
-      );
+      final RegExp ipRegex = RegExp(r'^(\d{1,3}\.){3}\d{1,3}\:\d{0,6}$');
+      print(pInput);
 
       return ipRegex.hasMatch(pInput.toLowerCase());
-      break;
   }
   return false;
 }
@@ -190,8 +185,19 @@ class _DomainPressActionState extends State<DomainPressAction> {
               String ipAdress = '$ip1.$ip2.$ip3.$ip4:$port';
               if (validateInput(1, ipAdress)) {
                 // valid ip address
+                validInput(0, context, ipAdress);
               } else {
                 // invalid ip address
+                showDialog(
+                  context: context,
+                  builder: (BuildContext dialogContext) {
+                    return ErrorDialogM3E(
+                      errorHeader: 'Invalid IP-Adress',
+                      errorText:
+                          'Please input a Valid IP-Adress for e.g. 192.178.5.21. If no Port is given the Client will try 8080',
+                    );
+                  },
+                );
               }
             },
             decoration: M3EButtonDecoration(),
@@ -235,7 +241,8 @@ class _DomainPressActionState extends State<DomainPressAction> {
             onPressed: () {
               String domainName = _domainInput.text;
               if (validateInput(0, domainName)) {
-                // If Domain name is a domain name
+                // Valid Domain Name
+                validInput(1, context, domainName);
               } else {
                 // Invalid Domain name
                 showDialog(
@@ -327,5 +334,68 @@ class _ErrorDialogM3EState extends State<ErrorDialogM3E> {
         ),
       ),
     );
+  }
+}
+
+class TestConnectionButton extends StatelessWidget {
+  const TestConnectionButton({super.key});
+
+  @override
+  Widget build(BuildContext context) {
+    return Dialog(
+      backgroundColor: const Color.fromARGB(255, 3, 59, 143),
+      child: Padding(
+        padding: EdgeInsets.all(24.0),
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            CircularProgressIndicator(),
+            SizedBox(height: 16),
+            M3EHeader(headerText: 'Testing Connection...'),
+          ],
+        ),
+      ),
+    );
+  }
+}
+
+Future<dynamic> testConnection(BuildContext context) {
+  return showDialog(
+    context: context,
+    barrierDismissible: false,
+    builder: (BuildContext context) {
+      return const Dialog(
+        backgroundColor: Color.fromARGB(255, 3, 59, 143),
+        child: Padding(
+          padding: EdgeInsets.all(24.0),
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              CircularProgressIndicator(color: Colors.blue),
+              SizedBox(height: 16),
+              M3EHeader(headerText: 'Testing Connection...'),
+            ],
+          ),
+        ),
+      );
+    },
+  );
+}
+
+Future<void> validInput(
+  int pConnectionType,
+  BuildContext context,
+  String pUrl,
+) async {
+  testConnection(context);
+  switch (pConnectionType) {
+    case 0: // Domain
+      bool succesFullConnection;
+      if (await handleTestConnectionToServer(pUrl)) {
+        succesFullConnection = true;
+      }
+      break;
+    case 1: // IP
+      break;
   }
 }

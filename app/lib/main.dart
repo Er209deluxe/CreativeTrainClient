@@ -1,4 +1,4 @@
-import 'package:creativetrainclient/UI/renderSplashScreen.dart';
+import 'package:creativetrainclient/UI/render_splashscreen.dart';
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
 
