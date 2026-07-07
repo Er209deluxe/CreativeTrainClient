@@ -213,6 +213,18 @@ function startStream() {
         }
     );
           eventSource.addEventListener(
+        "deathEvent",
+        (event) => {
+            alert("You have been killed!");
+        }
+    );
+             eventSource.addEventListener(
+        "sessionEnd",
+        (event) => {
+            showPlayerPopup(JSON.parse(event.data));
+        }
+    );
+          eventSource.addEventListener(
         "timerUpdate",
         (event) => {
             document.getElementById("timer").textContent = event.data;
@@ -245,7 +257,7 @@ function startStream() {
                         "sessionUuid"
                     );
 
-            }, 10000);
+            }, 3000);
         }
     );
 
@@ -302,7 +314,50 @@ function startStream() {
             stopStream();
         };
 }
+const teamColors = {
+    KILLER: "#d90408",
+    CIVILIAN: "#02d926",
+    NEUTRAL: "#888888"
+};
+function closePopup() {
+    document.getElementById("playerPopup").classList.add("hidden");
+    window.location.href = "/"; // Redirect to the main page
+}
+function showPlayerPopup(data) {
+    document.getElementById("playerPopup").classList.remove("hidden");
+    const winnerEl = document.getElementById("winner");
+    winnerEl.innerText =  data.winnerTeam+"S have won the game!";
+    winnerEl.style.color = teamColors[data.winnerTeam] || "white";
+        document.getElementById("reason").innerText =
+        data.reason;
+    // clear old data
+    document.querySelectorAll(".player-list").forEach(el => el.innerHTML = "");
 
+    data.playerDataList.forEach(p => {
+        const team = p.role.team; // KILLER / CIVILIAN / NEUTRAL
+        const container = document.querySelector(`#${team} .player-list`);
+
+        if (!container) return;
+
+        const div = document.createElement("div");
+        div.className = "player";
+
+        div.innerText = p.playerName;
+
+        // 🎨 role color
+        div.style.color = p.role.hex;
+
+        // ☠️ dead player = red override
+        if (!p.isAlive) {
+            div.style.textDecoration = "line-through";
+        }
+
+        // 🧾 tooltip = role name
+        div.title = `${p.role.name}`;
+
+        container.appendChild(div);
+    });
+}
 /* ---------------- STREAM STOP ---------------- */
 
 function stopStream() {
@@ -336,7 +391,8 @@ function stopStream() {
 async function loadInventory() {
     const inventoryData = await getInventory(false);
     const shopData = await getInventory(true);
-    if (!inventoryData) return;
+
+    if (!inventoryData || !shopData) return;
 
     const inventoryDiv = document.getElementById("Inventory");
     const shopDiv = document.getElementById("Shop");
@@ -346,8 +402,9 @@ async function loadInventory() {
     inventoryDiv.innerHTML = "<h2>Inventory</h2>";
     shopDiv.innerHTML = "<h2>Shop</h2>";
 
-    // Inventory
-    inventoryData.forEach((item, index) => {
+
+
+     inventoryData.forEach((item, index) => {
         const div = document.createElement("div");
         div.className = "inventory-slot";
 
@@ -355,24 +412,28 @@ async function loadInventory() {
             ? `${item.name}`
             : `Slot ${index + 1}: Empty`;
 
+                div.onclick = async () => {
+            if (item && await useItem(item)) {
+                await loadInventory();
+            }
+        };
         inventoryDiv.appendChild(div);
     });
 
-    // Shop
     shopData.forEach(item => {
-    const div = document.createElement("div");
-    div.className = "shop-item";
+        const div = document.createElement("div");
+        div.className = "shop-item";
 
-    div.textContent = `${item.name} - 🪙 ${item.price}`;
+        div.textContent = `${item.name} - 🪙 ${item.price}`;
 
-    div.onclick = async () => {
-        if (await buyItem(item.name)) {
-            await loadInventory();
-        }
-    };
+        div.onclick = async () => {
+            if (await buyItem(item.itemUuid)) {
+                await loadInventory();
+            }
+        };
 
-    shopDiv.appendChild(div);
-});
+        shopDiv.appendChild(div);
+    });
 }
 async function buyItem(item) {
     const playerUuid = sessionStorage.getItem("playerUuid");
@@ -381,7 +442,7 @@ async function buyItem(item) {
     const res = await makePostRequest(
         `/api/session/buyItem?playerUuid=${playerUuid}` +
         `&sessionToken=${sessionToken}` +
-        `&item=${encodeURIComponent(item)}` +
+        `&itemUuid=${encodeURIComponent(item)}` +
         `&ts=${Date.now()}`,
         "POST"
     );
@@ -391,6 +452,108 @@ async function buyItem(item) {
         return false;
     }
 
+    return true;
+}
+async function useItem(item) {
+    if (!item) return false;
+
+    const tags = item.tags || [];
+
+    // 🔫 Weapon flow → requires QR upload
+    if (tags.includes("Weapon")) {
+        return await openKillPopup(item);
+    }
+
+    // default behavior for non-weapons
+    console.log("Used item:", item.name);
+    return true;
+}
+function openKillPopup(item) {
+    return new Promise((resolve) => {
+        const overlay = document.createElement("div");
+        overlay.style.position = "fixed";
+        overlay.style.top = "0";
+        overlay.style.left = "0";
+        overlay.style.width = "100%";
+        overlay.style.height = "100%";
+        overlay.style.background = "rgba(0,0,0,0.7)";
+        overlay.style.display = "flex";
+        overlay.style.alignItems = "center";
+        overlay.style.justifyContent = "center";
+        overlay.style.zIndex = "9999";
+
+        const box = document.createElement("div");
+        box.style.background = "white";
+        box.style.padding = "20px";
+        box.style.borderRadius = "10px";
+        box.style.display = "flex";
+        box.style.flexDirection = "column";
+        box.style.gap = "10px";
+
+        const title = document.createElement("h3");
+        title.textContent = `Use ${item.name} - Scan Victim QR`;
+
+        const fileInput = document.createElement("input");
+        fileInput.type = "file";
+        fileInput.accept = "image/*";
+
+        const submitBtn = document.createElement("button");
+        submitBtn.textContent = "Confirm Kill";
+
+        const cancelBtn = document.createElement("button");
+        cancelBtn.textContent = "Cancel";
+
+        submitBtn.onclick = async () => {
+            if (!fileInput.files[0]) {
+                alert("Please upload a QR image");
+                return;
+            }
+
+            const success = await uploadKill(item, fileInput.files[0]);
+
+            document.body.removeChild(overlay);
+            resolve(success);
+        };
+
+        cancelBtn.onclick = () => {
+            document.body.removeChild(overlay);
+            resolve(false);
+        };
+
+        box.appendChild(title);
+        box.appendChild(fileInput);
+        box.appendChild(submitBtn);
+        box.appendChild(cancelBtn);
+        overlay.appendChild(box);
+
+        document.body.appendChild(overlay);
+    });
+}
+async function uploadKill(item, qrFile) {
+    const killerUuid = sessionStorage.getItem("playerUuid");
+    const sessionToken = sessionStorage.getItem("sessionToken");
+
+    const formData = new FormData();
+    formData.append("victimQr", qrFile);
+
+    const url =
+        `/api/session/kill` +
+        `?killerUuid=${killerUuid}` +
+        `&sessionToken=${sessionToken}` +
+        `&itemUuid=${item.itemUuid}`;
+
+    const res = await fetch(url, {
+        method: "POST",
+        body: formData
+    });
+
+    if (!res.ok) {
+        const text = await res.text();
+        alert("Kill failed: " + text);
+        return false;
+    }
+
+    alert("Kill successful!");
     return true;
 }
 /* ---------------- TRANSITION ---------------- */

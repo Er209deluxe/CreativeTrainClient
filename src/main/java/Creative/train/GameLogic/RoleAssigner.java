@@ -49,7 +49,6 @@ public class RoleAssigner {
         var innocents = GlobalVariableHolder.innocentClasses;
 
         int sets = playerCount / playersNeededForNewSpecialRole;
-
         //add a new killer/neutral for every playersNeededForNewSpecialRole players
         for (int i = 0; i < sets; i++) {
 
@@ -67,6 +66,9 @@ public class RoleAssigner {
         while (roleList.size() < playerCount) {
             roleList.add(getRandomRole(noVigiInnocents,sessionUuid));
         }
+        Session session = sessionManager.getSession(sessionUuid);
+        session.setAliveKillers(sets);
+        session.setAliveCivilians(sets+noVigiInnocents.size());
         return roleList;
     }
 }

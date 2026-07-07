@@ -16,7 +16,7 @@ public abstract class Role {
     protected boolean passiveIncome;
     protected int taskIncome;
 
-    private final Map<String,Item>  itemShop = new HashMap<>();
+    private final Map<UUID,Item>  itemShop = new HashMap<>();
     List<Item> baseInventory = new ArrayList<>();
 
     public Role(UUID sessionUuid,String name,Team team,String hex) {
@@ -29,7 +29,7 @@ public abstract class Role {
         this.taskIncome = data.taskIncome;
 
         data.itemShop.forEach(item -> {
-            this.itemShop.put(item.getName(),  item);
+            this.itemShop.put(item.getItemUuid(),  item);
         });
     }
 
@@ -45,7 +45,7 @@ public abstract class Role {
         return passiveIncome;
     }
 
-    public Map<String, Item> getItemShop() {
+    public Map<UUID, Item> getItemShop() {
         return itemShop;
     }
 

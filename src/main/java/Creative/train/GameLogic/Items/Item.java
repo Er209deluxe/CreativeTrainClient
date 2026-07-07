@@ -8,12 +8,13 @@ import java.util.UUID;
 
 @JsonTypeInfo(
         use = JsonTypeInfo.Id.NAME,
-        include = JsonTypeInfo.As.PROPERTY,
-        property = "type"
+        include = JsonTypeInfo.As.EXISTING_PROPERTY,
+        property = "name",
+        visible = true
 )
 @JsonSubTypes({
-        @JsonSubTypes.Type(value = Knife.class, name = "Knife"),
         @JsonSubTypes.Type(value = Gun.class, name = "Gun"),
+        @JsonSubTypes.Type(value = Knife.class, name = "Knife"),
         @JsonSubTypes.Type(value = Food.class, name = "Food")
 })
 public abstract class Item {
@@ -26,13 +27,36 @@ public abstract class Item {
         itemUuid = UUID.randomUUID();
         this.tags = tags;
     }
+    public Item copy() {
+        try {
+            Item clone = this.getClass()
+                    .getDeclaredConstructor()
+                    .newInstance();
+
+            clone.name = this.name;
+            clone.price = this.price;
+            clone.tags = this.tags != null ? List.copyOf(this.tags) : null;
+            clone.itemUuid = UUID.randomUUID();
+
+            return clone;
+
+        } catch (Exception e) {
+            throw new RuntimeException("Copy failed", e);
+        }
+    }
+
     public void setPrice(int price) {
         this.price = price;
+    }
+
+    public List<String> getTags() {
+        return tags;
     }
 
     public UUID getItemUuid() {
         return itemUuid;
     }
+
 
     public void setItemUuid(UUID itemUuid) {
         this.itemUuid = itemUuid;

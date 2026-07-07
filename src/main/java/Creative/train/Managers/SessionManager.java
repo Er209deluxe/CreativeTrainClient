@@ -9,9 +9,13 @@ import Creative.train.DataTypes.Wrappers.BasePlayerData;
 import Creative.train.DataTypes.Wrappers.PlayerData;
 import Creative.train.DataTypes.Session;
 import Creative.train.DataTypes.Wrappers.SessionEndData;
+import Creative.train.GameLogic.Items.Item;
+import Creative.train.GameLogic.Items.Weapon;
 import Creative.train.GameLogic.RoleAssigner;
 import Creative.train.GameLogic.Roles.Role;
 import com.fasterxml.jackson.databind.JsonNode;
+import org.springframework.http.HttpStatus;
+import org.springframework.http.ResponseEntity;
 
 import java.io.IOException;
 import java.util.*;
@@ -162,8 +166,35 @@ public class SessionManager {
     public boolean isSessionActive(UUID sessionUuid){
         return getSession(sessionUuid).isActive();
     }
-    public void killPlayer(Player player){
+    public void setPlayerDead(Player player){
         player.setAlive(false);
         SseHandler.sendDeathInfo(player.getPlayerId());
+
+        Session session = getSession(player.getSessionUUID());
+        session.decrementAlivePlayers(player);
+        session.getTimeManager().changeRemainingSecondsBy
+                (session.getGeneralConfig().getIncrementTimerOnKillInSeconds());
+    }
+    public ResponseEntity<?> killPlayer(Player killer, Player victim, UUID itemUuid){
+        Session session = getSession(killer.getSessionUUID());
+        if(!isSessionActive(killer.getSessionUUID())) return ResponseEntity.status(HttpStatus.FORBIDDEN)
+                .body("Session is not active");
+        if(!killer.isAlive()) return ResponseEntity.status(HttpStatus.CONFLICT).body("You are not alive");
+        if(!victim.isAlive()) return ResponseEntity.status(HttpStatus.CONFLICT).body("Victim is already dead");
+
+        Item item = killer.getItem(itemUuid);
+        if(item==null) return ResponseEntity.status(HttpStatus.CONFLICT).body("Item does not exist");
+
+        if(item instanceof Weapon weapon){
+            if(!weapon.killAbility(victim)){
+             return ResponseEntity.status(HttpStatus.CONFLICT).body("Weapon is still on cooldown");
+            }
+            if(killer.getRole().getTeam().equals(Role.Team.KILLER)) {
+                killer.changeCoins(session.getGeneralConfig().getKillReward());
+            }
+            setPlayerDead(victim);
+            return ResponseEntity.status(HttpStatus.OK).build();
+        }
+        return ResponseEntity.status(HttpStatus.CONFLICT).body("Item is not a Weapon");
     }
 }

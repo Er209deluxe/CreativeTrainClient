@@ -33,6 +33,35 @@
 <button onclick="loadInventory()">
     Refresh Inventory
 </button>
+
+
+<div id="playerPopup" class="popup hidden">
+    <div class="popup-content">
+        <h2 class="centerContent" id="gameResult">Game Result</h2>
+        <div id="winner"></div>
+        <div id="reason"></div>
+        <div class="teams">
+            
+        <div class="team-section" id="KILLER">
+            <h3 style="color:#d90408;">Killers</h3>
+            <div class="player-list"></div>
+        </div>
+
+        <div class="team-section" id="CIVILIAN">
+            <h3 style="color:#02d926;">Civilians</h3>
+            <div class="player-list"></div>
+        </div>
+
+        <div class="team-section" id="NEUTRAL">
+            <h3 style="color:#888;">Neutrals</h3>
+            <div class="player-list"></div>
+        </div>
+        </div>
+       
+
+        <button onclick="closePopup()">Close</button>
+    </div>
+</div>
 </body>
 
     <script src="/Web/ApiRequester.js?ts=1"></script>
