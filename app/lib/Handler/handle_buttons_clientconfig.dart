@@ -181,6 +181,9 @@ class _DomainPressActionState extends State<DomainPressAction> {
               String ip3 = _ipInput3.text;
               String ip4 = _ipInput4.text;
               String port = _portInput.text;
+              if (port == '') {
+                port = '8080';
+              }
 
               String ipAdress = '$ip1.$ip2.$ip3.$ip4:$port';
               if (validateInput(1, ipAdress)) {
@@ -359,25 +362,43 @@ class TestConnectionButton extends StatelessWidget {
   }
 }
 
+class CircleLoadingUI extends StatefulWidget {
+  final bool showLoadingIndicator;
+  const CircleLoadingUI({super.key, required this.showLoadingIndicator});
+
+  @override
+  State<CircleLoadingUI> createState() => CircleLoadingState();
+}
+
+class CircleLoadingState extends State<CircleLoadingUI> {
+  @override
+  Widget build(BuildContext context) {
+    return Dialog(
+      backgroundColor: const Color.fromARGB(255, 3, 59, 143),
+      child: Padding(
+        padding: const EdgeInsets.all(24.0),
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            if (widget.showLoadingIndicator)
+              const CircularProgressIndicator(color: Colors.blue)
+            else
+              Icon(Icons.check, color: Colors.green),
+            const SizedBox(height: 16),
+            const M3EHeader(headerText: 'Testing Connection...'),
+          ],
+        ),
+      ),
+    );
+  }
+}
+
 Future<dynamic> testConnection(BuildContext context) {
   return showDialog(
     context: context,
     barrierDismissible: false,
     builder: (BuildContext context) {
-      return const Dialog(
-        backgroundColor: Color.fromARGB(255, 3, 59, 143),
-        child: Padding(
-          padding: EdgeInsets.all(24.0),
-          child: Column(
-            mainAxisSize: MainAxisSize.min,
-            children: [
-              CircularProgressIndicator(color: Colors.blue),
-              SizedBox(height: 16),
-              M3EHeader(headerText: 'Testing Connection...'),
-            ],
-          ),
-        ),
-      );
+      return CircleLoadingUI(showLoadingIndicator: true);
     },
   );
 }
@@ -390,10 +411,8 @@ Future<void> validInput(
   testConnection(context);
   switch (pConnectionType) {
     case 0: // Domain
-      bool succesFullConnection;
-      if (await handleTestConnectionToServer(pUrl)) {
-        succesFullConnection = true;
-      }
+      CircleLoadingUI(showLoadingIndicator: true);
+      if (await handleTestConnectionToServer(pUrl)) {}
       break;
     case 1: // IP
       break;
