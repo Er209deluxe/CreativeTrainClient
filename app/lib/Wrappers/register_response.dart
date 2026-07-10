@@ -25,4 +25,14 @@ class RegisterResponse {
     );
   }
 
+  Map<String, dynamic> toJson() {
+    return {
+      "playerUuid": playerUuid,
+      "isHost": isHost,
+      "sessionUuid": sessionUuid,
+      "token": token,
+      "playerList": playerList,
+      "hostName": hostName,
+    };
+  }
 }

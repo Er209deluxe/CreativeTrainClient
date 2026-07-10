@@ -1,7 +1,14 @@
+import 'dart:async';
+import 'dart:collection';
+
+import 'package:creativetrainclient/Handler/sse_handler.dart';
 import 'package:creativetrainclient/Wrappers/register_response.dart';
 import 'package:http/http.dart' as http;
 import 'dart:convert';
+import 'package:flutter_client_sse/flutter_client_sse.dart';
+import 'package:flutter_client_sse/constants/sse_request_type_enum.dart';
 
+StreamSubscription? sseSubscription;
 Future<bool> handleTestConnectionToServer(String pUrl) async {
   var url = Uri.parse('http://$pUrl');
   var response = await http.get(url);
@@ -37,13 +44,13 @@ Future<bool> handleTestConnectionToServer(String pUrl) async {
     }
 
       var registrationJson = jsonDecode(registerResponse.body) as Map<String, dynamic>;
-    String uuid =registrationJson["sessionUuid"];
+    String sessionUuid =registrationJson["sessionUuid"];
 
     final connectedUsersUrl = Uri.http(
       ipAddress,
       '/api/session/connectedUsers',
       {
-        'sessionUuid': uuid,
+        'sessionUuid': sessionUuid,
       },
     );
 
@@ -51,7 +58,7 @@ Future<bool> handleTestConnectionToServer(String pUrl) async {
       ipAddress,
       '/api/session/hostName',
       {
-        'sessionUuid': uuid,
+        'sessionUuid': sessionUuid,
       },
     );
 
@@ -63,7 +70,42 @@ Future<bool> handleTestConnectionToServer(String pUrl) async {
     final users = (jsonDecode(futureResult.first.body) as List<dynamic>)
         .cast<String>();
     String hostName = futureResult.last.body;
-      return RegisterResponse.fromJson(registrationJson,users,hostName);
+
+    RegisterResponse returnResponse = RegisterResponse.fromJson(registrationJson,users,hostName);
+    print(jsonEncode(returnResponse.toJson()));
+    sseSubscription = startStream(ipAddress,returnResponse.playerUuid , returnResponse.token);
+
+    return returnResponse;
     }
 
+
+StreamSubscription<SSEModel> startStream(String ipAddress,String playerUuid, String sessionToken) {
+  /**
+   * key: event name
+   * value: corresponding function in "sse_handler.dart"
+   */
+  final Map<String, void Function(String)> eventMap = {
+    "playerJoined" : playerJoined,
+    "playerLeft" : playerLeft
+  };
+
+  final stream = SSEClient.subscribeToSSE(
+  method: SSERequestType.GET,
+  url: "http://$ipAddress/api/stream?playerUuid=$playerUuid&sessionToken=$sessionToken",
+  header: {
+  "Accept": "text/event-stream",
+  },
+  );
+
+  return stream.listen((event) {
+    print("Event: ${event.event}");
+    print("Data: ${event.data}");
+
+    final handler = eventMap[event.event];
+
+    if (handler != null && event.data != null) {
+      handler(event.data!);
+    }
+  });
+}
 

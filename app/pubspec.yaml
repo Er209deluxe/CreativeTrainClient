@@ -16,8 +16,7 @@ dependencies:
   m3e_collection: ^0.3.7
   shared_preferences: ^2.5.5
   http: ^1.6.0
-
-
+  flutter_client_sse: ^2.0.3
 dev_dependencies:
   flutter_test:
     sdk: flutter
