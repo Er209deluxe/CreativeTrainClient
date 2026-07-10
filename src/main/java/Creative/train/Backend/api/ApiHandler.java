@@ -20,7 +20,10 @@ import java.util.UUID;
 @RequestMapping(GlobalVariableHolder.apiPrefix)
 public class ApiHandler {
     static final SessionManager sessionManager=SessionManager.getInstance();
-
+    @GetMapping("/validateApi")
+    public ResponseEntity<?> apiValidation(){
+        return ResponseEntity.ok().body("CreativeTrain api v1\n Author: Creative0 \n");
+    }
     @GetMapping("/stream")
     public SseEmitter stream(@RequestParam("playerUuid") UUID playerUuid,@RequestParam("sessionToken") String sessionToken) {
         Player player = SessionManager.getInstance().getPlayer(playerUuid);
