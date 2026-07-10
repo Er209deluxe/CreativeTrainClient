@@ -1,13 +1,15 @@
 import 'package:creativetrainclient/Handler/handle_client_api_requests.dart';
+import 'package:creativetrainclient/UI/render_clientconfig.dart';
+import 'package:creativetrainclient/UI/render_registerconfig.dart';
 import 'package:creativetrainclient/configs/UI/standartm3edesign.dart';
 import 'package:creativetrainclient/Handler/app_state.dart';
 
+import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:http/http.dart' as http;
 import 'package:m3e_buttons/m3e_buttons.dart';
 import 'package:flutter/services.dart' show rootBundle;
-
 
 bool validateInput(int? validationType, String pInput) {
   // 0 DomainValidation | 1 IP validation
@@ -54,9 +56,9 @@ class _DomainPressActionState extends State<DomainPressAction> {
     _portInput.dispose();
     super.dispose();
   }
-  String getIp(){
 
-    if(app_state.getIpAddress()!=null){
+  String getIp() {
+    if (app_state.getIpAddress() != null) {
       print("got ip from cache");
       return app_state.getIpAddress()!;
     }
@@ -70,12 +72,13 @@ class _DomainPressActionState extends State<DomainPressAction> {
       port = '8080';
     }
     String ipAddress = '127.0.0.1:$port';
-    if(!(ip1.isEmpty || ip2.isEmpty || ip3.isEmpty || ip4.isEmpty)){
+    if (!(ip1.isEmpty || ip2.isEmpty || ip3.isEmpty || ip4.isEmpty)) {
       ipAddress = '$ip1.$ip2.$ip3.$ip4:$port';
     }
     app_state.setIpAddress(ipAddress);
     return ipAddress;
   }
+
   @override
   Widget build(BuildContext context) {
     if (widget.actionNr == 1) {
@@ -223,29 +226,8 @@ class _DomainPressActionState extends State<DomainPressAction> {
             },
             decoration: M3EButtonDecoration(),
             size: M3EButtonSize.lg,
-            child: const Text(
-              'Test Connection',
-              style: TextStyle(fontSize: 22),
-            ),
+            child: const Text('Connect', style: TextStyle(fontSize: 22)),
           ),
-          M3EButton(onPressed: () async {
-            String? ipAddress = getIp();
-
-            final data = await rootBundle.load('assets/images/6.png');
-            final bytes = data.buffer.asUint8List();
-
-            final mpFile = http.MultipartFile.fromBytes(
-              'playerQr',
-              bytes,
-              filename: '6.png',
-            );
-
-            handleRegistration(
-                ipAddress,
-                "Testacc",
-                mpFile,
-                null);
-          })
         ],
       );
     } else if (widget.actionNr == 0) {
@@ -298,10 +280,7 @@ class _DomainPressActionState extends State<DomainPressAction> {
             },
             decoration: M3EButtonDecoration(),
             size: M3EButtonSize.lg,
-            child: const Text(
-              'Test Connection',
-              style: TextStyle(fontSize: 22),
-            ),
+            child: const Text('Connect', style: TextStyle(fontSize: 22)),
           ),
         ],
       );
@@ -445,13 +424,12 @@ Future<void> validInput(
   String pUrl,
 ) async {
   testConnection(context);
-  switch (pConnectionType) {
-    case 0: // Domain
-      CircleLoadingUI(showLoadingIndicator: true);
-      if (await handleTestConnectionToServer(pUrl+"/api/validateApi")) {}
-      break;
-    case 1: // IP
-      break;
+  CircleLoadingUI(showLoadingIndicator: true);
+  if (await handleTestConnectionToServer(pUrl + "/api/validateApi", context)) {
+    Navigator.pop(context);
+    // Session Control screen
+    Navigator.of(context).pushReplacement(
+      CupertinoPageRoute(builder: (_) => RenderRegisterconfig()),
+    );
   }
-  Navigator.pop(context);
 }

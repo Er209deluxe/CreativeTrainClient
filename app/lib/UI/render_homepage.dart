@@ -1,4 +1,5 @@
 import 'package:creativetrainclient/UI/render_clientconfig.dart';
+import 'package:creativetrainclient/UI/render_registerconfig.dart';
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:m3e_buttons/m3e_buttons.dart';
@@ -19,7 +20,7 @@ class _HomePageState extends State<HomePage> {
       body: Stack(
         fit: StackFit.expand,
         children: [
-          _GradientHomeBG(),
+          GradientHomeBG(),
           Center(
             child: Column(
               mainAxisAlignment: MainAxisAlignment.center,
@@ -73,28 +74,6 @@ class _HomePageState extends State<HomePage> {
             ),
           ),
         ],
-      ),
-    );
-  }
-}
-
-// Gradient Background
-class _GradientHomeBG extends StatelessWidget {
-  const _GradientHomeBG();
-
-  @override
-  Widget build(BuildContext context) {
-    return Container(
-      decoration: BoxDecoration(
-        gradient: LinearGradient(
-          begin: Alignment.topLeft,
-          end: Alignment.bottomRight,
-          colors: [
-            Color.fromARGB(255, 119, 50, 43),
-            Color.fromARGB(255, 97, 6, 92),
-            Color.fromARGB(255, 21, 38, 87),
-          ],
-        ),
       ),
     );
   }
