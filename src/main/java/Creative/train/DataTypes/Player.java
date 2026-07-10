@@ -12,9 +12,6 @@ import Creative.train.Managers.EncryptionManager;
 import Creative.train.Managers.SessionManager;
 import org.springframework.web.servlet.mvc.method.annotation.SseEmitter;
 
-import java.util.Arrays;
-import java.util.Collections;
-import java.util.List;
 import java.util.UUID;
 
 public class Player {
@@ -23,33 +20,25 @@ public class Player {
     private final PlayerData data = new PlayerData();
     private final Item[] inventory = new Item[9];
     private int coins=0;
-    private Quest currentQuest;
-    public enum Quest{
-        Homework,
-        eat,
-        drink
-    }
+
     public Player(String name, UUID playerId,String passwordHash,boolean isHost){
         baseData.playerName = name;
         baseData.isAlive = true;
         data.playerUuid = playerId;
         data.isHost = isHost;
         data.token = passwordHash;
-    }
-    public void assignQuest(){
-        if(currentQuest!=null){
-            return;
-        }
-        List<Quest> values = Collections.unmodifiableList(Arrays.asList(Quest.values()));
-        int ranInt = (int)(Math.random() * values.size());
 
-        currentQuest = values.get(ranInt);
     }
-
+    public boolean isCorrectChallenge(String challenge){
+        return challenge.equals(data.challenge);
+    }
     public BasePlayerData getBaseData() {
         return baseData;
     }
-
+    public void generateNewChallange(){
+        data.challenge = EncryptionManager.generateRandomBytes(16);
+        SseHandler.sendChallangeUpdate(getPlayerId(),data.challenge);
+    }
     public boolean isCorrectPass(String password){
         String hashedPassword = EncryptionManager.sha256(password);
 
@@ -125,8 +114,8 @@ public class Player {
     }
 
     public void earnPassiveIncome(){
-            int passiveIncome = SessionManager.getInstance().getSession(getSessionUUID()).getGeneralConfig().getPassiveIncome();
-            changeCoins(passiveIncome);
+        int passiveIncome = SessionManager.getInstance().getSession(getSessionUUID()).getGeneralConfig().getPassiveIncome();
+        changeCoins(passiveIncome);
     }
     public Role getRole() {
         return baseData.role;

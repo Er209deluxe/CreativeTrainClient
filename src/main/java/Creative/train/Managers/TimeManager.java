@@ -3,7 +3,8 @@ package Creative.train.Managers;
 import Creative.train.Backend.api.SseHandler;
 import Creative.train.DataTypes.Session;
 import Creative.train.GameLogic.Roles.Role;
-import com.beust.ah.A;
+import Creative.train.Managers.ThreadManager;
+import Creative.train.Managers.SessionManager;
 
 import java.util.concurrent.ScheduledFuture;
 import java.util.concurrent.TimeUnit;
@@ -23,6 +24,7 @@ public class TimeManager {
     }
     public void startCountdown(){
         timerTask = ThreadManager.getScheduler().scheduleAtFixedRate(() -> {
+            try {
 
                 if (remainingSeconds.get() <= 0) {
                     SessionManager.getInstance().endSession(
@@ -46,17 +48,23 @@ public class TimeManager {
                 );
 
                 handlePassiveIncome(passedSeconds);
-                handleQuests(passedSeconds);
+                renewChallenge(passedSeconds);
 
                 remainingSeconds.decrementAndGet();
                 passedSeconds.incrementAndGet();
 
+            } catch (Exception e) {
+                e.printStackTrace();
+            }
         }, 0, 1, TimeUnit.SECONDS);
     }
-    private void handleQuests(AtomicInteger passedSeconds){
-        if(passedSeconds.get()%30!=0) return;
-
-
+    private void renewChallenge(AtomicInteger seconds){
+        if(seconds.get()%30!=0) return;
+        session.getAllPlayers().forEach(player -> {
+            if (player.getRole().isPassiveIncomeEnabled()) {
+                player.generateNewChallange();
+            }
+        });
     }
     public void changeRemainingSecondsBy(int changeBy) {
         remainingSeconds.addAndGet(changeBy);

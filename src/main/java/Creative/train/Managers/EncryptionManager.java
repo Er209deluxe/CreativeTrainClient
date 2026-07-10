@@ -10,11 +10,13 @@ public class EncryptionManager {
     private static final Base64.Encoder base64Encoder = Base64.getUrlEncoder(); //threadsafe
 
     public static String generateNewToken() {
-        byte[] randomBytes = new byte[24];
+        return generateRandomBytes(24);
+    }
+    public static String generateRandomBytes(int byteCount){
+        byte[] randomBytes = new byte[byteCount];
         secureRandom.nextBytes(randomBytes);
         return base64Encoder.encodeToString(randomBytes);
     }
-
     public static String sha256(String input) {
         try {
             MessageDigest digest = MessageDigest.getInstance("SHA-256");

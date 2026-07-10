@@ -459,7 +459,6 @@ async function useItem(item) {
 
     const tags = item.tags || [];
 
-    // 🔫 Weapon flow → requires QR upload
     if (tags.includes("Weapon")) {
         return await openKillPopup(item);
     }
@@ -467,49 +466,109 @@ async function useItem(item) {
     // default behavior for non-weapons
     console.log("Used item:", item.name);
     return true;
-}
-function openKillPopup(item) {
+}function openKillPopup(item) {
     return new Promise((resolve) => {
         const overlay = document.createElement("div");
-        overlay.style.position = "fixed";
-        overlay.style.top = "0";
-        overlay.style.left = "0";
-        overlay.style.width = "100%";
-        overlay.style.height = "100%";
-        overlay.style.background = "rgba(0,0,0,0.7)";
-        overlay.style.display = "flex";
-        overlay.style.alignItems = "center";
-        overlay.style.justifyContent = "center";
-        overlay.style.zIndex = "9999";
+        Object.assign(overlay.style, {
+            position: "fixed",
+            inset: "0",
+            background: "rgba(0,0,0,0.65)",
+            display: "flex",
+            alignItems: "center",
+            justifyContent: "center",
+            zIndex: "9999",
+            backdropFilter: "blur(4px)"
+        });
 
         const box = document.createElement("div");
-        box.style.background = "white";
-        box.style.padding = "20px";
-        box.style.borderRadius = "10px";
-        box.style.display = "flex";
-        box.style.flexDirection = "column";
-        box.style.gap = "10px";
+        Object.assign(box.style, {
+            background: "#ffffff",
+            borderRadius: "16px",
+            padding: "28px",
+            width: "420px",
+            maxWidth: "90%",
+            boxShadow: "0 12px 30px rgba(0,0,0,0.3)",
+            display: "flex",
+            flexDirection: "column",
+            gap: "16px",
+            fontFamily: "Arial, sans-serif"
+        });
 
-        const title = document.createElement("h3");
-        title.textContent = `Use ${item.name} - Scan Victim QR`;
+        const title = document.createElement("h2");
+        title.textContent = `Use ${item.name}`;
+        title.style.margin = "0";
+        title.style.textAlign = "center";
+        title.style.color = "#222";
 
-        const fileInput = document.createElement("input");
-        fileInput.type = "file";
-        fileInput.accept = "image/*";
+        const subtitle = document.createElement("p");
+        subtitle.textContent = "Enter the victim's information to confirm the kill.";
+        subtitle.style.margin = "0";
+        subtitle.style.textAlign = "center";
+        subtitle.style.color = "#666";
 
-        const submitBtn = document.createElement("button");
-        submitBtn.textContent = "Confirm Kill";
+        const uuidLabel = document.createElement("label");
+        uuidLabel.textContent = "Victim UUID";
+        uuidLabel.style.fontWeight = "bold";
+        uuidLabel.style.color = "#222";
+
+        const uuidInput = document.createElement("input");
+        uuidInput.type = "text";
+        uuidInput.placeholder = "e.g. a23390c2-b829-418e-8971-8dcd6dee5d8e";
+        uuidInput.style.color = "#222";
+        Object.assign(uuidInput.style, inputStyle());
+
+        const challengeLabel = document.createElement("label");
+        challengeLabel.textContent = "Challenge";
+        challengeLabel.style.fontWeight = "bold";
+        challengeLabel.style.color = "#222";
+        const challengeInput = document.createElement("input");
+        challengeInput.type = "text";
+        challengeInput.placeholder = "Enter current challenge";
+        challengeInput.style.color = "#222";
+
+        Object.assign(challengeInput.style, inputStyle());
+
+        const buttonRow = document.createElement("div");
+        Object.assign(buttonRow.style, {
+            display: "flex",
+            justifyContent: "flex-end",
+            gap: "12px",
+            marginTop: "8px"
+        });
 
         const cancelBtn = document.createElement("button");
         cancelBtn.textContent = "Cancel";
+        Object.assign(cancelBtn.style, {
+            padding: "10px 18px",
+            border: "none",
+            borderRadius: "8px",
+            background: "#d1d5db",
+            cursor: "pointer",
+            fontWeight: "bold"
+        });
+
+        const submitBtn = document.createElement("button");
+        submitBtn.textContent = "Confirm Kill";
+        Object.assign(submitBtn.style, {
+            padding: "10px 18px",
+            border: "none",
+            borderRadius: "8px",
+            background: "#dc2626",
+            color: "white",
+            cursor: "pointer",
+            fontWeight: "bold"
+        });
 
         submitBtn.onclick = async () => {
-            if (!fileInput.files[0]) {
-                alert("Please upload a QR image");
+            const victimUuid = uuidInput.value.trim();
+            const challenge = challengeInput.value.trim();
+
+            if (!victimUuid || !challenge) {
+                alert("Please enter both the victim UUID and the challenge.");
                 return;
             }
 
-            const success = await uploadKill(item, fileInput.files[0]);
+            const success = await uploadKill(item, victimUuid, challenge);
 
             document.body.removeChild(overlay);
             resolve(success);
@@ -520,40 +579,55 @@ function openKillPopup(item) {
             resolve(false);
         };
 
-        box.appendChild(title);
-        box.appendChild(fileInput);
-        box.appendChild(submitBtn);
-        box.appendChild(cancelBtn);
-        overlay.appendChild(box);
+        buttonRow.append(cancelBtn, submitBtn);
 
+        box.append(
+            title,
+            subtitle,
+            uuidLabel,
+            uuidInput,
+            challengeLabel,
+            challengeInput,
+            buttonRow
+        );
+
+        overlay.appendChild(box);
         document.body.appendChild(overlay);
+
+        uuidInput.focus();
     });
+
+    function inputStyle() {
+        return {
+            padding: "12px",
+            border: "1px solid #ccc",
+            borderRadius: "8px",
+            fontSize: "14px",
+            outline: "none",
+            width: "100%",
+            boxSizing: "border-box"
+        };
+    }
 }
-async function uploadKill(item, qrFile) {
-    const killerUuid = sessionStorage.getItem("playerUuid");
+async function uploadKill(item, victimUuid, challenge) {
+    const playerUuid = sessionStorage.getItem("playerUuid");
     const sessionToken = sessionStorage.getItem("sessionToken");
 
-    const formData = new FormData();
-    formData.append("victimQr", qrFile);
-
-    const url =
-        `/api/session/kill` +
-        `?killerUuid=${killerUuid}` +
+    const res = await makePostRequest(
+        `/api/session/kill?killerUuid=${playerUuid}` +
         `&sessionToken=${sessionToken}` +
-        `&itemUuid=${item.itemUuid}`;
-
-    const res = await fetch(url, {
-        method: "POST",
-        body: formData
-    });
+        `&itemUuid=${encodeURIComponent(item.itemUuid)}` +
+        `&victimUuid=${encodeURIComponent(victimUuid)}` +
+        `&challenge=${encodeURIComponent(challenge)}` +
+        `&ts=${Date.now()}`,
+        "POST"
+    );
 
     if (!res.ok) {
-        const text = await res.text();
-        alert("Kill failed: " + text);
+        alert(res.body);
         return false;
     }
 
-    alert("Kill successful!");
     return true;
 }
 /* ---------------- TRANSITION ---------------- */
@@ -601,7 +675,7 @@ function hideTransition() {
 
 async function registerAndConnect() {
 
-    
+
 
     const isHost =
         document.getElementById(
@@ -755,17 +829,7 @@ async function registerUser() {
             )
             .value.trim();
 
-    const file =
-        playerUuidInput.files[0];
 
-    if (!file) {
-
-        alert(
-            "Please upload a QR image."
-        );
-
-        return;
-    }
 
     if (!playerName) {
 
@@ -791,10 +855,7 @@ async function registerUser() {
     const formData =
         new FormData();
 
-    formData.append(
-        "playerQr",
-        file
-    );
+
 
     formData.append(
         "playerName",

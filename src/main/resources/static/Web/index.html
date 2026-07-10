@@ -4,164 +4,157 @@
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>Train Lobby</title>
-     <link rel="icon" type="image/x-icon" href="/TrainFavicon.ico">
+    <link rel="icon" type="image/x-icon" href="/TrainFavicon.ico">
 
     <link rel="stylesheet" href="/Web/stylesheet.css" />
 </head>
 
 <body>
 
-    <div id="transitionScreen" class="transition-screen"></div>
+<div id="transitionScreen" class="transition-screen"></div>
 
-    <div class="centered">
+<div class="centered">
 
-        <!-- Main Panel -->
-        <div class="main">
+    <!-- Main Panel -->
+    <div class="main">
 
-            <h1>Session Control</h1>
+        <h1>Session Control</h1>
 
-            <button onclick="generatePlayerQr()">
-                Generate QR Code
+        <button onclick="generatePlayerQr()">
+            Generate QR Code
+        </button>
+
+        <button id="startSessionButton"
+                onclick="startSession()"
+                style="display: none;">
+            Host Session
+        </button>
+
+        <!-- Registration Section -->
+        <div id="registrationSection">
+
+            <button onclick="registerAndConnect()">
+                Register
             </button>
 
-            <button id="startSessionButton"
-                    onclick="startSession()"
-                    style="display: none;">
-                Host Session
-            </button>
+            <div class="checkboxRow">
+                <input type="checkbox" name="isHost" id="isHost">
+                <label for="isHost">I am the host</label>
+            </div>
 
-            <!-- Registration Section -->
-            <div id="registrationSection">
 
-                <button onclick="registerAndConnect()">
-                    Register
-                </button>
-
-                <div class="checkboxRow">
-                    <input type="checkbox" name="isHost" id="isHost">
-                    <label for="isHost">I am the host</label>
-                </div>
-
-                <!-- Player UUID image upload -->
-                <input
-                    class="fileUpload"
-                    type="file"
-                    id="player-uuid"
-                    accept="image/*"
-                >
-
-                <input
+            <input
                     type="text"
                     id="player-name"
                     placeholder="Player Name"
-                >
+            >
 
-                <input
+            <input
                     type="text"
                     id="register-session-uuid"
                     placeholder="Session UUID"
-                >
+            >
 
-            </div>
+        </div>
 
-            <!-- Host Only Config -->
-            <div id="hostConfigSection" style="display: none;">
+        <!-- Host Only Config -->
+        <div id="hostConfigSection" style="display: none;">
 
-                <label for="role-config-upload">
-                    Upload Role Config JSON
-                </label>
+            <label for="role-config-upload">
+                Upload Role Config JSON
+            </label>
 
-                <input
+            <input
                     class="fileUpload"
                     type="file"
                     id="role-config-upload"
                     accept=".json,application/json"
-                >
+            >
 
-                <p id="role-config-status">
-                    No JSON uploaded
-                </p>
-
-            </div>
-
-            <div class="absoluteCenter">
-                <img id="qrCode" alt="QR Code">
-            </div>
+            <p id="role-config-status">
+                No JSON uploaded
+            </p>
 
         </div>
 
-        <!-- User Panel -->
-        <div id="currentUsers" class="currentUsers">
-
-            <h3>Session UUID</h3>
-
-            <p
-                class="sessionDisplay"
-                id="sessionUuidDisplay"
-            >
-                No session active
-            </p>
-
-            <button onclick="leaveSession()">Leave Game</button>
-
-            <h3>Current Users</h3>
-
-            <ul id="userList">
-                <li>No users connected</li>
-            </ul>
-
+        <div class="absoluteCenter">
+            <img id="qrCode" alt="QR Code">
         </div>
 
     </div>
 
-    <script src="/Web/ApiRequester.js"></script>
+    <!-- User Panel -->
+    <div id="currentUsers" class="currentUsers">
 
-    <script>
+        <h3>Session UUID</h3>
 
-        let uploadedRoleConfig = null;
+        <p
+                class="sessionDisplay"
+                id="sessionUuidDisplay"
+        >
+            No session active
+        </p>
 
-        document
-            .getElementById("role-config-upload")
-            .addEventListener("change", async (event) => {
+        <button onclick="leaveSession()">Leave Game</button>
 
-                const file = event.target.files[0];
+        <h3>Current Users</h3>
 
-                if (!file) {
-                    return;
-                }
+        <ul id="userList">
+            <li>No users connected</li>
+        </ul>
 
-                try {
+    </div>
 
-                    const text = await file.text();
+</div>
 
-                    JSON.parse(text);
+<script src="/Web/ApiRequester.js"></script>
 
-                    uploadedRoleConfig = text;
+<script>
 
-                    document.getElementById(
-                        "role-config-status"
-                    ).innerText =
-                        `Loaded: ${file.name}`;
+    let uploadedRoleConfig = null;
 
-                    console.log(
-                        "Role config loaded:",
-                        uploadedRoleConfig
-                    );
+    document
+        .getElementById("role-config-upload")
+        .addEventListener("change", async (event) => {
 
-                } catch (err) {
+            const file = event.target.files[0];
 
-                    uploadedRoleConfig = null;
+            if (!file) {
+                return;
+            }
 
-                    document.getElementById(
-                        "role-config-status"
-                    ).innerText =
-                        "Invalid JSON file";
+            try {
 
-                    console.error(err);
-                }
-            });
+                const text = await file.text();
 
-    </script>
+                JSON.parse(text);
+
+                uploadedRoleConfig = text;
+
+                document.getElementById(
+                    "role-config-status"
+                ).innerText =
+                    `Loaded: ${file.name}`;
+
+                console.log(
+                    "Role config loaded:",
+                    uploadedRoleConfig
+                );
+
+            } catch (err) {
+
+                uploadedRoleConfig = null;
+
+                document.getElementById(
+                    "role-config-status"
+                ).innerText =
+                    "Invalid JSON file";
+
+                console.error(err);
+            }
+        });
+
+</script>
 
 </body>
 </html>
