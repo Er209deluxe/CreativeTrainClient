@@ -30,21 +30,18 @@ public class SessionApi {
     @PostMapping("/register")
     public ResponseEntity<?> register(
             @RequestParam("playerName") String playerName,
-            @RequestParam("playerQr") MultipartFile playerQr,
             @RequestParam(value = "joinedSession", required = false) UUID joinedSession
     ) throws NotFoundException {
 
-        ResponseEntity<String> bad_request = validateQr(playerName, playerQr);
-        if (bad_request != null) return bad_request;
-        if(joinedSession!=null&&sessionManager.isSessionActive(joinedSession))
-                return ResponseEntity.status(HttpStatus.FORBIDDEN).body("Session already started");
-
-        UUID playerUuid;
-        try {
-            playerUuid = getUuidFromQrCode(playerQr);
-        } catch (Exception e) {
-            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body("Couldn't process QR Code");
+        if (playerName.isEmpty()) {
+            return ResponseEntity.status(HttpStatus.BAD_REQUEST).body("Username missing");
         }
+
+        if(joinedSession!=null&&sessionManager.isSessionActive(joinedSession))
+            return ResponseEntity.status(HttpStatus.FORBIDDEN).body("Session already started");
+
+        UUID playerUuid = UUID.randomUUID();
+
         boolean isHost = (joinedSession == null);
         String sessionToken =EncryptionManager.generateNewToken();
         String hashedToken = EncryptionManager.sha256(sessionToken);
@@ -65,15 +62,6 @@ public class SessionApi {
     }
 
 
-    private static ResponseEntity<String> validateQr(String playerName, MultipartFile playerQr) {
-        if (playerQr.isEmpty()) {
-            return ResponseEntity.status(HttpStatus.BAD_REQUEST).body("QrCode missing");
-        }
-        if (playerName.isEmpty()) {
-            return ResponseEntity.status(HttpStatus.BAD_REQUEST).body("Username missing");
-        }
-        return null;
-    }
     private boolean validatePlayer(UUID playerUuid,String sessionToken) throws NotFoundException, AuthenticationException {
         Player player = sessionManager.getPlayer(playerUuid);
         if(player==null) throw new NotFoundException("player",playerUuid);
@@ -182,18 +170,14 @@ public class SessionApi {
     @PostMapping("/kill")
     public ResponseEntity<?> killPlayer(@RequestParam UUID killerUuid,
                                         @RequestParam("sessionToken") String killerToken,
-                                        @RequestParam MultipartFile victimQr,
+                                        @RequestParam String challenge,
+                                        @RequestParam UUID victimUuid,
                                         @RequestParam UUID itemUuid){
         Player killer =sessionManager.getPlayer(killerUuid);
-        UUID victimUuid;
-        try {
-             victimUuid = getUuidFromQrCode(victimQr);
-        } catch (Exception e){
-            return ResponseEntity.status(HttpStatus.NOT_FOUND).build();
-        }
-        Player victim = sessionManager.getPlayer(victimUuid);
 
-        return sessionManager.killPlayer(killer,victim,itemUuid);
+        Player victim = sessionManager.getPlayer(victimUuid);
+        if(!victim.isCorrectChallenge(challenge)) return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body("Wrong challenge");
+            return sessionManager.killPlayer(killer,victim,itemUuid);
 
     }
     @PostMapping("/testusers")

@@ -4,7 +4,7 @@ import Creative.train.Backend.ExceptionTypes.UserAlreadyInSessionExcepion;
 import Creative.train.Backend.ExceptionTypes.UsernameAlreadyExistsException;
 import Creative.train.GameLogic.GeneralConfig;
 import Creative.train.GameLogic.Roles.Role;
-import Creative.train.GameLogic.TimeManager;
+import Creative.train.Managers.TimeManager;
 import Creative.train.Managers.SessionManager;
 
 import java.util.*;

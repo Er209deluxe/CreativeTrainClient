@@ -29,11 +29,16 @@ public class Player {
         data.token = passwordHash;
 
     }
-
+    public boolean isCorrectChallenge(String challenge){
+        return challenge.equals(data.challenge);
+    }
     public BasePlayerData getBaseData() {
         return baseData;
     }
-
+    public void generateNewChallange(){
+        data.challenge = EncryptionManager.generateRandomBytes(16);
+        SseHandler.sendChallangeUpdate(getPlayerId(),data.challenge);
+    }
     public boolean isCorrectPass(String password){
         String hashedPassword = EncryptionManager.sha256(password);
 
@@ -109,8 +114,8 @@ public class Player {
     }
 
     public void earnPassiveIncome(){
-            int passiveIncome = SessionManager.getInstance().getSession(getSessionUUID()).getGeneralConfig().getPassiveIncome();
-            changeCoins(passiveIncome);
+        int passiveIncome = SessionManager.getInstance().getSession(getSessionUUID()).getGeneralConfig().getPassiveIncome();
+        changeCoins(passiveIncome);
     }
     public Role getRole() {
         return baseData.role;

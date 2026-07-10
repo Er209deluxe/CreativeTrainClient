@@ -10,4 +10,5 @@ public class PlayerData {
     public SseEmitter connection;
     public UUID sessionUuid;
     public String token;
+    public String challenge;
 }

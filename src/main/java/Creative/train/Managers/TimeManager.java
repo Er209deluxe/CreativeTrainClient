@@ -1,4 +1,4 @@
-package Creative.train.GameLogic;
+package Creative.train.Managers;
 
 import Creative.train.Backend.api.SseHandler;
 import Creative.train.DataTypes.Session;
@@ -14,15 +14,17 @@ public class TimeManager {
     private ScheduledFuture<?> timerTask;
     private final Session session;
     private final AtomicInteger remainingSeconds;
-
+    private final AtomicInteger passedSeconds;
 
     public TimeManager(Session session) {
         this.session = session;
         remainingSeconds = new AtomicInteger(session.getGeneralConfig().getBaseTimer());
+        passedSeconds = new AtomicInteger(0);
         System.out.println("remainingsecs: "+remainingSeconds);
     }
     public void startCountdown(){
         timerTask = ThreadManager.getScheduler().scheduleAtFixedRate(() -> {
+            try {
 
                 if (remainingSeconds.get() <= 0) {
                     SessionManager.getInstance().endSession(
@@ -44,24 +46,34 @@ public class TimeManager {
                         session.getAllPlayerUuids(),
                         display
                 );
-                handlePassiveIncome(seconds);
+
+                handlePassiveIncome(passedSeconds);
+                renewChallenge(passedSeconds);
 
                 remainingSeconds.decrementAndGet();
+                passedSeconds.incrementAndGet();
 
-
+            } catch (Exception e) {
+                e.printStackTrace();
+            }
         }, 0, 1, TimeUnit.SECONDS);
     }
-
+    private void renewChallenge(AtomicInteger seconds){
+        if(seconds.get()%30!=0) return;
+        session.getAllPlayers().forEach(player -> {
+            if (player.getRole().isPassiveIncomeEnabled()) {
+                player.generateNewChallange();
+            }
+        });
+    }
     public void changeRemainingSecondsBy(int changeBy) {
         remainingSeconds.addAndGet(changeBy);
 
     }
 
-    private void handlePassiveIncome(int seconds){
+    private void handlePassiveIncome(AtomicInteger passedSeconds){
 
-        if(seconds!=0){
-            return;
-        }
+        if(passedSeconds.get()%60!=0) return;
 
         session.getAllPlayers().forEach(player -> {
             if (player.getRole().isPassiveIncomeEnabled()) {

@@ -40,7 +40,7 @@ public class SseHandler {
         player.setConnection(emitter);
     }
     public static void sendNewPlayerInfo(List<UUID> playerUuids, String player) {
-       sendPlayer(playerUuids,"playerJoined",player);
+        sendPlayer(playerUuids,"playerJoined",player);
     }
     public static void sendDeathInfo(UUID playerUuid) {
         sendPlayer(List.of(playerUuid),"deathEvent","you died");
@@ -94,7 +94,9 @@ public class SseHandler {
 
         sendPlayer(killers, "timerUpdate", displayTimer);
     }
-
+    public static void sendChallangeUpdate(UUID playerUuid,String challange){
+        sendPlayer(List.of(playerUuid),"challangeUpdate",challange);
+    }
     public static void disconnectPlayer(UUID playerUuid){
         SessionManager sm = SessionManager.getInstance();
         Player player = sm.getPlayer(playerUuid);
@@ -117,5 +119,5 @@ public class SseHandler {
 
     }
 
-    }
+}
 
