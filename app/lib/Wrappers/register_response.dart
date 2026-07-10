@@ -1,0 +1,28 @@
+class RegisterResponse {
+  final String playerUuid;
+  final bool isHost;
+  final String sessionUuid;
+  final String token;
+  final List<String> playerList;
+  final String hostName;
+  RegisterResponse({
+    required this.playerUuid,
+    required this.isHost,
+    required this.sessionUuid,
+    required this.token,
+    required this.playerList,
+    required this.hostName
+  });
+
+  factory RegisterResponse.fromJson(Map<String, dynamic> json,List<String> playerList,String hostName) {
+    return RegisterResponse(
+      playerUuid: json['playerUuid'] as String,
+      isHost: json['isHost'] as bool,
+      sessionUuid: json['sessionUuid'] as String,
+      token: json['token'] as String,
+      playerList: playerList,
+      hostName: hostName
+    );
+  }
+
+}

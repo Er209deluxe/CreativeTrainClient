@@ -2,8 +2,9 @@ import 'package:creativetrainclient/Handler/handle_client_api_requests.dart';
 import 'package:creativetrainclient/configs/UI/standartm3edesign.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
+import 'package:http/http.dart' as http;
 import 'package:m3e_buttons/m3e_buttons.dart';
-
+import 'package:flutter/services.dart' show rootBundle;
 bool validateInput(int? validationType, String pInput) {
   // 0 DomainValidation | 1 IP validation
   //Extract Textinput
@@ -215,6 +216,24 @@ class _DomainPressActionState extends State<DomainPressAction> {
               style: TextStyle(fontSize: 22),
             ),
           ),
+          M3EButton(onPressed: () async {
+            String ipAddress = getIp();
+
+            final data = await rootBundle.load('assets/images/6.png');
+            final bytes = data.buffer.asUint8List();
+
+            final mpFile = http.MultipartFile.fromBytes(
+              'playerQr',
+              bytes,
+              filename: '6.png',
+            );
+
+            print( handleRegistration(
+                ipAddress,
+                "Testacc",
+                mpFile,
+                null));
+          })
         ],
       );
     } else if (widget.actionNr == 0) {
@@ -417,9 +436,10 @@ Future<void> validInput(
   switch (pConnectionType) {
     case 0: // Domain
       CircleLoadingUI(showLoadingIndicator: true);
-      if (await handleTestConnectionToServer(pUrl)) {}
+      if (await handleTestConnectionToServer(pUrl+"/api/validateApi")) {}
       break;
     case 1: // IP
       break;
   }
+  Navigator.pop(context);
 }
