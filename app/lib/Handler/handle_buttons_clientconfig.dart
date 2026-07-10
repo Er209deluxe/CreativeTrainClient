@@ -1,10 +1,14 @@
 import 'package:creativetrainclient/Handler/handle_client_api_requests.dart';
 import 'package:creativetrainclient/configs/UI/standartm3edesign.dart';
+import 'package:creativetrainclient/Handler/app_state.dart';
+
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:http/http.dart' as http;
 import 'package:m3e_buttons/m3e_buttons.dart';
 import 'package:flutter/services.dart' show rootBundle;
+
+
 bool validateInput(int? validationType, String pInput) {
   // 0 DomainValidation | 1 IP validation
   //Extract Textinput
@@ -51,6 +55,11 @@ class _DomainPressActionState extends State<DomainPressAction> {
     super.dispose();
   }
   String getIp(){
+
+    if(app_state.getIpAddress()!=null){
+      print("got ip from cache");
+      return app_state.getIpAddress()!;
+    }
     String ip1 = _ipInput1.text;
     String ip2 = _ipInput2.text;
     String ip3 = _ipInput3.text;
@@ -60,10 +69,12 @@ class _DomainPressActionState extends State<DomainPressAction> {
     if (port == '') {
       port = '8080';
     }
-    if(ip1.isEmpty || ip2.isEmpty || ip3.isEmpty || ip4.isEmpty){
-      return '127.0.0.1:$port';
+    String ipAddress = '127.0.0.1:$port';
+    if(!(ip1.isEmpty || ip2.isEmpty || ip3.isEmpty || ip4.isEmpty)){
+      ipAddress = '$ip1.$ip2.$ip3.$ip4:$port';
     }
-    return '$ip1.$ip2.$ip3.$ip4:$port';
+    app_state.setIpAddress(ipAddress);
+    return ipAddress;
   }
   @override
   Widget build(BuildContext context) {
@@ -191,7 +202,8 @@ class _DomainPressActionState extends State<DomainPressAction> {
           M3EButton(
             onPressed: () {
               // Merge ip inputs and validate
-              String ipAddress = getIp();
+              String? ipAddress = getIp();
+
               if (validateInput(1, ipAddress)) {
                 // valid ip address
                 validInput(0, context, ipAddress);
@@ -217,7 +229,7 @@ class _DomainPressActionState extends State<DomainPressAction> {
             ),
           ),
           M3EButton(onPressed: () async {
-            String ipAddress = getIp();
+            String? ipAddress = getIp();
 
             final data = await rootBundle.load('assets/images/6.png');
             final bytes = data.buffer.asUint8List();
@@ -228,11 +240,11 @@ class _DomainPressActionState extends State<DomainPressAction> {
               filename: '6.png',
             );
 
-            print( handleRegistration(
+            handleRegistration(
                 ipAddress,
                 "Testacc",
                 mpFile,
-                null));
+                null);
           })
         ],
       );

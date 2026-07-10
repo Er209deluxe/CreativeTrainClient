@@ -1,6 +1,7 @@
 import 'dart:async';
 import 'dart:collection';
 
+import 'package:creativetrainclient/Handler/app_state.dart';
 import 'package:creativetrainclient/Handler/sse_handler.dart';
 import 'package:creativetrainclient/Wrappers/register_response.dart';
 import 'package:http/http.dart' as http;
@@ -8,7 +9,6 @@ import 'dart:convert';
 import 'package:flutter_client_sse/flutter_client_sse.dart';
 import 'package:flutter_client_sse/constants/sse_request_type_enum.dart';
 
-StreamSubscription? sseSubscription;
 Future<bool> handleTestConnectionToServer(String pUrl) async {
   var url = Uri.parse('http://$pUrl');
   var response = await http.get(url);
@@ -28,7 +28,7 @@ Future<bool> handleTestConnectionToServer(String pUrl) async {
  * playerQr: png image of the qr code that the player registers under
  * joinedSession: the UUID of the session the player wants to join, is null if the user registers as host
    */
-  Future<RegisterResponse> handleRegistration(String ipAddress,String playerName,http.MultipartFile playerQr,String? joinedSession)
+  void handleRegistration(String ipAddress,String playerName,http.MultipartFile playerQr,String? joinedSession)
   async{
 
     final registerUrl = Uri.http(ipAddress, '/api/session/register');
@@ -73,9 +73,9 @@ Future<bool> handleTestConnectionToServer(String pUrl) async {
 
     RegisterResponse returnResponse = RegisterResponse.fromJson(registrationJson,users,hostName);
     print(jsonEncode(returnResponse.toJson()));
-    sseSubscription = startStream(ipAddress,returnResponse.playerUuid , returnResponse.token);
-
-    return returnResponse;
+    app_state.sseSubscription = startStream(ipAddress,returnResponse.playerUuid , returnResponse.token);
+    app_state.setCurrentSession(returnResponse);
+    app_state.changeGameActivation(true);
     }
 
 
