@@ -51,7 +51,9 @@ public class SseHandler {
             sendPlayer(new ArrayList<>(List.of(player.getPlayerId())),"sessionStart",player.getRole());
         }
     }
-
+    public static void sendNewQuestInfo(UUID playerUuid,Player.Quest quest){
+        sendPlayer(List.of(playerUuid),"newQuest",quest);
+    }
     public static void sendPlayerDisconnectInfo(List<UUID> playerUuids,String player){
         sendPlayer(playerUuids,"playerDisconnected",player);
     }

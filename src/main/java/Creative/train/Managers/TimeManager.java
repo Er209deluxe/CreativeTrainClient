@@ -1,10 +1,9 @@
-package Creative.train.GameLogic;
+package Creative.train.Managers;
 
 import Creative.train.Backend.api.SseHandler;
 import Creative.train.DataTypes.Session;
 import Creative.train.GameLogic.Roles.Role;
-import Creative.train.Managers.ThreadManager;
-import Creative.train.Managers.SessionManager;
+import com.beust.ah.A;
 
 import java.util.concurrent.ScheduledFuture;
 import java.util.concurrent.TimeUnit;
@@ -14,11 +13,12 @@ public class TimeManager {
     private ScheduledFuture<?> timerTask;
     private final Session session;
     private final AtomicInteger remainingSeconds;
-
+    private final AtomicInteger passedSeconds;
 
     public TimeManager(Session session) {
         this.session = session;
         remainingSeconds = new AtomicInteger(session.getGeneralConfig().getBaseTimer());
+        passedSeconds = new AtomicInteger(0);
         System.out.println("remainingsecs: "+remainingSeconds);
     }
     public void startCountdown(){
@@ -44,24 +44,28 @@ public class TimeManager {
                         session.getAllPlayerUuids(),
                         display
                 );
-                handlePassiveIncome(seconds);
+
+                handlePassiveIncome(passedSeconds);
+                handleQuests(passedSeconds);
 
                 remainingSeconds.decrementAndGet();
-
+                passedSeconds.incrementAndGet();
 
         }, 0, 1, TimeUnit.SECONDS);
     }
+    private void handleQuests(AtomicInteger passedSeconds){
+        if(passedSeconds.get()%30!=0) return;
 
+
+    }
     public void changeRemainingSecondsBy(int changeBy) {
         remainingSeconds.addAndGet(changeBy);
 
     }
 
-    private void handlePassiveIncome(int seconds){
+    private void handlePassiveIncome(AtomicInteger passedSeconds){
 
-        if(seconds!=0){
-            return;
-        }
+        if(passedSeconds.get()%60!=0) return;
 
         session.getAllPlayers().forEach(player -> {
             if (player.getRole().isPassiveIncomeEnabled()) {

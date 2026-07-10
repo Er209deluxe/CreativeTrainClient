@@ -33,7 +33,8 @@ public class SessionApi {
             @RequestParam("playerQr") MultipartFile playerQr,
             @RequestParam(value = "joinedSession", required = false) UUID joinedSession
     ) throws NotFoundException {
-
+        if(playerName.length()>20) return ResponseEntity.status(HttpStatus.BAD_REQUEST)
+                .body("Username too long (max 20 characters)");
         ResponseEntity<String> bad_request = validateQr(playerName, playerQr);
         if (bad_request != null) return bad_request;
         if(joinedSession!=null&&sessionManager.isSessionActive(joinedSession))
@@ -57,7 +58,8 @@ public class SessionApi {
             player.setSessionUUID(result.sessionUuid);
             return ResponseEntity.ok(result);
         }
-
+        Session session = sessionManager.getSession(joinedSession);
+        if(session.getAllPlayers().size()>=12) return ResponseEntity.status(HttpStatus.CONFLICT).body("Session already full");
         player.setSessionUUID(result.sessionUuid);
         List<UUID> playersInSession = sessionManager.getAllUuidsInSession(joinedSession);
         SseHandler.sendNewPlayerInfo(playersInSession, playerName);
@@ -196,7 +198,7 @@ public class SessionApi {
         return sessionManager.killPlayer(killer,victim,itemUuid);
 
     }
-    @PostMapping("/testusers")
+    /*@PostMapping("/testusers")
     public ResponseEntity<?> testUsers(@RequestParam int amount) throws NotFoundException {
 
         SessionManager sm = SessionManager.getInstance();
@@ -211,5 +213,5 @@ public class SessionApi {
             sm.registerPlayerToSession(sessionId, p, "");
         }
         return ResponseEntity.status(200).build();
-    }
+    }*/
 }
