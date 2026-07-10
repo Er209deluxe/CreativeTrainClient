@@ -1,3 +1,4 @@
+import 'package:creativetrainclient/Handler/app_state.dart';
 import 'package:creativetrainclient/Handler/handle_buttons_clientconfig.dart';
 import 'package:creativetrainclient/Handler/handle_client_api_requests.dart';
 import 'package:creativetrainclient/UI/render_homepage.dart';
@@ -100,9 +101,21 @@ class _RenderRegisterconfigState extends State<RenderRegisterconfig> {
                       const SizedBox(width: 15),
                       M3EButton(
                         onPressed: () async {
-                          String? ipAddress = DomainPressAction(
-                            actionNr: null,
-                          ).getIp();
+
+                          String? ipAddress = app_state.getIpAddress();
+
+                          if(ipAddress==null){
+                            showDialog(
+                              context: context,
+                              builder: (BuildContext dialogContext) {
+                                return ErrorDialogM3E(
+                                  errorHeader: 'Missing ip address',
+                                  errorText:
+                                  'Ip address not found',
+                                );
+                              },
+                            );
+                          }
 
                           final data = await rootBundle.load(
                             'assets/images/6.png',
@@ -116,12 +129,14 @@ class _RenderRegisterconfigState extends State<RenderRegisterconfig> {
                           );
 
                           handleRegistration(
-                            ipAddress,
+                            ipAddress!,
                             "Testacc",
                             mpFile,
                             null,
                           );
                         },
+                        child: const Text('Register', style: TextStyle(fontSize: 22)),
+
                       ),
                     ],
                   ),
