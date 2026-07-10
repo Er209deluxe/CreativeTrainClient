@@ -94,17 +94,21 @@ Future<bool> handleTestConnectionToServer(
  * playerQr: png image of the qr code that the player registers under
  * joinedSession: the UUID of the session the player wants to join, is null if the user registers as host
    */
-Future<RegisterResponse> handleRegistration(
+Future<bool> handleRegistration(
   String ipAddress,
   String playerName,
-  http.MultipartFile playerQr,
   String? joinedSession,
 ) async {
+  print(joinedSession);
+  if(app_state.inGame) return false;
+
   final registerUrl = Uri.http(ipAddress, '/api/session/register');
 
   final registerRequest = http.MultipartRequest('POST', registerUrl)
-    ..fields['playerName'] = playerName
-    ..files.add(playerQr);
+    ..fields['playerName'] = playerName;
+  if(joinedSession!=null) {
+    registerRequest..fields['joinedSession'] = joinedSession;
+  }
   final streamedResponse = await registerRequest.send();
   final registerResponse = await http.Response.fromStream(streamedResponse);
 
@@ -144,8 +148,8 @@ Future<RegisterResponse> handleRegistration(
     returnResponse.playerUuid,
     returnResponse.token,
   );
-
-  return returnResponse;
+  app_state.changeGameActivation(true);
+  return true;
 }
 
 StreamSubscription<SSEModel> startStream(

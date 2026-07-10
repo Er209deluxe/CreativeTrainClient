@@ -85,7 +85,7 @@ class _RenderRegisterconfigState extends State<RenderRegisterconfig> {
                       const SizedBox(width: 15),
                       Expanded(
                         child: TextField(
-                          maxLength: 32,
+                          maxLength: 36,
                           style: const TextStyle(color: Colors.white),
                           controller: _sessionUUID,
                           decoration: InputDecoration(
@@ -117,23 +117,25 @@ class _RenderRegisterconfigState extends State<RenderRegisterconfig> {
                             );
                           }
 
-                          final data = await rootBundle.load(
-                            'assets/images/6.png',
-                          );
-                          final bytes = data.buffer.asUint8List();
 
-                          final mpFile = http.MultipartFile.fromBytes(
-                            'playerQr',
-                            bytes,
-                            filename: '6.png',
-                          );
-
-                          handleRegistration(
+                          if(!await handleRegistration(
                             ipAddress!,
-                            "Testacc",
-                            mpFile,
-                            null,
-                          );
+                            _playerName.text,
+                            _sessionUUID.text,
+                          ))
+                          {
+                            showDialog(
+                              context: context,
+                              builder: (BuildContext dialogContext) {
+                                return ErrorDialogM3E(
+                                  errorHeader: 'Already connected to session',
+                                  errorText:
+                                  'Leave the session to join another one',
+                                );
+                              },
+                            );
+                            return;
+                          }
                         },
                         child: const Text('Register', style: TextStyle(fontSize: 22)),
 
