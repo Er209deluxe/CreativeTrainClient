@@ -49,7 +49,21 @@ class _DomainPressActionState extends State<DomainPressAction> {
     _portInput.dispose();
     super.dispose();
   }
+  String getIp(){
+    String ip1 = _ipInput1.text;
+    String ip2 = _ipInput2.text;
+    String ip3 = _ipInput3.text;
+    String ip4 = _ipInput4.text;
+    String port = _portInput.text;
 
+    if (port == '') {
+      port = '8080';
+    }
+    if(ip1.isEmpty || ip2.isEmpty || ip3.isEmpty || ip4.isEmpty){
+      return '127.0.0.1:$port';
+    }
+    return '$ip1.$ip2.$ip3.$ip4:$port';
+  }
   @override
   Widget build(BuildContext context) {
     if (widget.actionNr == 1) {
@@ -176,19 +190,10 @@ class _DomainPressActionState extends State<DomainPressAction> {
           M3EButton(
             onPressed: () {
               // Merge ip inputs and validate
-              String ip1 = _ipInput1.text;
-              String ip2 = _ipInput2.text;
-              String ip3 = _ipInput3.text;
-              String ip4 = _ipInput4.text;
-              String port = _portInput.text;
-              if (port == '') {
-                port = '8080';
-              }
-
-              String ipAdress = '$ip1.$ip2.$ip3.$ip4:$port';
-              if (validateInput(1, ipAdress)) {
+              String ipAddress = getIp();
+              if (validateInput(1, ipAddress)) {
                 // valid ip address
-                validInput(0, context, ipAdress);
+                validInput(0, context, ipAddress);
               } else {
                 // invalid ip address
                 showDialog(
