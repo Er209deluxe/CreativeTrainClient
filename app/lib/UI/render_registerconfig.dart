@@ -103,20 +103,7 @@ class _RenderRegisterconfigState extends State<RenderRegisterconfig> {
                         onPressed: () async {
 
                           String? ipAddress = app_state.getIpAddress();
-
-                          if(ipAddress==null){
-                            showDialog(
-                              context: context,
-                              builder: (BuildContext dialogContext) {
-                                return ErrorDialogM3E(
-                                  errorHeader: 'Missing ip address',
-                                  errorText:
-                                  'Ip address not found',
-                                );
-                              },
-                            );
-                          }
-
+                          isValidIp(ipAddress, context);
 
                           if(!await handleRegistration(
                             ipAddress!,
@@ -150,7 +137,22 @@ class _RenderRegisterconfigState extends State<RenderRegisterconfig> {
     );
   }
 }
-
+bool isValidIp(String? ipAddress,BuildContext context){
+  if(ipAddress==null){
+    showDialog(
+      context: context,
+      builder: (BuildContext dialogContext) {
+        return ErrorDialogM3E(
+          errorHeader: 'Missing ip address',
+          errorText:
+          'Ip address not found',
+        );
+      },
+    );
+    return false;
+  }
+  return true;
+}
 // Gradient Background
 class GradientHomeBG extends StatelessWidget {
   const GradientHomeBG({super.key});

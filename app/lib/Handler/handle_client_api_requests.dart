@@ -184,3 +184,44 @@ StreamSubscription<SSEModel> startStream(
     }
   });
 }
+Future<bool> leaveSession(String ipAddress,String playerUuid,String sessionToken) async {
+  final leaveUrl = Uri.http(ipAddress, '/api/session/leaveGame');
+
+  final leaveRequest = http.MultipartRequest('POST', leaveUrl)
+    ..fields['playerUuid'] = playerUuid
+    ..fields['sessionToken'] = sessionToken;
+
+  final streamedResponse = await leaveRequest.send();
+  final registerResponse = await http.Response.fromStream(streamedResponse);
+
+  if (registerResponse.statusCode < 200 || registerResponse.statusCode >= 300) {
+    throw Exception(registerResponse.body);
+  }
+  return true;
+}
+Future<bool> startSession(
+    String ipAddress,
+    String token,
+    String sessionUuid,
+    String playerUuid,
+    Map<String,dynamic> roleConfig) async {
+
+  final url = Uri.http(
+    ipAddress,
+    '/api/session/start',
+    {
+      'playerUuid': playerUuid,
+      'token': token,
+      'sessionUuid': sessionUuid,
+    },
+  );
+  final response = await http.post(
+    url,
+    headers: {
+      'Content-Type': 'application/json',
+    },
+    body: jsonEncode(roleConfig),
+  );
+
+  return true;
+}
