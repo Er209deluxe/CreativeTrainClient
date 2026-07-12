@@ -1,8 +1,11 @@
 import 'package:creativetrainclient/Handler/app_state.dart';
 import 'package:creativetrainclient/Handler/handle_buttons_clientconfig.dart';
 import 'package:creativetrainclient/Handler/handle_client_api_requests.dart';
+import 'package:creativetrainclient/UI/render_clientconfig.dart';
 import 'package:creativetrainclient/UI/render_homepage.dart';
+import 'package:creativetrainclient/UI/render_inactivesession.dart';
 import 'package:creativetrainclient/configs/UI/standartm3edesign.dart';
+import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:http/http.dart' as http;
@@ -99,49 +102,16 @@ class _RenderRegisterconfigState extends State<RenderRegisterconfig> {
                         ),
                       ),
                       const SizedBox(width: 15),
-                      M3EButton(
-                        onPressed: () async {
-
-                          String? ipAddress = app_state.getIpAddress();
-
-                          if(ipAddress==null){
-                            showDialog(
-                              context: context,
-                              builder: (BuildContext dialogContext) {
-                                return ErrorDialogM3E(
-                                  errorHeader: 'Missing ip address',
-                                  errorText:
-                                  'Ip address not found',
-                                );
-                              },
-                            );
-                          }
-
-
-                          if(!await handleRegistration(
-                            ipAddress!,
-                            _playerName.text,
-                            _sessionUUID.text,
-                          ))
-                          {
-                            showDialog(
-                              context: context,
-                              builder: (BuildContext dialogContext) {
-                                return ErrorDialogM3E(
-                                  errorHeader: 'Already connected to session',
-                                  errorText:
-                                  'Leave the session to join another one',
-                                );
-                              },
-                            );
-                            return;
-                          }
-                        },
-                        child: const Text('Register', style: TextStyle(fontSize: 22)),
-
-                      ),
                     ],
-                  ),
+                  )
+                else
+                  const SizedBox(height: 68),
+                M3EButton(
+                  onPressed: () {},
+                  decoration: M3EButtonDecoration(),
+                  size: M3EButtonSize.lg,
+                  child: const Text('Register', style: TextStyle(fontSize: 22)),
+                ),
               ],
             ),
           ),
