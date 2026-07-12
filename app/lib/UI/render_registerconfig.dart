@@ -99,36 +99,50 @@ class _RenderRegisterconfigState extends State<RenderRegisterconfig> {
                         ),
                       ),
                       const SizedBox(width: 15),
-                      M3EButton(
-                        onPressed: () async {
-
-                          String? ipAddress = app_state.getIpAddress();
-                          isValidIp(ipAddress, context);
-
-                          if(!await handleRegistration(
-                            ipAddress!,
-                            _playerName.text,
-                            _sessionUUID.text,
-                          ))
-                          {
-                            showDialog(
-                              context: context,
-                              builder: (BuildContext dialogContext) {
-                                return ErrorDialogM3E(
-                                  errorHeader: 'Already connected to session',
-                                  errorText:
-                                  'Leave the session to join another one',
-                                );
-                              },
-                            );
-                            return;
-                          }
-                        },
-                        child: const Text('Register', style: TextStyle(fontSize: 22)),
-
-                      ),
                     ],
+                  )
+                else
+                  const SizedBox(height: 68),M3EButton(
+                  onPressed: () async {
+                    String? ipAddress = app_state.getIpAddress();
+
+                    if (ipAddress == null) {
+                      showDialog(
+                        context: context,
+                        builder: (BuildContext dialogContext) {
+                          return ErrorDialogM3E(
+                            errorHeader: 'Missing IP address',
+                            errorText: 'IP address not found',
+                          );
+                        },
+                      );
+                      return;
+                    }
+
+                    if (!await handleRegistration(
+                      ipAddress,
+                      _playerName.text,
+                      _sessionUUID.text,
+                    )) {
+                      showDialog(
+                        context: context,
+                        builder: (BuildContext dialogContext) {
+                          return ErrorDialogM3E(
+                            errorHeader: 'Already connected to session',
+                            errorText: 'Leave the session to join another one',
+                          );
+                        },
+                      );
+                      return;
+                    }
+                  },
+                  decoration: M3EButtonDecoration(),
+                  size: M3EButtonSize.lg,
+                  child: const Text(
+                    'Register',
+                    style: TextStyle(fontSize: 22),
                   ),
+                ),
               ],
             ),
           ),

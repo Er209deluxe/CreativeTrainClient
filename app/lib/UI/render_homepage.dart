@@ -35,7 +35,7 @@ class _HomePageState extends State<HomePage> {
                     });
                     // Press Action
                     if (index == 1) {
-                      Navigator.of(context).pushReplacement(
+                      Navigator.of(context).push(
                         CupertinoPageRoute(builder: (_) => ClientConfigPage()),
                       );
                     }
