@@ -100,13 +100,13 @@ Future<bool> handleRegistration(
   String? joinedSession,
 ) async {
   print(joinedSession);
-  if(app_state.inGame) return false;
+  if (app_state.inGame) return false;
 
   final registerUrl = Uri.http(ipAddress, '/api/session/register');
 
   final registerRequest = http.MultipartRequest('POST', registerUrl)
     ..fields['playerName'] = playerName;
-  if(joinedSession!=null) {
+  if (joinedSession != null) {
     registerRequest..fields['joinedSession'] = joinedSession;
   }
   final streamedResponse = await registerRequest.send();
@@ -148,6 +148,7 @@ Future<bool> handleRegistration(
     returnResponse.playerUuid,
     returnResponse.token,
   );
+  app_state.setCurrentSession(returnResponse);
   app_state.changeGameActivation(true);
   return true;
 }
@@ -184,7 +185,12 @@ StreamSubscription<SSEModel> startStream(
     }
   });
 }
-Future<bool> leaveSession(String ipAddress,String playerUuid,String sessionToken) async {
+
+Future<bool> leaveSession(
+  String ipAddress,
+  String playerUuid,
+  String sessionToken,
+) async {
   final leaveUrl = Uri.http(ipAddress, '/api/session/leaveGame');
 
   final leaveRequest = http.MultipartRequest('POST', leaveUrl)
@@ -197,29 +203,25 @@ Future<bool> leaveSession(String ipAddress,String playerUuid,String sessionToken
   if (registerResponse.statusCode < 200 || registerResponse.statusCode >= 300) {
     throw Exception(registerResponse.body);
   }
+  app_state.inGame = false;
   return true;
 }
-Future<bool> startSession(
-    String ipAddress,
-    String token,
-    String sessionUuid,
-    String playerUuid,
-    Map<String,dynamic> roleConfig) async {
 
-  final url = Uri.http(
-    ipAddress,
-    '/api/session/start',
-    {
-      'playerUuid': playerUuid,
-      'token': token,
-      'sessionUuid': sessionUuid,
-    },
-  );
+Future<bool> startSession(
+  String ipAddress,
+  String token,
+  String sessionUuid,
+  String playerUuid,
+  Map<String, dynamic> roleConfig,
+) async {
+  final url = Uri.http(ipAddress, '/api/session/start', {
+    'playerUuid': playerUuid,
+    'token': token,
+    'sessionUuid': sessionUuid,
+  });
   final response = await http.post(
     url,
-    headers: {
-      'Content-Type': 'application/json',
-    },
+    headers: {'Content-Type': 'application/json'},
     body: jsonEncode(roleConfig),
   );
 

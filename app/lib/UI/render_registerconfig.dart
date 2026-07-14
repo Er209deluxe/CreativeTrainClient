@@ -2,7 +2,9 @@ import 'package:creativetrainclient/Handler/app_state.dart';
 import 'package:creativetrainclient/Handler/handle_buttons_clientconfig.dart';
 import 'package:creativetrainclient/Handler/handle_client_api_requests.dart';
 import 'package:creativetrainclient/UI/render_homepage.dart';
+import 'package:creativetrainclient/UI/render_inactivesession.dart';
 import 'package:creativetrainclient/configs/UI/standartm3edesign.dart';
+import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:http/http.dart' as http;
@@ -102,7 +104,8 @@ class _RenderRegisterconfigState extends State<RenderRegisterconfig> {
                     ],
                   )
                 else
-                  const SizedBox(height: 68),M3EButton(
+                  const SizedBox(height: 68),
+                M3EButton(
                   onPressed: () async {
                     String? ipAddress = app_state.getIpAddress();
 
@@ -113,6 +116,19 @@ class _RenderRegisterconfigState extends State<RenderRegisterconfig> {
                           return ErrorDialogM3E(
                             errorHeader: 'Missing IP address',
                             errorText: 'IP address not found',
+                          );
+                        },
+                      );
+                      return;
+                    }
+
+                    if (_playerName.text == '') {
+                      showDialog(
+                        context: context,
+                        builder: (BuildContext dialogContext) {
+                          return ErrorDialogM3E(
+                            errorHeader: 'No Name given',
+                            errorText: 'Please input a player name',
                           );
                         },
                       );
@@ -134,14 +150,17 @@ class _RenderRegisterconfigState extends State<RenderRegisterconfig> {
                         },
                       );
                       return;
+                    } else {
+                      Navigator.of(context).push(
+                        CupertinoPageRoute(
+                          builder: (_) => RenderInactivesession(),
+                        ),
+                      );
                     }
                   },
                   decoration: M3EButtonDecoration(),
                   size: M3EButtonSize.lg,
-                  child: const Text(
-                    'Register',
-                    style: TextStyle(fontSize: 22),
-                  ),
+                  child: const Text('Register', style: TextStyle(fontSize: 22)),
                 ),
               ],
             ),
@@ -151,15 +170,15 @@ class _RenderRegisterconfigState extends State<RenderRegisterconfig> {
     );
   }
 }
-bool isValidIp(String? ipAddress,BuildContext context){
-  if(ipAddress==null){
+
+bool isValidIp(String? ipAddress, BuildContext context) {
+  if (ipAddress == null) {
     showDialog(
       context: context,
       builder: (BuildContext dialogContext) {
         return ErrorDialogM3E(
           errorHeader: 'Missing ip address',
-          errorText:
-          'Ip address not found',
+          errorText: 'Ip address not found',
         );
       },
     );
@@ -167,6 +186,7 @@ bool isValidIp(String? ipAddress,BuildContext context){
   }
   return true;
 }
+
 // Gradient Background
 class GradientHomeBG extends StatelessWidget {
   const GradientHomeBG({super.key});
