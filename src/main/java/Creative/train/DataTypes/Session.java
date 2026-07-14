@@ -2,6 +2,7 @@ package Creative.train.DataTypes;
 
 import Creative.train.Backend.ExceptionTypes.UserAlreadyInSessionExcepion;
 import Creative.train.Backend.ExceptionTypes.UsernameAlreadyExistsException;
+import Creative.train.ConfigManagement.Wrappers.DepressionData;
 import Creative.train.GameLogic.GeneralConfig;
 import Creative.train.GameLogic.Roles.Role;
 import Creative.train.Managers.TimeManager;
@@ -11,9 +12,12 @@ import java.util.*;
 import java.util.stream.Collectors;
 
 public class Session {
+    DepressionData depressionData = new DepressionData(
+            60,60
+    );
     private GeneralConfig generalConfig=
             new GeneralConfig(
-                    null,
+                    depressionData,
                     50,
                     7,1,
                     50,

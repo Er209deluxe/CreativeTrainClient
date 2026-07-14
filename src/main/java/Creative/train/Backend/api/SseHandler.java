@@ -39,6 +39,11 @@ public class SseHandler {
         }
         player.setConnection(emitter);
     }
+    public static void sendSanityUpdate(UUID playerUuid,Map<String,Double> sanityData)
+    {
+
+        sendPlayer(new ArrayList<>(List.of(playerUuid)),"sanityUpdate",sanityData);
+    }
     public static void sendNewPlayerInfo(List<UUID> playerUuids, String player) {
         sendPlayer(playerUuids,"playerJoined",player);
     }
@@ -94,8 +99,8 @@ public class SseHandler {
 
         sendPlayer(killers, "timerUpdate", displayTimer);
     }
-    public static void sendChallangeUpdate(UUID playerUuid,String challange){
-        sendPlayer(List.of(playerUuid),"challangeUpdate",challange);
+    public static void sendChallengeUpdate(UUID playerUuid, String challenge){
+        sendPlayer(List.of(playerUuid),"challengeUpdate",challenge);
     }
     public static void disconnectPlayer(UUID playerUuid){
         SessionManager sm = SessionManager.getInstance();
