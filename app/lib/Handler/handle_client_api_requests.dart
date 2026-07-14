@@ -87,7 +87,61 @@ Future<bool> handleTestConnectionToServer(
     return false;
   }
 }
+Future<bool> startSession(String roleConfig) async {
+  String token = app_state.getCurrentSession().token;
+  String sessionUuid = app_state.getCurrentSession().sessionUuid;
+  String playerUuid = app_state.getCurrentSession().playerUuid;
+  String? ipAddress = app_state.getIpAddress();
+  String roleConfig = r'''
+{
+  "roleConfig": [
+    {
+      "name": "Innocent",
+      "enableShop": false,
+      "passiveIncome": true,
+      "taskIncome": 50,
+      "itemShop": [
+        {"name": "Knife", "price": 30}
+      ]
+    },
+    {
+      "name": "Vigilante",
+      "enableShop": true,
+      "passiveIncome": true,
+      "taskIncome": 50,
+      "itemShop": [
+        {"name": "Knife", "price": 25},
+        {"name": "Gun", "price": 50},
+        {"name": "Food", "price": 11}
+      ]
+    },
+    {
+      "name": "Killer",
+      "enableShop": true,
+      "passiveIncome": true,
+      "taskIncome": 100,
+      "itemShop": [
+        {"name": "Knife", "price": 14},
+        {"name": "Gun", "price": 18}
+      ]
+    }
+  ]
+}
+''';  if(ipAddress == null) return false;
 
+  final startUrl = Uri.http(ipAddress, '/api/session/start');
+
+  final startRequest = http.MultipartRequest('POST', startUrl)
+    ..fields['playerUuid'] = playerUuid
+    ..fields['sessionUuid'] = sessionUuid
+    ..fields['token'] = token
+    ..files.add(http.MultipartFile.fromString(
+      'roleConfig',
+      roleConfig,
+      contentType: http.MediaType('application', 'json'),
+    ));
+  return true;
+}
 /**
  * ipAddress: the ip Adress of the connected CreativeTrain server example: 127.0.0.1:8080
  * playerName: the name of the player
@@ -100,7 +154,7 @@ Future<bool> handleRegistration(
   String? joinedSession,
 ) async {
   print(joinedSession);
-  if(app_state.inGame) return false;
+  if(app_state.inSession) return false;
 
   final registerUrl = Uri.http(ipAddress, '/api/session/register');
 
@@ -164,6 +218,8 @@ StreamSubscription<SSEModel> startStream(
   final Map<String, void Function(String)> eventMap = {
     "playerJoined": playerJoined,
     "playerLeft": playerLeft,
+    "challengeUpdate": updateChallenge,
+    "sessionStart": sessionStart
   };
 
   final stream = SSEClient.subscribeToSSE(
@@ -197,31 +253,5 @@ Future<bool> leaveSession(String ipAddress,String playerUuid,String sessionToken
   if (registerResponse.statusCode < 200 || registerResponse.statusCode >= 300) {
     throw Exception(registerResponse.body);
   }
-  return true;
-}
-Future<bool> startSession(
-    String ipAddress,
-    String token,
-    String sessionUuid,
-    String playerUuid,
-    Map<String,dynamic> roleConfig) async {
-
-  final url = Uri.http(
-    ipAddress,
-    '/api/session/start',
-    {
-      'playerUuid': playerUuid,
-      'token': token,
-      'sessionUuid': sessionUuid,
-    },
-  );
-  final response = await http.post(
-    url,
-    headers: {
-      'Content-Type': 'application/json',
-    },
-    body: jsonEncode(roleConfig),
-  );
-
   return true;
 }

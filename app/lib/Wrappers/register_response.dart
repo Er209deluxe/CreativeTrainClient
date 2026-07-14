@@ -5,6 +5,17 @@ class RegisterResponse {
   final String token;
   final List<String> playerList;
   final String hostName;
+  late int coinCount;
+
+  void setCoins(int coins){
+    coinCount = coins;
+  }
+  void addPlayer(String playerName){
+    playerList.add(playerName);
+  }
+  void removePlayer(String playerName){
+    playerList.remove(playerName);
+  }
   RegisterResponse({
     required this.playerUuid,
     required this.isHost,
