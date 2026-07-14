@@ -14,6 +14,7 @@ class app_state {
   static late String _challenge;
   static late final RoleWrapper _role;
 
+  static bool isGameStarted(){return gameStarted;}
   static void updateChallenge(String challenge){
     _challenge = challenge;
   }
@@ -33,17 +34,12 @@ class app_state {
   }
   static void setCurrentSession(RegisterResponse sessionData){
     if(inSession) {
-      //leave session
+      return;
     }
     inSession = true;
     _currentSession = sessionData;
   }
   static void setRole(RoleWrapper roleData){
-    if(inSession) {
-      if(_ipAddress==null) return;
-      leaveSession(_ipAddress!, _currentSession.playerUuid, _currentSession.token);
-    }
-
     _role = roleData;
   }
   static RegisterResponse getCurrentSession(){

@@ -127,19 +127,28 @@ Future<bool> startSession(String roleConfig) async {
     }
   ]
 }
-''';  if(ipAddress == null) return false;
+''';
+  if(ipAddress == null) return false;
 
-  final startUrl = Uri.http(ipAddress, '/api/session/start');
+  final uri = Uri.http(
+    ipAddress,
+    '/api/session/start',
+    {
+      'token': token,
+      'sessionUuid': sessionUuid,
+      'playerUuid': playerUuid,
+    },
+  );
 
-  final startRequest = http.MultipartRequest('POST', startUrl)
-    ..fields['playerUuid'] = playerUuid
-    ..fields['sessionUuid'] = sessionUuid
-    ..fields['token'] = token
-    ..files.add(http.MultipartFile.fromString(
-      'roleConfig',
-      roleConfig,
-      contentType: http.MediaType('application', 'json'),
-    ));
+  final response = await http.post(
+    uri,
+    headers: {
+      'Content-Type': 'application/json',
+    },
+    body: roleConfig,
+  );
+  print(response.body);
+
   return true;
 }
 /**
@@ -160,7 +169,7 @@ Future<bool> handleRegistration(
 
   final registerRequest = http.MultipartRequest('POST', registerUrl)
     ..fields['playerName'] = playerName;
-  if(joinedSession!=null) {
+  if (joinedSession != null) {
     registerRequest..fields['joinedSession'] = joinedSession;
   }
   final streamedResponse = await registerRequest.send();
@@ -202,6 +211,7 @@ Future<bool> handleRegistration(
     returnResponse.playerUuid,
     returnResponse.token,
   );
+  app_state.setCurrentSession(returnResponse);
   app_state.changeGameActivation(true);
   return true;
 }
@@ -240,7 +250,12 @@ StreamSubscription<SSEModel> startStream(
     }
   });
 }
-Future<bool> leaveSession(String ipAddress,String playerUuid,String sessionToken) async {
+
+Future<bool> leaveSession(
+  String ipAddress,
+  String playerUuid,
+  String sessionToken,
+) async {
   final leaveUrl = Uri.http(ipAddress, '/api/session/leaveGame');
 
   final leaveRequest = http.MultipartRequest('POST', leaveUrl)
@@ -253,5 +268,6 @@ Future<bool> leaveSession(String ipAddress,String playerUuid,String sessionToken
   if (registerResponse.statusCode < 200 || registerResponse.statusCode >= 300) {
     throw Exception(registerResponse.body);
   }
+  app_state.inSession = false;
   return true;
 }

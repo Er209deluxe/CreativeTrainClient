@@ -20,7 +20,7 @@ void playerLeft(String? data) {
       return;
     }
     print("Challenge: ${challenge.replaceAll('\n', '')}");
-    updateChallenge(challenge);
+    app_state.updateChallenge(challenge);
   }
   void sessionStart(String? data){
       if(data==null) return;
