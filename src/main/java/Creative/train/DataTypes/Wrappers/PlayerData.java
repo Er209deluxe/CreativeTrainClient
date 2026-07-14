@@ -11,4 +11,5 @@ public class PlayerData {
     public UUID sessionUuid;
     public String token;
     public String challenge;
+
 }

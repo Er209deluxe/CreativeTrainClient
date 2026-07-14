@@ -2,8 +2,6 @@ package Creative.train.GameLogic;
 
 import Creative.train.ConfigManagement.Wrappers.DepressionData;
 
-import java.util.concurrent.TimeUnit;
-
 public class GeneralConfig {
 
     private final int baseTimerMins;
@@ -50,72 +48,13 @@ public class GeneralConfig {
         return depressionData!=null;
     }
 
-    /**
-     * Returns the depression kill timer in the requested unit.
-     * Supported:
-     * - "s"  = seconds
-     * - "ms" = milliseconds
-     * - "m"  = minutes
-     *
-     * @param unit the unit to return
-     * @return converted time value
-     */
-    public long getDepressedTimer(String unit) {
+    public int getBaseDepression() {
 
-        return switch (unit.toLowerCase()) {
+         return depressionData.baseDepression;
 
-            case "s" ->
-                    depressionData.depressedKillingTimerInSeconds;
-
-            case "ms" ->
-                    TimeUnit.SECONDS.toMillis(
-                            depressionData.depressedKillingTimerInSeconds
-                    );
-
-            case "m" ->
-                    TimeUnit.SECONDS.toMinutes(
-                            depressionData.depressedKillingTimerInSeconds
-                    );
-
-            default ->
-                    throw new IllegalArgumentException(
-                            "Unsupported unit: " + unit
-                    );
-        };
     }
 
-    /**
-     * Returns the depression activation timer
-     * in the requested unit.
-     * Supported:
-     * - "s"  = seconds
-     * - "ms" = milliseconds
-     * - "m"  = minutes
-     *
-     * @param unit the unit to return
-     * @return converted time value
-     */
-    public long getDepressionActivationTimer(String unit) {
-
-        return switch (unit.toLowerCase()) {
-
-            case "s" ->
-                    depressionData.depressionActivationInSeconds;
-
-            case "ms" ->
-                    TimeUnit.SECONDS.toMillis(
-                            depressionData.depressionActivationInSeconds
-                    );
-
-            case "m" ->
-                    TimeUnit.SECONDS.toMinutes(
-                            depressionData.depressionActivationInSeconds
-                    );
-
-            default ->
-                    throw new IllegalArgumentException(
-                            "Unsupported unit: " + unit
-                    );
-        };
+    public int getBaseSanity() {
+         return depressionData.baseSanity;
     }
 }

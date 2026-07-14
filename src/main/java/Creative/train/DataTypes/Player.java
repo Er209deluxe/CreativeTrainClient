@@ -6,12 +6,15 @@ import Creative.train.Backend.ExceptionTypes.NotFoundException;
 import Creative.train.Backend.api.SseHandler;
 import Creative.train.DataTypes.Wrappers.BasePlayerData;
 import Creative.train.DataTypes.Wrappers.PlayerData;
+import Creative.train.GameLogic.GeneralConfig;
 import Creative.train.GameLogic.Items.Item;
 import Creative.train.GameLogic.Roles.Role;
 import Creative.train.Managers.EncryptionManager;
 import Creative.train.Managers.SessionManager;
 import org.springframework.web.servlet.mvc.method.annotation.SseEmitter;
 
+import java.util.HashMap;
+import java.util.Map;
 import java.util.UUID;
 
 public class Player {
@@ -20,10 +23,12 @@ public class Player {
     private final PlayerData data = new PlayerData();
     private final Item[] inventory = new Item[9];
     private int coins=0;
-
+    private Session session;
+    private GeneralConfig sessionConfig;
     public Player(String name, UUID playerId,String passwordHash,boolean isHost){
         baseData.playerName = name;
         baseData.isAlive = true;
+
         data.playerUuid = playerId;
         data.isHost = isHost;
         data.token = passwordHash;
@@ -35,16 +40,41 @@ public class Player {
     public BasePlayerData getBaseData() {
         return baseData;
     }
-    public void generateNewChallange(){
+    public void generateNewChallenge(){
         data.challenge = EncryptionManager.generateRandomBytes(16);
-        SseHandler.sendChallangeUpdate(getPlayerId(),data.challenge);
+        SseHandler.sendChallengeUpdate(getPlayerId(),data.challenge);
     }
     public boolean isCorrectPass(String password){
         String hashedPassword = EncryptionManager.sha256(password);
 
         return data.token.equals(hashedPassword);
     }
+    public void handleSanity(){
+        if(!isAlive()) return;
+        if(baseData.depression==-1){
+            baseData.depression = sessionConfig.getBaseDepression();
+            baseData.sanity = sessionConfig.getBaseSanity();
+        }
+        Map<String,Double> sanityData = new HashMap<>();
 
+        if(baseData.sanity<=0){
+            baseData.depression--;
+            if(baseData.depression<=0){
+                SessionManager.getInstance().setPlayerDead(this);
+            }
+            sanityData.put("sanity",(((double)baseData.sanity/(double)sessionConfig.getBaseSanity())));
+            sanityData.put("depression",((double)(baseData.depression/(double)sessionConfig.getBaseDepression())));
+            SseHandler.sendSanityUpdate(getPlayerId(),sanityData);
+            return;
+        }
+        baseData.sanity--;
+        if(baseData.depression<sessionConfig.getBaseDepression()){
+            baseData.depression++;
+        }
+        sanityData.put("sanity",(((double)baseData.sanity/(double) sessionConfig.getBaseSanity())));
+        sanityData.put("depression",((double)(baseData.depression/(double)sessionConfig.getBaseDepression())));
+        SseHandler.sendSanityUpdate(getPlayerId(),sanityData);
+    }
     public Item[] getInventory() {
         return inventory;
     }
@@ -123,6 +153,9 @@ public class Player {
 
     public void setSessionUUID(UUID sessionUUID) {
         data.sessionUuid = sessionUUID;
+        session = SessionManager.getInstance().getSession(getSessionUUID());
+        sessionConfig = session.getGeneralConfig();
+
     }
 
     public UUID getSessionUUID() {

@@ -4,12 +4,12 @@ public class DepressionData {
     //public final boolean depresionKilling;
 
     // Time it takes for depression to kill you
-    public final int depressedKillingTimerInSeconds;
+    public final int baseDepression;
 
     // Time before depression activates
-    public final int depressionActivationInSeconds;
-    public DepressionData(int depressedKillingTimerInSeconds,int depressionActivationInSeconds){
-        this.depressedKillingTimerInSeconds = depressedKillingTimerInSeconds;
-        this.depressionActivationInSeconds = depressionActivationInSeconds;
+    public final int baseSanity;
+    public DepressionData(int baseDepression,int baseSanity){
+        this.baseDepression = baseDepression;
+        this.baseSanity = baseSanity;
     }
 }
