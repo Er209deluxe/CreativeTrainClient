@@ -4,15 +4,16 @@ import 'package:creativetrainclient/Handler/app_state.dart';
 import 'package:creativetrainclient/Wrappers/RoleWrapper.dart';
 
 void playerJoined(String? data){
+
   if(data!=null) {
     print("${data.replaceAll('\n', '')} joined");
-    app_state.getCurrentSession().addPlayer(data);
+    app_state.playerJoined(data);
   }
 }
 void playerLeft(String? data) {
   if (data != null) {
     print("${data.replaceAll('\n', '')} left");
-    app_state.getCurrentSession().removePlayer(data);
+    app_state.playerLeft(data);
   }
 }
   void updateChallenge(String? challenge){

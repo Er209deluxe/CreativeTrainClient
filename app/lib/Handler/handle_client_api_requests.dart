@@ -227,7 +227,7 @@ StreamSubscription<SSEModel> startStream(
    */
   final Map<String, void Function(String)> eventMap = {
     "playerJoined": playerJoined,
-    "playerLeft": playerLeft,
+    "playerDisconnected": playerLeft,
     "challengeUpdate": updateChallenge,
     "sessionStart": sessionStart
   };

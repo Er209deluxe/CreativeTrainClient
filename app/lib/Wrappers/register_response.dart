@@ -10,8 +10,11 @@ class RegisterResponse {
   void setCoins(int coins){
     coinCount = coins;
   }
-  void addPlayer(String playerName){
-    playerList.add(playerName);
+  void addPlayer(String name) {
+    if (!playerList.contains(name)) {
+      playerList.add(name);
+      playerList.sort((a, b) => a.toLowerCase().compareTo(b.toLowerCase()));
+    }
   }
   void removePlayer(String playerName){
     playerList.remove(playerName);
@@ -26,6 +29,7 @@ class RegisterResponse {
   });
 
   factory RegisterResponse.fromJson(Map<String, dynamic> json,List<String> playerList,String hostName) {
+    playerList.sort();
     return RegisterResponse(
       playerUuid: json['playerUuid'] as String,
       isHost: json['isHost'] as bool,

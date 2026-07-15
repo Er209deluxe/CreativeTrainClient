@@ -10,7 +10,8 @@ class RenderInactivesession extends StatefulWidget {
   const RenderInactivesession({super.key});
 
   @override
-  State<RenderInactivesession> createState() => _RenderInactivesessionState();
+  State<RenderInactivesession> createState() =>
+      _RenderInactivesessionState();
 }
 
 class _RenderInactivesessionState extends State<RenderInactivesession> {
@@ -21,7 +22,8 @@ class _RenderInactivesessionState extends State<RenderInactivesession> {
         fit: StackFit.expand,
         children: [
           GradientHomeBG(),
-          Center(
+
+          SafeArea(
             child: Column(
               children: [
                 const SizedBox(height: 35),
@@ -77,22 +79,43 @@ class _RenderInactivesessionState extends State<RenderInactivesession> {
                     ),
                   ),
                 const SizedBox(height: 20),
-                M3EButton(
-                  onPressed: () {},
-                  decoration: M3EButtonDecoration.styleFrom(
-                    backgroundColor: const Color.fromARGB(255, 3, 59, 143),
-                    foregroundColor: const Color.fromARGB(255, 255, 255, 255),
+
+                const Text(
+                  "Players",
+                  style: TextStyle(
+                    fontSize: 24,
+                    fontWeight: FontWeight.bold,
                   ),
-                  size: M3EButtonSize.custom(height: 65, width: 550),
-                  child: const Text('Players', style: TextStyle(fontSize: 22)),
                 ),
-                //TODO: Render all Player names
-                const SizedBox(height: 20),
-                M3EHeader(headerText: 'Player 1'),
-                const SizedBox(height: 20),
-                M3EHeader(headerText: 'Player 2'),
-                const SizedBox(height: 20),
-                M3EHeader(headerText: 'Player 3'),
+
+                Expanded(
+                  child: Align(
+                    alignment: Alignment.topCenter,
+                    child: SizedBox(
+                      width: 550,
+                      child: ValueListenableBuilder<int>(
+                        valueListenable: app_state.playerListNotifier,
+                        builder: (_, __, ___) {
+                          final players = app_state.getCurrentSession().playerList;
+
+                          return ListView.builder(
+                            itemCount: players.length,
+                            itemBuilder: (_, index) {
+                              return SizedBox(
+                                height: 30,
+                                child: Text(
+                                  players[index],
+                                  key: ValueKey(players[index]),
+                                  style: const TextStyle(fontSize: 20),
+                                ),
+                              );
+                            },
+                          );
+                        },
+                      ),
+                    ),
+                  ),
+                ),
               ],
             ),
           ),
