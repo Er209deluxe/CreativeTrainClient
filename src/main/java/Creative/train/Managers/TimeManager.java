@@ -1,10 +1,9 @@
 package Creative.train.Managers;
 
 import Creative.train.Backend.api.SseHandler;
+import Creative.train.DataTypes.Player;
 import Creative.train.DataTypes.Session;
 import Creative.train.GameLogic.Roles.Role;
-import Creative.train.Managers.ThreadManager;
-import Creative.train.Managers.SessionManager;
 
 import java.util.concurrent.ScheduledFuture;
 import java.util.concurrent.TimeUnit;
@@ -49,6 +48,7 @@ public class TimeManager {
 
                 handlePassiveIncome(passedSeconds);
                 renewChallenge(passedSeconds);
+                handleSanity();
 
                 remainingSeconds.decrementAndGet();
                 passedSeconds.incrementAndGet();
@@ -62,7 +62,7 @@ public class TimeManager {
         if(seconds.get()%30!=0) return;
         session.getAllPlayers().forEach(player -> {
             if (player.getRole().isPassiveIncomeEnabled()) {
-                player.generateNewChallange();
+                player.generateNewChallenge();
             }
         });
     }
@@ -70,7 +70,9 @@ public class TimeManager {
         remainingSeconds.addAndGet(changeBy);
 
     }
-
+    private void handleSanity(){
+        session.getAllPlayers().forEach(Player::handleSanity);
+    }
     private void handlePassiveIncome(AtomicInteger passedSeconds){
 
         if(passedSeconds.get()%60!=0) return;

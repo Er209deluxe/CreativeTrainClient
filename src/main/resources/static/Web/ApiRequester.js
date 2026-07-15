@@ -137,6 +137,24 @@ function startStream() {
             "userList"
         );
 
+     eventSource.addEventListener("sanityUpdate", (event) => {
+    const data = JSON.parse(event.data);
+
+    const sanityBar = document.getElementById("sanityBar");
+    sanityBar.style.color = "#ffffff";
+    const depressionBar = document.getElementById("depressionBar");
+
+    sanityBar.value = data.sanity;
+
+    if (data.depression === 1) {
+        depressionBar.style.visibility = "hidden";
+        return;
+    }
+
+    depressionBar.style.visibility = "visible";
+    depressionBar.style.color = "#66013d"; 
+    depressionBar.value = data.depression;
+});
     /* ---------- JOIN ---------- */
 
     eventSource.addEventListener(
@@ -257,7 +275,7 @@ function startStream() {
                         "sessionUuid"
                     );
 
-            }, 3000);
+            }, 9000);
         }
     );
 
