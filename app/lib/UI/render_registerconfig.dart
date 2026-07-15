@@ -135,6 +135,10 @@ class _RenderRegisterconfigState extends State<RenderRegisterconfig> {
                       return;
                     }
 
+                    if (hostSession) {
+                      _sessionUUID.text = '';
+                    }
+
                     if (!await handleRegistration(
                       ipAddress,
                       _playerName.text,

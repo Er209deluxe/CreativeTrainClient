@@ -87,6 +87,7 @@ Future<bool> handleTestConnectionToServer(
     return false;
   }
 }
+
 Future<bool> startSession(String roleConfig) async {
   String token = app_state.getCurrentSession().token;
   String sessionUuid = app_state.getCurrentSession().sessionUuid;
@@ -128,23 +129,17 @@ Future<bool> startSession(String roleConfig) async {
   ]
 }
 ''';
-  if(ipAddress == null) return false;
+  if (ipAddress == null) return false;
 
-  final uri = Uri.http(
-    ipAddress,
-    '/api/session/start',
-    {
-      'token': token,
-      'sessionUuid': sessionUuid,
-      'playerUuid': playerUuid,
-    },
-  );
+  final uri = Uri.http(ipAddress, '/api/session/start', {
+    'token': token,
+    'sessionUuid': sessionUuid,
+    'playerUuid': playerUuid,
+  });
 
   final response = await http.post(
     uri,
-    headers: {
-      'Content-Type': 'application/json',
-    },
+    headers: {'Content-Type': 'application/json'},
     body: roleConfig,
   );
   print(response.body);
@@ -157,13 +152,14 @@ Future<bool> startSession(String roleConfig) async {
  * playerQr: png image of the qr code that the player registers under
  * joinedSession: the UUID of the session the player wants to join, is null if the user registers as host
    */
+
 Future<bool> handleRegistration(
   String ipAddress,
   String playerName,
   String? joinedSession,
 ) async {
   print(joinedSession);
-  if(app_state.inSession) return false;
+  if (app_state.inSession) return false;
 
   final registerUrl = Uri.http(ipAddress, '/api/session/register');
 
@@ -229,7 +225,7 @@ StreamSubscription<SSEModel> startStream(
     "playerJoined": playerJoined,
     "playerLeft": playerLeft,
     "challengeUpdate": updateChallenge,
-    "sessionStart": sessionStart
+    "sessionStart": sessionStart,
   };
 
   final stream = SSEClient.subscribeToSSE(
@@ -269,5 +265,6 @@ Future<bool> leaveSession(
     throw Exception(registerResponse.body);
   }
   app_state.inSession = false;
+  app_state.changeGameActivation(false);
   return true;
 }
