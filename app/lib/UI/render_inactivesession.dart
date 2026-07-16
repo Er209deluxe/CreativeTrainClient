@@ -60,6 +60,7 @@ class _RenderInactivesessionState extends State<RenderInactivesession> {
                         ),
                       ),
 
+                    if (app_state.getCurrentSession().isHost)
                     const SizedBox(width: 20),
                     Expanded(
                       child: M3EButton(
