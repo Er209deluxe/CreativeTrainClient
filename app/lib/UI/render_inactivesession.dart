@@ -1,8 +1,9 @@
 import 'package:creativetrainclient/Handler/app_state.dart';
 import 'package:creativetrainclient/Handler/handle_buttons_clientconfig.dart';
 import 'package:creativetrainclient/Handler/handle_client_api_requests.dart';
+import 'package:creativetrainclient/UI/render_activesession.dart';
 import 'package:creativetrainclient/UI/render_registerconfig.dart';
-import 'package:creativetrainclient/configs/UI/standartm3edesign.dart';
+import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:m3e_buttons/m3e_buttons.dart';
@@ -11,8 +12,7 @@ class RenderInactivesession extends StatefulWidget {
   const RenderInactivesession({super.key});
 
   @override
-  State<RenderInactivesession> createState() =>
-      _RenderInactivesessionState();
+  State<RenderInactivesession> createState() => _RenderInactivesessionState();
 }
 
 class _RenderInactivesessionState extends State<RenderInactivesession> {
@@ -37,6 +37,11 @@ class _RenderInactivesessionState extends State<RenderInactivesession> {
                           onPressed: () {
                             print("start session");
                             startSession("temp role configR");
+                            Navigator.of(context).pushReplacement(
+                              CupertinoPageRoute(
+                                builder: (_) => RenderActivesession(),
+                              ),
+                            );
                           },
                           decoration: M3EButtonDecoration.styleFrom(
                             backgroundColor: const Color.fromARGB(
@@ -61,7 +66,7 @@ class _RenderInactivesessionState extends State<RenderInactivesession> {
                       ),
 
                     if (app_state.getCurrentSession().isHost)
-                    const SizedBox(width: 20),
+                      const SizedBox(width: 20),
                     Expanded(
                       child: M3EButton(
                         onPressed: () {
@@ -177,10 +182,8 @@ class _RenderInactivesessionState extends State<RenderInactivesession> {
                             fontSize: 22,
                             color: Color.fromARGB(255, 255, 255, 255),
                           ),
-
                         ),
                       ),
-
                     ),
 
                     const SizedBox(width: 35),
@@ -190,28 +193,38 @@ class _RenderInactivesessionState extends State<RenderInactivesession> {
                 Expanded(
                   child: Align(
                     alignment: Alignment.topCenter,
-                    child: SizedBox(
-                      width: 550,
-                      child: ValueListenableBuilder<int>(
-                        valueListenable: app_state.playerListNotifier,
-                        builder: (_, __, ___) {
-                          final players = app_state.getCurrentSession().playerList;
+                    child: Row(
+                      children: [
+                        const SizedBox(width: 40),
+                        Expanded(
+                          child: ValueListenableBuilder<int>(
+                            valueListenable: app_state.playerListNotifier,
+                            builder: (_, __, ___) {
+                              final players = app_state
+                                  .getCurrentSession()
+                                  .playerList;
 
-                          return ListView.builder(
-                            itemCount: players.length,
-                            itemBuilder: (_, index) {
-                              return SizedBox(
-                                height: 30,
-                                child: Text(
-                                  players[index],
-                                  key: ValueKey(players[index]),
-                                  style: const TextStyle(fontSize: 20),
-                                ),
+                              return ListView.builder(
+                                itemCount: players.length,
+                                itemBuilder: (_, index) {
+                                  return SizedBox(
+                                    height: 30,
+                                    child: Text(
+                                      players[index],
+                                      key: ValueKey(players[index]),
+                                      style: const TextStyle(
+                                        fontSize: 26,
+                                        color: Colors.white,
+                                      ),
+                                    ),
+                                  );
+                                },
                               );
                             },
-                          );
-                        },
-                      ),
+                          ),
+                        ),
+                        const SizedBox(width: 40),
+                      ],
                     ),
                   ),
                 ),
