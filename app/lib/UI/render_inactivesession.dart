@@ -3,6 +3,7 @@ import 'package:creativetrainclient/Handler/handle_buttons_clientconfig.dart';
 import 'package:creativetrainclient/Handler/handle_client_api_requests.dart';
 import 'package:creativetrainclient/UI/render_activesession.dart';
 import 'package:creativetrainclient/UI/render_registerconfig.dart';
+import 'package:creativetrainclient/Wrappers/RoleWrapper.dart';
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
@@ -41,6 +42,20 @@ class _RenderInactivesessionState extends State<RenderInactivesession> {
                               CupertinoPageRoute(
                                 builder: (_) => RenderActivesession(),
                               ),
+                            );
+                            showDialog(
+                              context: context,
+                              builder: (BuildContext dialogContext) {
+                                return ValueListenableBuilder<RoleWrapper?>(
+                                  valueListenable: app_state.roleNotifier,
+                                  builder: (context, role, _) {
+                                    return ErrorDialogM3E(
+                                      errorHeader: 'Your Role:',
+                                      errorText: role?.team.name ?? 'Unknown',
+                                    );
+                                  },
+                                );
+                              },
                             );
                           },
                           decoration: M3EButtonDecoration.styleFrom(
