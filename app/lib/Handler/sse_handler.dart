@@ -23,11 +23,20 @@ void playerLeft(String? data) {
     print("Challenge: ${challenge.replaceAll('\n', '')}");
     app_state.updateChallenge(challenge);
   }
-  void sessionStart(String? data){
+void sessionStart(String? data){
       if(data==null) return;
 
       RoleWrapper role = RoleWrapper.fromJson(jsonDecode(data));
       print("session started role: ${role.team.name}");
       app_state.setRole(role);
       app_state.gameStarted = true;
+    }
+
+  void sanityUpdate(String? data) {
+    if (data == null) return;
+    final json = jsonDecode(data);
+    final sanity = (json['sanity'] as num?)?.toDouble() ?? 1.0;
+    final depression = (json['depression'] as num?)?.toDouble() ?? 0.0;
+    print("Sanity update: $sanity, Depression: $depression");
+    app_state.updateSanity(sanity, depression);
   }

@@ -21,7 +21,7 @@ class _RenderActivesessionState extends State<RenderActivesession> {
           GradientHomeBG(),
           Center(
             child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
+              crossAxisAlignment: CrossAxisAlignment.center,
               children: [
                 const SizedBox(height: 25),
                 ValueListenableBuilder<RoleWrapper?>(
@@ -29,6 +29,98 @@ class _RenderActivesessionState extends State<RenderActivesession> {
                   builder: (context, role, _) {
                     return M3EHeader(
                       headerText: "Role: ${role?.team.name ?? 'Loading...'}",
+                    );
+                  },
+                ),
+                const SizedBox(height: 25),
+                ValueListenableBuilder<double>(
+                  valueListenable: app_state.sanityNotifier,
+                  builder: (context, sanity, _) {
+                    return ValueListenableBuilder<double>(
+                      valueListenable: app_state.depressionNotifier,
+                      builder: (context, depression, _) {
+                        return Padding(
+                          padding: const EdgeInsets.symmetric(horizontal: 16),
+                          child: Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              Row(
+                                mainAxisAlignment:
+                                    MainAxisAlignment.spaceBetween,
+                                children: [
+                                  Text(
+                                    'Sanity',
+                                    style: TextStyle(
+                                      fontSize: 20,
+                                      fontWeight: FontWeight.w500,
+                                      color: Colors.white.withOpacity(0.9),
+                                    ),
+                                  ),
+                                  Text(
+                                    '${(sanity * 100).round()}%',
+                                    style: TextStyle(
+                                      fontSize: 20,
+                                      fontWeight: FontWeight.w600,
+                                      color: Colors.white,
+                                    ),
+                                  ),
+                                ],
+                              ),
+                              const SizedBox(height: 8),
+                              LinearProgressIndicator(
+                                value: sanity,
+                                minHeight: 22,
+                                borderRadius: BorderRadius.circular(6),
+                                backgroundColor: Colors.white.withOpacity(0.15),
+                                valueColor: AlwaysStoppedAnimation<Color>(
+                                  sanity > 0.5
+                                      ? Colors.greenAccent
+                                      : sanity > 0.25
+                                      ? Colors.amber
+                                      : Colors.redAccent,
+                                ),
+                              ),
+                              const SizedBox(height: 12),
+                              Row(
+                                mainAxisAlignment:
+                                    MainAxisAlignment.spaceBetween,
+                                children: [
+                                  Text(
+                                    'Depression',
+                                    style: TextStyle(
+                                      fontSize: 20,
+                                      fontWeight: FontWeight.w500,
+                                      color: Colors.white.withOpacity(0.9),
+                                    ),
+                                  ),
+                                  Text(
+                                    '${(depression * 100).round()}%',
+                                    style: TextStyle(
+                                      fontSize: 20,
+                                      fontWeight: FontWeight.w600,
+                                      color: Colors.white,
+                                    ),
+                                  ),
+                                ],
+                              ),
+                              const SizedBox(height: 8),
+                              LinearProgressIndicator(
+                                value: depression,
+                                minHeight: 22,
+                                borderRadius: BorderRadius.circular(4),
+                                backgroundColor: Colors.white.withOpacity(0.15),
+                                valueColor: AlwaysStoppedAnimation<Color>(
+                                  depression < 0.3
+                                      ? Colors.greenAccent
+                                      : depression < 0.6
+                                      ? Colors.amber
+                                      : Colors.redAccent,
+                                ),
+                              ),
+                            ],
+                          ),
+                        );
+                      },
                     );
                   },
                 ),

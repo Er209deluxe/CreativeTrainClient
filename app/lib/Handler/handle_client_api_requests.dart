@@ -226,6 +226,7 @@ StreamSubscription<SSEModel> startStream(
     "playerDisconnected": playerLeft,
     "challengeUpdate": updateChallenge,
     "sessionStart": sessionStart,
+    "sanityUpdate": sanityUpdate,
   };
 
   final stream = SSEClient.subscribeToSSE(

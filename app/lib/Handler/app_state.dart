@@ -16,6 +16,8 @@ class app_state {
   static RoleWrapper? _role;
 
   static final ValueNotifier<RoleWrapper?> roleNotifier = ValueNotifier(null);
+  static final ValueNotifier<double> sanityNotifier = ValueNotifier(1.0);
+  static final ValueNotifier<double> depressionNotifier = ValueNotifier(0.0);
 
   static final ValueNotifier<int> playerListNotifier = ValueNotifier(0);
 
@@ -66,6 +68,11 @@ class app_state {
   static void setRole(RoleWrapper roleData) {
     _role = roleData;
     roleNotifier.value = roleData;
+  }
+
+  static void updateSanity(double sanity, double depression) {
+    sanityNotifier.value = sanity.clamp(0.0, 1.0);
+    depressionNotifier.value = depression.clamp(0.0, 1.0);
   }
 
   static RegisterResponse getCurrentSession() {
