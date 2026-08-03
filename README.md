@@ -4,7 +4,7 @@ This is an Client for the game 🚆 CreativeTrain.
 
 ## Current Goals:
 - [ ] implement all requests
-- [ ] Material 3 you Design
+- [x] Material 3 you Design
 - [ ] Remember last connections
 - [ ] Tutorial to run Server(Termux)
 - [ ] iOS, Android main plattform(maybe desktop plattforms aswell)
@@ -83,10 +83,29 @@ During the game:
 ## Run locally
 
 ```bash
-git clone https://github.com/CreativeN025/CreativeTrain.git
-cd CreativeTrain
-mvn spring-boot:run
+    git clone https://github.com/CreativeN025/CreativeTrain.git
+    cd CreativeTrain
+    mvn spring-boot:run
 ````
+
+## Compile the flutter app
+
+To compile the flutter app you will need the flutter binary for your OS
+
+## Arch or Arch-based:
+```bash
+	sudo pacman -S yay clang cmake ninja pkg-config libgtk-3-dev
+	yay -S flutter-bin
+```
+
+With the flutter binary you can now compile the Project for your desired plattform
+
+```bash
+	git clone https://github.com/Er209deluxe/CreativeTrainClient
+	cd CreativeTrainClient/app
+	flutter build linux
+```
+
 
 ## 📱 Gameplay flow
 
