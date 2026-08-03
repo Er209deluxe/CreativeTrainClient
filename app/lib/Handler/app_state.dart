@@ -18,6 +18,7 @@ class app_state {
   static final ValueNotifier<RoleWrapper?> roleNotifier = ValueNotifier(null);
   static final ValueNotifier<double> sanityNotifier = ValueNotifier(1.0);
   static final ValueNotifier<double> depressionNotifier = ValueNotifier(0.0);
+  static final ValueNotifier<int> coinsNotifier = ValueNotifier(0);
 
   static final ValueNotifier<int> playerListNotifier = ValueNotifier(0);
 
@@ -73,6 +74,19 @@ class app_state {
   static void updateSanity(double sanity, double depression) {
     sanityNotifier.value = sanity.clamp(0.0, 1.0);
     depressionNotifier.value = depression.clamp(0.0, 1.0);
+  }
+
+  static void updateCoins(int coins) {
+    coinsNotifier.value = coins;
+    _currentSession.setCoins(coins);
+  }
+
+  static void updateInventory(List<dynamic> inventory) {
+    if (_role == null) return;
+    _role = _role?.copyWith(
+      team: _role!.team.copyWith(baseInventory: inventory),
+    );
+    roleNotifier.value = _role;
   }
 
   static RegisterResponse getCurrentSession() {

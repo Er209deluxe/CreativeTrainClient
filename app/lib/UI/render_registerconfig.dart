@@ -137,6 +137,7 @@ class _RenderRegisterconfigState extends State<RenderRegisterconfig> {
 
                     if (hostSession) {
                       _sessionUUID.text = '';
+                      app_state.inSession = false;
                     }
 
                     if (!await handleRegistration(

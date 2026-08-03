@@ -1,4 +1,6 @@
 import 'package:creativetrainclient/Handler/app_state.dart';
+import 'package:creativetrainclient/Handler/handle_buttons_clientconfig.dart';
+import 'package:creativetrainclient/Handler/handle_client_api_requests.dart';
 import 'package:creativetrainclient/UI/render_registerconfig.dart';
 import 'package:creativetrainclient/Wrappers/RoleWrapper.dart';
 import 'package:creativetrainclient/configs/UI/standartm3edesign.dart';
@@ -154,28 +156,26 @@ class _RenderActivesessionState extends State<RenderActivesession> {
                   },
                 ),
                 const SizedBox(height: 25),
+                ValueListenableBuilder<int>(
+                  valueListenable: app_state.coinsNotifier,
+                  builder: (context, coins, _) {
+                    return M3EHeader(headerText: 'Coins: $coins');
+                  },
+                ),
+                const SizedBox(height: 25),
                 Row(
                   children: [
                     const SizedBox(width: 25),
                     Expanded(
                       child: M3EButton(
                         onPressed: () {
-                          //TODO: Leave Game
+                          //Leave Game
+                          showLeaveConfirmDialog(context);
                         },
                         size: M3EButtonSize.custom(height: 85),
                         decoration: M3EButtonDecoration.styleFrom(
-                          backgroundColor: const Color.fromARGB(
-                            255,
-                            224,
-                            11,
-                            11,
-                          ),
-                          foregroundColor: const Color.fromARGB(
-                            255,
-                            255,
-                            255,
-                            255,
-                          ),
+                          backgroundColor: Colors.red.shade700,
+                          foregroundColor: Colors.white,
                         ),
                         child: Text(
                           'Leave Game',
@@ -187,7 +187,7 @@ class _RenderActivesessionState extends State<RenderActivesession> {
                     Expanded(
                       child: M3EButton(
                         onPressed: () {
-                          //TODO: Refresh Inventory
+                          showInventoryDialog(context);
                         },
                         size: M3EButtonSize.custom(height: 85),
                         decoration: M3EButtonDecoration.styleFrom(
@@ -205,7 +205,7 @@ class _RenderActivesessionState extends State<RenderActivesession> {
                           ),
                         ),
                         child: Text(
-                          'Refresh Inventory',
+                          'Inventory',
                           style: TextStyle(fontSize: 27),
                         ),
                       ),
@@ -220,4 +220,330 @@ class _RenderActivesessionState extends State<RenderActivesession> {
       ),
     );
   }
+}
+
+void showInventoryDialog(BuildContext context) {
+  showDialog(
+    context: context,
+    builder: (BuildContext dialogContext) {
+      return Dialog(
+        shape: RoundedRectangleBorder(
+          borderRadius: BorderRadius.circular(16.0),
+        ),
+        elevation: 16.0,
+        backgroundColor: const Color.fromARGB(255, 34, 68, 117),
+        child: Padding(
+          padding: const EdgeInsets.all(24.0),
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            crossAxisAlignment: CrossAxisAlignment.center,
+            children: [
+              Text(
+                'Inventory',
+                style: const TextStyle(
+                  fontSize: 30,
+                  fontWeight: FontWeight.bold,
+                  color: Colors.white,
+                ),
+              ),
+              ValueListenableBuilder<RoleWrapper?>(
+                valueListenable: app_state.roleNotifier,
+                builder: (context, role, _) {
+                  final baseInventory = role?.team.baseInventory ?? [];
+                  final inventoryItems = baseInventory
+                      .where((item) => item != null)
+                      .toList();
+
+                  if (inventoryItems.isEmpty) {
+                    return const Padding(
+                      padding: EdgeInsets.all(16.0),
+                      child: Text(
+                        'Inventory is empty',
+                        style: TextStyle(fontSize: 20, color: Colors.white70),
+                      ),
+                    );
+                  }
+
+                  return Flexible(
+                    child: ListView.builder(
+                      shrinkWrap: true,
+                      itemCount: inventoryItems.length,
+                      itemBuilder: (context, index) {
+                        final item = inventoryItems[index];
+                        final name = item['name'];
+                        return Padding(
+                          padding: const EdgeInsets.symmetric(vertical: 10),
+                          child: M3EButton(
+                            onPressed: () {},
+                            decoration: M3EButtonDecoration.styleFrom(
+                              backgroundColor: const Color.fromARGB(
+                                255,
+                                5,
+                                88,
+                                157,
+                              ),
+                            ),
+                            child: Text(
+                              '${index + 1}. $name',
+                              style: TextStyle(
+                                fontSize: 20,
+                                color: Colors.white,
+                              ),
+                            ),
+                          ),
+                        );
+                      },
+                    ),
+                  );
+                },
+              ),
+              const SizedBox(height: 24),
+              Row(
+                mainAxisAlignment: MainAxisAlignment.center,
+                children: [
+                  SizedBox(width: 8),
+                  ElevatedButton(
+                    onPressed: () => Navigator.of(dialogContext).pop(true),
+                    child: const Text(
+                      'Exit',
+                      style: TextStyle(
+                        fontSize: 20,
+                        fontWeight: FontWeight.bold,
+                        color: Color.fromARGB(255, 0, 0, 0),
+                      ),
+                    ),
+                  ),
+                  SizedBox(width: 8),
+                  ElevatedButton(
+                    onPressed: () {
+                      Navigator.of(dialogContext).pop(true);
+                      showShopDialog(context, app_state.getRole());
+                    },
+                    child: const Text(
+                      'To Shop',
+                      style: TextStyle(
+                        fontSize: 20,
+                        fontWeight: FontWeight.bold,
+                        color: Color.fromARGB(255, 0, 0, 0),
+                      ),
+                    ),
+                  ),
+                  SizedBox(width: 8),
+                ],
+              ),
+            ],
+          ),
+        ),
+      );
+    },
+  );
+}
+
+void showShopDialog(BuildContext context, RoleWrapper? role) {
+  final itemShop = role?.team.itemShop ?? {};
+  showDialog(
+    context: context,
+    builder: (BuildContext dialogContext) {
+      return Dialog(
+        shape: RoundedRectangleBorder(
+          borderRadius: BorderRadius.circular(16.0),
+        ),
+        elevation: 16.0,
+        backgroundColor: const Color.fromARGB(255, 34, 68, 117),
+        child: Padding(
+          padding: const EdgeInsets.all(24.0),
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            crossAxisAlignment: CrossAxisAlignment.center,
+            children: [
+              Text(
+                'Shop',
+                style: const TextStyle(
+                  fontSize: 30,
+                  fontWeight: FontWeight.bold,
+                  color: Colors.white,
+                ),
+              ),
+              if (itemShop.isEmpty)
+                const Padding(
+                  padding: EdgeInsets.all(16.0),
+                  child: Text(
+                    'Shop is empty',
+                    style: TextStyle(fontSize: 20, color: Colors.white70),
+                  ),
+                )
+              else
+                Flexible(
+                  child: ListView.builder(
+                    shrinkWrap: true,
+                    itemCount: itemShop.length,
+                    itemBuilder: (context, index) {
+                      final entry = itemShop.entries.elementAt(index);
+                      final item = entry.value;
+                      final name = item.name;
+                      final price = item.price;
+                      return Padding(
+                        padding: const EdgeInsets.symmetric(vertical: 10),
+                        child: M3EButton(
+                          onPressed: () async {
+                            String result;
+                            try {
+                              result = await buyItem(
+                                app_state.getIpAddress().toString(),
+                                app_state.getCurrentSession().playerUuid,
+                                app_state.getCurrentSession().token,
+                                item.itemUuid,
+                              );
+                              if (result == 'Bought Item') {
+                                final inventory = await fetchInventory(
+                                  app_state.getIpAddress().toString(),
+                                  app_state.getCurrentSession().playerUuid,
+                                  app_state.getCurrentSession().token,
+                                );
+                                app_state.updateInventory(inventory);
+                              }
+                            } catch (e) {
+                              result = 'Failed to buy item: $e';
+                            }
+                            if (!context.mounted) return;
+                            showDialog(
+                              context: context,
+                              builder: (BuildContext dialogContext) {
+                                return ErrorDialogM3E(
+                                  errorHeader: 'Server Message',
+                                  errorText: result,
+                                );
+                              },
+                            );
+                          },
+                          decoration: M3EButtonDecoration.styleFrom(
+                            backgroundColor: const Color.fromARGB(
+                              255,
+                              5,
+                              88,
+                              157,
+                            ),
+                          ),
+                          child: Text(
+                            '${index + 1}. $name - $price coins',
+                            style: TextStyle(fontSize: 20, color: Colors.white),
+                          ),
+                        ),
+                      );
+                    },
+                  ),
+                ),
+              const SizedBox(height: 24),
+              Row(
+                mainAxisAlignment: MainAxisAlignment.center,
+                children: [
+                  SizedBox(width: 8),
+                  ElevatedButton(
+                    onPressed: () {
+                      Navigator.of(dialogContext).pop(true);
+                      showInventoryDialog(context);
+                    },
+                    child: const Text(
+                      'Exit Shop',
+                      style: TextStyle(
+                        fontSize: 20,
+                        fontWeight: FontWeight.bold,
+                        color: Color.fromARGB(255, 0, 0, 0),
+                      ),
+                    ),
+                  ),
+                  SizedBox(width: 8),
+                ],
+              ),
+            ],
+          ),
+        ),
+      );
+    },
+  );
+}
+
+void showLeaveConfirmDialog(BuildContext context) {
+  showDialog(
+    context: context,
+    builder: (BuildContext dialogContext) {
+      return Dialog(
+        shape: RoundedRectangleBorder(
+          borderRadius: BorderRadius.circular(16.0),
+        ),
+        elevation: 16.0,
+        backgroundColor: const Color.fromARGB(255, 34, 68, 117),
+        child: Padding(
+          padding: const EdgeInsets.all(24.0),
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            crossAxisAlignment: CrossAxisAlignment.center,
+            children: [
+              Text(
+                'Are you Sure?',
+                style: const TextStyle(
+                  fontSize: 30,
+                  fontWeight: FontWeight.bold,
+                  color: Colors.white,
+                ),
+              ),
+              const Padding(
+                padding: EdgeInsets.all(16.0),
+                child: Text(
+                  'Do you really want to Leave the Game',
+                  style: TextStyle(fontSize: 20, color: Colors.white70),
+                ),
+              ),
+              const SizedBox(height: 24),
+              Row(
+                mainAxisAlignment: MainAxisAlignment.center,
+                children: [
+                  SizedBox(width: 8),
+                  ElevatedButton(
+                    onPressed: () => Navigator.of(context).pop(true),
+                    child: const Text(
+                      'Cancel',
+                      style: TextStyle(
+                        fontSize: 20,
+                        fontWeight: FontWeight.bold,
+                        color: Color.fromARGB(255, 0, 0, 0),
+                      ),
+                    ),
+                  ),
+                  SizedBox(width: 8),
+                  ElevatedButton(
+                    onPressed: () async {
+                      //Confirm Leave
+                      await leaveSession(
+                        app_state.getIpAddress().toString(),
+                        app_state.getCurrentSession().playerUuid,
+                        app_state.getCurrentSession().token,
+                      );
+                      if (!context.mounted) return;
+                      Navigator.pop(context);
+                      Navigator.pop(context);
+                    },
+                    style: ButtonStyle(
+                      backgroundColor: WidgetStateProperty.all(
+                        Colors.red.shade700,
+                      ),
+                    ),
+                    child: const Text(
+                      'Leave Game',
+                      style: TextStyle(
+                        fontSize: 20,
+                        fontWeight: FontWeight.bold,
+                        color: Colors.white,
+                      ),
+                    ),
+                  ),
+                  SizedBox(width: 8),
+                ],
+              ),
+            ],
+          ),
+        ),
+      );
+    },
+  );
 }

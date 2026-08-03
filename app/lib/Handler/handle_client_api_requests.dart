@@ -227,6 +227,8 @@ StreamSubscription<SSEModel> startStream(
     "challengeUpdate": updateChallenge,
     "sessionStart": sessionStart,
     "sanityUpdate": sanityUpdate,
+    "coinUpdate": coinUpdate,
+    "inventoryUpdate": inventoryUpdate,
   };
 
   final stream = SSEClient.subscribeToSSE(
@@ -268,4 +270,48 @@ Future<bool> leaveSession(
   app_state.inSession = false;
   app_state.changeGameActivation(false);
   return true;
+}
+
+Future<String> buyItem(
+  String ipAddress,
+  String playerUuid,
+  String sessionToken,
+  String itemUUID,
+) async {
+  final buyUrl = Uri.http(ipAddress, '/api/session/buyItem');
+
+  final buyRequest = http.MultipartRequest('POST', buyUrl)
+    ..fields['playerUuid'] = playerUuid
+    ..fields['sessionToken'] = sessionToken
+    ..fields['itemUuid'] = itemUUID;
+
+  final streamedResponse = await buyRequest.send();
+  final buyResponse = await http.Response.fromStream(streamedResponse);
+
+  if (buyResponse.statusCode < 200 || buyResponse.statusCode >= 300) {
+    return buyResponse.body;
+  }
+
+  return 'Bought Item';
+}
+
+Future<List<dynamic>> fetchInventory(
+  String ipAddress,
+  String playerUuid,
+  String sessionToken,
+) async {
+  final inventoryUrl = Uri.http(ipAddress, '/api/session/inventory', {
+    'playerUuid': playerUuid,
+    'sessionToken': sessionToken,
+    'isShop': 'false',
+  });
+
+  final inventoryResponse = await http.get(inventoryUrl);
+
+  if (inventoryResponse.statusCode < 200 ||
+      inventoryResponse.statusCode >= 300) {
+    return [];
+  }
+
+  return jsonDecode(inventoryResponse.body) as List<dynamic>;
 }

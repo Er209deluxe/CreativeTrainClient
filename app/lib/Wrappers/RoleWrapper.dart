@@ -11,6 +11,10 @@ class RoleWrapper {
     );
   }
 
+  RoleWrapper copyWith({Team? team}) {
+    return RoleWrapper(team: team ?? this.team);
+  }
+
   Map<String, dynamic> toJson() {
     return team.toJson();
   }
@@ -40,6 +44,22 @@ class Team {
             (key, value) => MapEntry(key, ShopItem.fromJson(value)),
       ),
       baseInventory: json['baseInventory'] ?? [],
+    );
+  }
+
+  Team copyWith({
+    String? name,
+    String? team,
+    String? hex,
+    Map<String, ShopItem>? itemShop,
+    List<dynamic>? baseInventory,
+  }) {
+    return Team(
+      name: name ?? this.name,
+      team: team ?? this.team,
+      hex: hex ?? this.hex,
+      itemShop: itemShop ?? this.itemShop,
+      baseInventory: baseInventory ?? this.baseInventory,
     );
   }
 

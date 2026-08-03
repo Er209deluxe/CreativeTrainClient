@@ -315,7 +315,7 @@ class _ErrorDialogM3EState extends State<ErrorDialogM3E> {
         padding: const EdgeInsets.all(24.0),
         child: Column(
           mainAxisSize: MainAxisSize.min,
-          crossAxisAlignment: CrossAxisAlignment.start,
+          crossAxisAlignment: CrossAxisAlignment.center,
           children: [
             Text(
               widget.errorHeader,
@@ -332,7 +332,7 @@ class _ErrorDialogM3EState extends State<ErrorDialogM3E> {
             ),
             const SizedBox(height: 24),
             Row(
-              mainAxisAlignment: MainAxisAlignment.end,
+              mainAxisAlignment: MainAxisAlignment.center,
               children: [
                 SizedBox(width: 8),
                 ElevatedButton(
@@ -428,8 +428,8 @@ Future<void> validInput(
   if (await handleTestConnectionToServer(pUrl + "/api/validateApi", context)) {
     Navigator.pop(context);
     // Session Control screen
-    Navigator.of(context).pushReplacement(
-      CupertinoPageRoute(builder: (_) => RenderRegisterconfig()),
-    );
+    Navigator.of(
+      context,
+    ).push(CupertinoPageRoute(builder: (_) => RenderRegisterconfig()));
   }
 }
