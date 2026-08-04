@@ -1,42 +1,38 @@
-name: iOS-ipa-build
+name: Build iOS ipa
 
 on:
-  workflow_dispatch:
+  push:
+    branches:
+      - main
 
 jobs:
-  build-ios:
-    name: 🎉 iOS Build
+  build:
+    name: Build Flutter iOS App
     runs-on: macos-latest
     steps:
-      - uses: actions/checkout@v3
-
-      - uses: subosito/flutter-action@v2
-        with:
-          channel: 'stable'
-          architecture: x64
-      - run: flutter pub get
+      # Step 1: Check out the code
+      - uses: actions/checkout@v2
       
+      # Step 2: Prepare ExportOptions.plist
+      - name: Create plist file
+        run: |
+          cat <<EOF > ios/ExportOptions.plist
+          ${{ secrets.EXPORT_OPTION_PLIST }}
+          EOF
 
-      - run: pod repo update
-        working-directory: ios
-
-      - run: flutter build ios --release --no-codesign
-
-      - run: mkdir Payload
-        working-directory: build/ios/iphoneos
-
-      - run: mv Runner.app/ Payload
-        working-directory: build/ios/iphoneos
-
-      - name: Zip output
-        run: zip -qq -r -9 FlutterIpaExport.ipa Payload
-        working-directory: build/ios/iphoneos
-
-      - name: Upload binaries to release
-        uses: svenstaro/upload-release-action@v2
+      # Step 3: Build the iOS app with Flutter
+      - name: iOS Application Building...
+        uses: cedvdb/action-flutter-build-ios@v1
         with:
-          repo_token: ${{ secrets.GITHUB_TOKEN }}
-          file: build/ios/iphoneos/FlutterIpaExport.ipa
-          tag: v1.0
-          overwrite: true
-          body: "This is first release"
+          build-cmd: flutter build ipa --export-options-plist=ios/ExportOptions.plist
+          certificate-base64: ${{ secrets.BUILD_CERTIFICATE_BASE64 }}
+          certificate-password: ${{ secrets.P12_PASSWORD }}
+          provisioning-profile-base64: ${{ secrets.BUILD_PROVISION_PROFILE_BASE64 }}
+          keychain-password: ${{ secrets.KEYCHAIN_PASSWORD }}
+
+      # Step 4: Upload the IPA file as an artifact
+      - name: Upload Artifact - IPA File
+        uses: actions/upload-artifact@{latest}
+        with:
+          name: iOS-IPA
+          path: build/ios/ipa/*.ipa
