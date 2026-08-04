@@ -5,6 +5,7 @@ import Creative.train.DataTypes.Player;
 import Creative.train.DataTypes.Session;
 import Creative.train.GameLogic.Roles.Role;
 
+import java.util.ArrayList;
 import java.util.concurrent.ScheduledFuture;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicInteger;
@@ -14,9 +15,11 @@ public class TimeManager {
     private final Session session;
     private final AtomicInteger remainingSeconds;
     private final AtomicInteger passedSeconds;
+    private final QuestManager questManager;
 
-    public TimeManager(Session session) {
+    public TimeManager(Session session,QuestManager questManager) {
         this.session = session;
+        this.questManager = questManager;
         remainingSeconds = new AtomicInteger(session.getGeneralConfig().getBaseTimer());
         passedSeconds = new AtomicInteger(0);
         System.out.println("remainingsecs: "+remainingSeconds);
@@ -45,13 +48,17 @@ public class TimeManager {
                         session.getAllPlayerUuids(),
                         display
                 );
-
-                handlePassiveIncome(passedSeconds);
-                renewChallenge(passedSeconds);
-                handleSanity();
-
                 remainingSeconds.decrementAndGet();
                 passedSeconds.incrementAndGet();
+
+                if(SessionManager.getInstance().getSession(session.getSessionId())!=null) {
+
+                    handlePassiveIncome(passedSeconds);
+                    renewChallenge(passedSeconds);
+                    handleSanity();
+                    handleQuests(passedSeconds);
+
+                }
 
             } catch (Exception e) {
                 e.printStackTrace();
@@ -71,8 +78,10 @@ public class TimeManager {
 
     }
     private void handleSanity(){
-        session.getAllPlayers().forEach(Player::handleSanity);
-    }
+
+        new ArrayList<>(session.getAllPlayers())
+                    .forEach(Player::handleSanity);
+        }
     private void handlePassiveIncome(AtomicInteger passedSeconds){
 
         if(passedSeconds.get()%60!=0) return;
@@ -85,7 +94,11 @@ public class TimeManager {
 
 
     }
+    public void handleQuests(AtomicInteger passedSeconds){
 
+        if(passedSeconds.get()%30!=0) return;
+        questManager.assignQuests();
+    }
     public void stopCountdown() {
         if (timerTask != null && !timerTask.isCancelled()) {
             timerTask.cancel(false);

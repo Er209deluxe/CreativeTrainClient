@@ -8,6 +8,7 @@ import Creative.train.DataTypes.Wrappers.BasePlayerData;
 import Creative.train.DataTypes.Wrappers.PlayerData;
 import Creative.train.GameLogic.GeneralConfig;
 import Creative.train.GameLogic.Items.Item;
+import Creative.train.GameLogic.Quest;
 import Creative.train.GameLogic.Roles.Role;
 import Creative.train.Managers.EncryptionManager;
 import Creative.train.Managers.SessionManager;
@@ -21,8 +22,11 @@ public class Player {
 
     private final BasePlayerData baseData = new BasePlayerData();
     private final PlayerData data = new PlayerData();
+
     private final Item[] inventory = new Item[9];
     private int coins=0;
+    private Quest currentQuest;
+
     private Session session;
     private GeneralConfig sessionConfig;
     public Player(String name, UUID playerId,String passwordHash,boolean isHost){
@@ -32,7 +36,36 @@ public class Player {
         data.playerUuid = playerId;
         data.isHost = isHost;
         data.token = passwordHash;
+    }public boolean completeQuest(String questToken) {
+        if (currentQuest == null || !currentQuest.getQuestToken().equals(questToken)) {
+            return false;
+        }
 
+        currentQuest = null;
+
+        restoreSanityAfterQuest();
+        changeCoins(getRole().getTaskIncome());
+
+        return true;
+    }
+    private void restoreSanityAfterQuest() {
+        int maxSanity = sessionConfig.getBaseSanity();
+
+        int newSanity = getBaseData().sanity + maxSanity / 2;
+
+        if (newSanity > maxSanity * 0.75) {
+            newSanity = maxSanity;
+        }
+
+        updateSanity(newSanity, getBaseData().depression);
+    }
+    public boolean assignQuest(Quest newQuest){
+        if(currentQuest!=null){
+            return false;
+        }
+        currentQuest = newQuest;
+        SseHandler.sendNewQuestUpdate(getPlayerId(),currentQuest.getDescription());
+        return true;
     }
     public boolean isCorrectChallenge(String challenge){
         return challenge.equals(data.challenge);
@@ -51,29 +84,37 @@ public class Player {
     }
     public void handleSanity(){
         if(!isAlive()) return;
-        if(baseData.depression==-1){
-            baseData.depression = sessionConfig.getBaseDepression();
-            baseData.sanity = sessionConfig.getBaseSanity();
+        if(getBaseData().depression==-1){
+            getBaseData().depression = sessionConfig.getBaseDepression();
+            getBaseData().sanity = sessionConfig.getBaseSanity();
         }
-        Map<String,Double> sanityData = new HashMap<>();
 
-        if(baseData.sanity<=0){
-            baseData.depression--;
-            if(baseData.depression<=0){
+        if(getBaseData().sanity<=0){
+            updateSanity(getBaseData().sanity, getBaseData().depression-1);
+            if(getBaseData().depression<=0){
                 SessionManager.getInstance().setPlayerDead(this);
             }
-            sanityData.put("sanity",(((double)baseData.sanity/(double)sessionConfig.getBaseSanity())));
-            sanityData.put("depression",((double)(baseData.depression/(double)sessionConfig.getBaseDepression())));
-            SseHandler.sendSanityUpdate(getPlayerId(),sanityData);
             return;
         }
-        baseData.sanity--;
-        if(baseData.depression<sessionConfig.getBaseDepression()){
-            baseData.depression++;
+        int sanity=getBaseData().sanity-1;
+        int depression=getBaseData().depression;
+
+        if(getBaseData().depression<sessionConfig.getBaseDepression()){
+            depression++;
         }
-        sanityData.put("sanity",(((double)baseData.sanity/(double) sessionConfig.getBaseSanity())));
-        sanityData.put("depression",((double)(baseData.depression/(double)sessionConfig.getBaseDepression())));
+        updateSanity(sanity,depression);
+    }
+
+    public void updateSanity(int sanityValue,int depressionValue){
+        Map<String,Double> sanityData = new HashMap<>();
+
+        getBaseData().sanity = sanityValue;
+        getBaseData().depression = depressionValue;
+
+        sanityData.put("sanity",(((double)sanityValue/(double) sessionConfig.getBaseSanity())));
+        sanityData.put("depression",((double)(depressionValue/(double)sessionConfig.getBaseDepression())));
         SseHandler.sendSanityUpdate(getPlayerId(),sanityData);
+
     }
     public Item[] getInventory() {
         return inventory;

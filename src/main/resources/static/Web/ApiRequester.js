@@ -248,6 +248,12 @@ function startStream() {
             document.getElementById("timer").textContent = event.data;
         }
     );
+    eventSource.addEventListener(
+        "questUpdate",
+        (event) => {
+            document.getElementById("quest").textContent = event.data;
+        }
+    );
 
     /* ---------- SESSION START ---------- */
 
@@ -275,7 +281,7 @@ function startStream() {
                         "sessionUuid"
                     );
 
-            }, 9000);
+            }, 1000);
         }
     );
 
@@ -377,7 +383,14 @@ function showPlayerPopup(data) {
     });
 }
 /* ---------------- STREAM STOP ---------------- */
-
+function completeQuest(){
+    const playerUuid = sessionStorage.getItem("playerUuid");
+    const sessionToken = sessionStorage.getItem("sessionToken");
+    const questInput = document.getElementById("questInput").value.trim();
+    makePostRequest(
+        `/api/session/completeQuest?playerUuid=${playerUuid}&sessionToken=${sessionToken}&questToken=${encodeURIComponent(questInput)}&ts=${Date.now()}`,
+        "POST");
+}
 function stopStream() {
 
     if (eventSource) {

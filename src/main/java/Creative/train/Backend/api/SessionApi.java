@@ -75,6 +75,17 @@ public class SessionApi {
         String result =QrManager.readQrCode(qrImage);
         return UUID.fromString(result);
     }
+    @PostMapping("/completeQuest")
+    public ResponseEntity<?> completeQuest(@RequestParam UUID playerUuid,
+                                       @RequestParam("sessionToken") String sessionToken,
+                                           @RequestParam String questToken){
+        Player player = SessionManager.getInstance().getPlayer(playerUuid);
+        if(player==null) return ResponseEntity.status(HttpStatus.NOT_FOUND).body("Player not found");
+        if(!player.isCorrectPass(sessionToken)) return ResponseEntity.status(HttpStatus.FORBIDDEN).body("Wrong token");
+
+        if(!player.completeQuest(questToken)) return ResponseEntity.status(HttpStatus.FORBIDDEN).body("Wrong quest");
+        return ResponseEntity.status(HttpStatus.OK).build();
+    }
     @PostMapping("/leaveGame")
     public ResponseEntity<?> leaveGame(@RequestParam UUID playerUuid,
                                        @RequestParam("sessionToken") String sessionToken){

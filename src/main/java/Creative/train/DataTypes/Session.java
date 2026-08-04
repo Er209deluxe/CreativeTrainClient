@@ -5,6 +5,7 @@ import Creative.train.Backend.ExceptionTypes.UsernameAlreadyExistsException;
 import Creative.train.ConfigManagement.Wrappers.DepressionData;
 import Creative.train.GameLogic.GeneralConfig;
 import Creative.train.GameLogic.Roles.Role;
+import Creative.train.Managers.QuestManager;
 import Creative.train.Managers.TimeManager;
 import Creative.train.Managers.SessionManager;
 
@@ -13,7 +14,7 @@ import java.util.stream.Collectors;
 
 public class Session {
     DepressionData depressionData = new DepressionData(
-            60,60
+            100,100
     );
     private GeneralConfig generalConfig=
             new GeneralConfig(
@@ -30,6 +31,8 @@ public class Session {
     private final UUID hostUuid;
 
     private TimeManager timeManager;
+    private QuestManager questManager;
+
     public Session(UUID hostUuid){
         sessionId = UUID.randomUUID();
         this.hostUuid = hostUuid;
@@ -99,8 +102,10 @@ public class Session {
     }
     public void start(){
         active=true;
-        timeManager = new TimeManager(this);
+        questManager = new QuestManager(this);
+        timeManager = new TimeManager(this,questManager);
         timeManager.startCountdown();
+
     }
     public void stop(){
         active=false;

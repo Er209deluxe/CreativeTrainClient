@@ -3,6 +3,7 @@ package Creative.train.Backend.api;
 import Creative.train.DataTypes.Player;
 import Creative.train.DataTypes.Session;
 import Creative.train.DataTypes.Wrappers.SessionEndData;
+import Creative.train.GameLogic.Quest;
 import Creative.train.GameLogic.Roles.Role;
 import Creative.train.Managers.SessionManager;
 import org.springframework.web.servlet.mvc.method.annotation.SseEmitter;
@@ -68,6 +69,9 @@ public class SseHandler {
         while (iterator.hasNext()) {
             UUID id = iterator.next();
             Player playerData = SessionManager.getInstance().getPlayer(id);
+            if (playerData == null) {
+                iterator.remove();
+            }
             SseEmitter emitter = playerData.getConnection();
 
             if (emitter == null) continue;
@@ -102,16 +106,19 @@ public class SseHandler {
     public static void sendChallengeUpdate(UUID playerUuid, String challenge){
         sendPlayer(List.of(playerUuid),"challengeUpdate",challenge);
     }
+    public static void sendNewQuestUpdate(UUID playerUuid, String quest){
+        sendPlayer(List.of(playerUuid),"questUpdate",quest);
+    }
     public static void disconnectPlayer(UUID playerUuid){
-        SessionManager sm = SessionManager.getInstance();
-        Player player = sm.getPlayer(playerUuid);
+        SessionManager sessionManager = SessionManager.getInstance();
+        Player player = sessionManager.getPlayer(playerUuid);
 
         if (player == null) return;
-        Session session = sm.getSession(player.getSessionUUID());
+        Session session = sessionManager.getSession(player.getSessionUUID());
         List<UUID> players = new ArrayList<>(session.getAllPlayerUuids());
 
         players.remove(playerUuid);
-        sm.removePlayer(playerUuid);
+        sessionManager.removePlayer(playerUuid);
 
         sendPlayerDisconnectInfo(players, player.getName());
 

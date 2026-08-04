@@ -109,9 +109,11 @@ public class SessionManager {
         Player player =getPlayer(playerUuid);
         if(player==null) return;
         UUID sessionUuid=player.getSessionUUID();
-
-        playerMap.remove(playerUuid);
         Session session = getSession(sessionUuid);
+        if(session.isActive()){
+            setPlayerDead(player);
+        }
+        playerMap.remove(playerUuid);
         if(session==null) return;
         session.removePlayer(playerUuid);
         System.out.println("removed:"+playerUuid);
@@ -132,7 +134,6 @@ public class SessionManager {
         SessionEndData sessionEndData = new SessionEndData();
         Session session = getSession(sessionUuid);
         session.stop();
-
         sessionEndData.winnerTeam = winners;
         sessionEndData.reason = reason;
 
