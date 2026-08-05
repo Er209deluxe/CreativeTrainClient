@@ -31,7 +31,7 @@ void sessionStart(String? data) {
   RoleWrapper role = RoleWrapper.fromJson(jsonDecode(data));
   print("session started role: ${role.team.name}");
   app_state.setRole(role);
-  app_state.gameStarted = true;
+  app_state.setGameStarted(true);
 }
 
 void sanityUpdate(String? data) {

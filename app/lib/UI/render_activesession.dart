@@ -26,14 +26,8 @@ class _RenderActivesessionState extends State<RenderActivesession> {
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.center,
               children: [
-                const SizedBox(height: 25),
-                ValueListenableBuilder<RoleWrapper?>(
-                  valueListenable: app_state.roleNotifier,
-                  builder: (context, role, _) {
-                    return M3EHeader(
-                      headerText: "Role: ${role?.team.name ?? 'Loading...'}",
-                    );
-                  },
+                M3EHeader(
+                  headerText: "Role: ${app_state.getRole()?.team.name}",
                 ),
                 const SizedBox(height: 25),
                 ValueListenableBuilder<double>(

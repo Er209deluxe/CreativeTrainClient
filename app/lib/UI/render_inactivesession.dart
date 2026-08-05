@@ -18,6 +18,31 @@ class RenderInactivesession extends StatefulWidget {
 
 class _RenderInactivesessionState extends State<RenderInactivesession> {
   @override
+  void initState() {
+    super.initState();
+
+    app_state.gameStartedNotifier.addListener(_onGameStarted);
+  }
+
+  void _onGameStarted() {
+    if (!mounted) return;
+
+    if (app_state.gameStartedNotifier.value) {
+      Navigator.of(context).pushReplacement(
+        CupertinoPageRoute(
+          builder: (_) => const RenderActivesession(),
+        ),
+      );
+    }
+  }
+
+  @override
+  void dispose() {
+    app_state.gameStartedNotifier.removeListener(_onGameStarted);
+    super.dispose();
+  }
+
+  @override
   Widget build(BuildContext context) {
     return Scaffold(
       body: Stack(
@@ -38,11 +63,7 @@ class _RenderInactivesessionState extends State<RenderInactivesession> {
                           onPressed: () {
                             print("start session");
                             startSession("temp role configR");
-                            Navigator.of(context).pushReplacement(
-                              CupertinoPageRoute(
-                                builder: (_) => RenderActivesession(),
-                              ),
-                            );
+
                             showDialog(
                               context: context,
                               builder: (BuildContext dialogContext) {

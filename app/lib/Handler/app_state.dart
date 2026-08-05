@@ -11,10 +11,11 @@ class app_state {
   static late RegisterResponse _currentSession;
   static String? _ipAddress;
   static bool inSession = false;
-  static bool gameStarted = false;
+  static bool _gameStarted = false;
   static late String _challenge;
   static RoleWrapper? _role;
 
+  static final ValueNotifier<bool> gameStartedNotifier = ValueNotifier(false);
   static final ValueNotifier<RoleWrapper?> roleNotifier = ValueNotifier(null);
   static final ValueNotifier<double> sanityNotifier = ValueNotifier(1.0);
   static final ValueNotifier<double> depressionNotifier = ValueNotifier(0.0);
@@ -31,9 +32,12 @@ class app_state {
     _currentSession.removePlayer(name);
     playerListNotifier.value++;
   }
-
+  static void setGameStarted(bool started) {
+    _gameStarted = started;
+    gameStartedNotifier.value = started;
+  }
   static bool isGameStarted() {
-    return gameStarted;
+    return _gameStarted;
   }
 
   static void updateChallenge(String challenge) {
