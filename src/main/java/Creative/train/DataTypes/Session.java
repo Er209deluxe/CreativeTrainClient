@@ -13,16 +13,16 @@ import java.util.*;
 import java.util.stream.Collectors;
 
 public class Session {
-    DepressionData depressionData = new DepressionData(
+    /*DepressionData depressionData = new DepressionData(
             100,100
-    );
-    private GeneralConfig generalConfig=
-            new GeneralConfig(
+    );*/
+    private GeneralConfig generalConfig;
+            /*new GeneralConfig(
                     depressionData,
                     50,
                     7,1,
                     50,
-                    30);
+                    30);*/
     private int aliveCivilians;
     private int aliveKillers;
     private boolean active = false;
@@ -100,8 +100,9 @@ public class Session {
                 .map(Player::getName)
                 .collect(Collectors.toSet());
     }
-    public void start(){
+    public void start(GeneralConfig generalConfig){
         active=true;
+        this.generalConfig = generalConfig;
         questManager = new QuestManager(this);
         timeManager = new TimeManager(this,questManager);
         timeManager.startCountdown();

@@ -8,9 +8,11 @@ import Creative.train.DataTypes.GlobalVariableHolder;
 import Creative.train.DataTypes.Player;
 import Creative.train.DataTypes.Wrappers.PlayerData;
 import Creative.train.DataTypes.Session;
+import Creative.train.DataTypes.Wrappers.SessionStartConfigs;
 import Creative.train.Managers.EncryptionManager;
 import Creative.train.Managers.QrManager;
 import Creative.train.Managers.SessionManager;
+import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.JsonNode;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
@@ -99,8 +101,10 @@ public class SessionApi {
     public ResponseEntity<?> startSession(@RequestParam("token") String token,
                                           @RequestParam("sessionUuid") UUID sessionUuid,
                                           @RequestParam("playerUuid") UUID playerUuid,
-                                          @RequestBody JsonNode roleConfig){
-
+                                          @RequestBody SessionStartConfigs configs
+                                         ) throws JsonProcessingException {
+        JsonNode roleConfig = configs.getRoleConfig();
+        JsonNode generalConfig = configs.getGeneralConfig();
         Player host = SessionManager.getInstance().getPlayer(playerUuid);
         if(host==null) return ResponseEntity.status(HttpStatus.NOT_FOUND).body("Player UUID not found");
         if(!host.isCorrectPass(token))  return ResponseEntity.status(HttpStatus.FORBIDDEN).body("Wrong token");
@@ -120,7 +124,7 @@ public class SessionApi {
         }
 
 
-        if(!sessionManager.startSession(sessionUuid, roleConfig))
+        if(!sessionManager.startSession(sessionUuid, roleConfig,generalConfig))
             return ResponseEntity.status(HttpStatus.BAD_REQUEST).body("Could not read JSON");
         return ResponseEntity.status(HttpStatus.OK).build();
     }

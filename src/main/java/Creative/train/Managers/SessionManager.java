@@ -9,11 +9,15 @@ import Creative.train.DataTypes.Wrappers.BasePlayerData;
 import Creative.train.DataTypes.Wrappers.PlayerData;
 import Creative.train.DataTypes.Session;
 import Creative.train.DataTypes.Wrappers.SessionEndData;
+import Creative.train.GameLogic.GeneralConfig;
 import Creative.train.GameLogic.Items.Item;
 import Creative.train.GameLogic.Items.Weapon;
 import Creative.train.GameLogic.RoleAssigner;
 import Creative.train.GameLogic.Roles.Role;
+import com.fasterxml.jackson.core.JsonProcessingException;
+import com.fasterxml.jackson.core.ObjectCodec;
 import com.fasterxml.jackson.databind.JsonNode;
+import com.fasterxml.jackson.databind.ObjectMapper;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 
@@ -118,14 +122,17 @@ public class SessionManager {
         session.removePlayer(playerUuid);
         System.out.println("removed:"+playerUuid);
     }
-    public boolean startSession(UUID sessionUuid,JsonNode json) {
+    public boolean startSession(UUID sessionUuid,JsonNode roleJson,JsonNode configJson) throws JsonProcessingException {
         Session session = getSession(sessionUuid);
 
-        if(!roleLoader(json,sessionUuid)) return false;
+        if(!roleLoader(roleJson,sessionUuid)) return false;
 
         RoleAssigner.assignAllRoles(session);
 
-        session.start();
+        ObjectMapper mapper = new ObjectMapper();
+        GeneralConfig generalConfig =mapper.treeToValue(configJson, GeneralConfig.class);
+
+        session.start(generalConfig);
 
         SseHandler.sendSessionStart(getAllUuidsInSession(sessionUuid));
         return true;

@@ -1,5 +1,8 @@
 package Creative.train.ConfigManagement.Wrappers;
 
+import com.fasterxml.jackson.annotation.JsonCreator;
+import com.fasterxml.jackson.annotation.JsonProperty;
+
 public class DepressionData {
     //public final boolean depresionKilling;
 
@@ -8,7 +11,11 @@ public class DepressionData {
 
     // Time before depression activates
     public final int baseSanity;
-    public DepressionData(int baseDepression,int baseSanity){
+    @JsonCreator
+    public DepressionData(
+            @JsonProperty("baseDepression") int baseDepression,
+            @JsonProperty("baseSanity") int baseSanity
+    ) {
         this.baseDepression = baseDepression;
         this.baseSanity = baseSanity;
     }

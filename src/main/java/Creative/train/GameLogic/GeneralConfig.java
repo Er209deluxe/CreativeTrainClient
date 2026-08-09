@@ -1,6 +1,8 @@
 package Creative.train.GameLogic;
 
 import Creative.train.ConfigManagement.Wrappers.DepressionData;
+import com.fasterxml.jackson.annotation.JsonCreator;
+import com.fasterxml.jackson.annotation.JsonProperty;
 
 public class GeneralConfig {
 
@@ -11,22 +13,21 @@ public class GeneralConfig {
     private final int killReward;
     private final DepressionData depressionData;
     private final int passiveIncome;
+    @JsonCreator
     public GeneralConfig(
-            DepressionData depressionData,
-            int passiveIncome,
-            int baseTimerMins,
-            int baseTimerSecs,
-            int killReward,
-            int incrementTimerOnDeathInSeconds
+            @JsonProperty("depressionData") DepressionData depressionData,
+            @JsonProperty("passiveIncome") int passiveIncome,
+            @JsonProperty("baseTimerMins") int baseTimerMins,
+            @JsonProperty("baseTimerSecs") int baseTimerSecs,
+            @JsonProperty("killReward") int killReward,
+            @JsonProperty("incrementTimerOnKillInSeconds") int incrementTimerOnKillInSeconds
     ) {
         this.depressionData = depressionData;
         this.passiveIncome = passiveIncome;
-
         this.baseTimerMins = baseTimerMins;
         this.baseTimerSecs = baseTimerSecs;
-
         this.killReward = killReward;
-        this.incrementTimerOnKillInSeconds = incrementTimerOnDeathInSeconds;
+        this.incrementTimerOnKillInSeconds = incrementTimerOnKillInSeconds;
     }
 
     public int getIncrementTimerOnKillInSeconds() {

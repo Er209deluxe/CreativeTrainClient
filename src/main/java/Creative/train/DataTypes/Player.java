@@ -28,7 +28,7 @@ public class Player {
     private Quest currentQuest;
 
     private Session session;
-    private GeneralConfig sessionConfig;
+
     public Player(String name, UUID playerId,String passwordHash,boolean isHost){
         baseData.playerName = name;
         baseData.isAlive = true;
@@ -49,7 +49,7 @@ public class Player {
         return true;
     }
     private void restoreSanityAfterQuest() {
-        int maxSanity = sessionConfig.getBaseSanity();
+        int maxSanity = session.getGeneralConfig().getBaseSanity();
 
         int newSanity = getBaseData().sanity + maxSanity / 2;
 
@@ -85,8 +85,8 @@ public class Player {
     public void handleSanity(){
         if(!isAlive()) return;
         if(getBaseData().depression==-1){
-            getBaseData().depression = sessionConfig.getBaseDepression();
-            getBaseData().sanity = sessionConfig.getBaseSanity();
+            getBaseData().depression = session.getGeneralConfig().getBaseDepression();
+            getBaseData().sanity = session.getGeneralConfig().getBaseSanity();
         }
 
         if(getBaseData().sanity<=0){
@@ -99,7 +99,7 @@ public class Player {
         int sanity=getBaseData().sanity-1;
         int depression=getBaseData().depression;
 
-        if(getBaseData().depression<sessionConfig.getBaseDepression()){
+        if(getBaseData().depression<session.getGeneralConfig().getBaseDepression()){
             depression++;
         }
         updateSanity(sanity,depression);
@@ -111,8 +111,8 @@ public class Player {
         getBaseData().sanity = sanityValue;
         getBaseData().depression = depressionValue;
 
-        sanityData.put("sanity",(((double)sanityValue/(double) sessionConfig.getBaseSanity())));
-        sanityData.put("depression",((double)(depressionValue/(double)sessionConfig.getBaseDepression())));
+        sanityData.put("sanity",(((double)sanityValue/(double) session.getGeneralConfig().getBaseSanity())));
+        sanityData.put("depression",((double)(depressionValue/(double)session.getGeneralConfig().getBaseDepression())));
         SseHandler.sendSanityUpdate(getPlayerId(),sanityData);
 
     }
@@ -155,6 +155,7 @@ public class Player {
         }
     }
 
+
     public int getCoins() {
         return coins;
     }
@@ -195,7 +196,6 @@ public class Player {
     public void setSessionUUID(UUID sessionUUID) {
         data.sessionUuid = sessionUUID;
         session = SessionManager.getInstance().getSession(getSessionUUID());
-        sessionConfig = session.getGeneralConfig();
 
     }
 

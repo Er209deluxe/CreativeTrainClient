@@ -74,13 +74,26 @@ async function startSession() {
     });
 
     // Parse the uploaded JSON file into an object
-    const roleConfig = JSON.parse(uploadedRoleConfig);
+  if (!uploadedRoleConfig) {
+    alert("Please upload a role config.");
+    return;
+}
 
-    const res = await makePostRequest(
-        `/api/session/start?${params.toString()}`,
-        "POST",
-        roleConfig
-    );
+if (!uploadedGeneralConfig) {
+    alert("Please upload a general config.");
+    return;
+}
+
+const body = {
+    roleConfig: JSON.parse(uploadedRoleConfig),
+    generalConfig: JSON.parse(uploadedGeneralConfig)
+};
+
+const res = await makePostRequest(
+    `/api/session/start?${params.toString()}`,
+    "POST",
+    body
+);
 
     console.log(res);
 
