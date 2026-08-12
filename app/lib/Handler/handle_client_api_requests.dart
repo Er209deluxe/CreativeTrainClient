@@ -157,6 +157,7 @@ Future<bool> handleRegistration(
   String ipAddress,
   String playerName,
   String? joinedSession,
+  BuildContext context,
 ) async {
   print(joinedSession);
   if (app_state.inSession) return false;
@@ -166,13 +167,22 @@ Future<bool> handleRegistration(
   final registerRequest = http.MultipartRequest('POST', registerUrl)
     ..fields['playerName'] = playerName;
   if (joinedSession != null) {
-    registerRequest..fields['joinedSession'] = joinedSession;
+    registerRequest.fields['joinedSession'] = joinedSession;
   }
   final streamedResponse = await registerRequest.send();
   final registerResponse = await http.Response.fromStream(streamedResponse);
 
   if (registerResponse.statusCode < 200 || registerResponse.statusCode >= 300) {
-    throw Exception(registerResponse.body);
+    showDialog(
+      context: context,
+      builder: (BuildContext dialogContext) {
+        return ErrorDialogM3E(
+          errorHeader: 'Server Message:',
+          errorText: registerResponse.body,
+        );
+      },
+    );
+    return false;
   }
 
   var registrationJson =
@@ -229,6 +239,8 @@ StreamSubscription<SSEModel> startStream(
     "sanityUpdate": sanityUpdate,
     "coinUpdate": coinUpdate,
     "inventoryUpdate": inventoryUpdate,
+    "sessionEnd": gameEndData,
+    //"timerUpdate" : timerUpdate,
   };
 
   final stream = SSEClient.subscribeToSSE(

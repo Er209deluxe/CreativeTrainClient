@@ -1,8 +1,7 @@
 import 'dart:async';
-
-import 'package:creativetrainclient/Handler/handle_client_api_requests.dart';
 import 'package:flutter/cupertino.dart';
-
+import 'package:creativetrainclient/Handler/handle_client_api_requests.dart';
+import 'package:flutter/foundation.dart';
 import '../Wrappers/RoleWrapper.dart';
 import '../Wrappers/register_response.dart';
 
@@ -16,12 +15,29 @@ class app_state {
   static RoleWrapper? _role;
 
   static final ValueNotifier<bool> gameStartedNotifier = ValueNotifier(false);
+  static final ValueNotifier<Map<String, dynamic>> gameEndDataNotifier =
+      ValueNotifier({});
   static final ValueNotifier<RoleWrapper?> roleNotifier = ValueNotifier(null);
   static final ValueNotifier<double> sanityNotifier = ValueNotifier(1.0);
   static final ValueNotifier<double> depressionNotifier = ValueNotifier(0.0);
   static final ValueNotifier<int> coinsNotifier = ValueNotifier(0);
 
   static final ValueNotifier<int> playerListNotifier = ValueNotifier(0);
+
+  static final ValueNotifier<String> winnerTeam = ValueNotifier("Unknown");
+  static final ValueNotifier<String> reason = ValueNotifier("Unknown");
+
+  static void updateSessionEndData(Map<String, dynamic> json) {
+    gameEndDataNotifier.value = json;
+
+    final str = json.toString();
+
+    final matchWinnerTeam = RegExp(r'winnerTeam:\s*([^,]+),').firstMatch(str);
+    final matchReason = RegExp(r'reason:\s*([^}]*)\}?').firstMatch(str);
+
+    winnerTeam.value = matchWinnerTeam?.group(1)?.trim() ?? "Unknown";
+    reason.value = matchReason?.group(1)?.trim() ?? "Unknown";
+  }
 
   static void playerJoined(String name) {
     _currentSession.addPlayer(name);
@@ -32,10 +48,12 @@ class app_state {
     _currentSession.removePlayer(name);
     playerListNotifier.value++;
   }
+
   static void setGameStarted(bool started) {
     _gameStarted = started;
     gameStartedNotifier.value = started;
   }
+
   static bool isGameStarted() {
     return _gameStarted;
   }

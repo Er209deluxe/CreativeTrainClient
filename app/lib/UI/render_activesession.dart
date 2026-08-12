@@ -1,6 +1,9 @@
+import 'dart:async';
+
 import 'package:creativetrainclient/Handler/app_state.dart';
 import 'package:creativetrainclient/Handler/handle_buttons_clientconfig.dart';
 import 'package:creativetrainclient/Handler/handle_client_api_requests.dart';
+import 'package:creativetrainclient/Handler/sse_handler.dart';
 import 'package:creativetrainclient/UI/render_registerconfig.dart';
 import 'package:creativetrainclient/Wrappers/RoleWrapper.dart';
 import 'package:creativetrainclient/configs/UI/standartm3edesign.dart';
@@ -15,6 +18,41 @@ class RenderActivesession extends StatefulWidget {
 }
 
 class _RenderActivesessionState extends State<RenderActivesession> {
+  bool _showRole = true;
+  bool _canRevealRole = true;
+  Timer? _hideTimer;
+  Timer? _showAgainTimer;
+  Timer? _startTimer;
+
+  @override
+  void initState() {
+    super.initState();
+    _startTimer = Timer(const Duration(seconds: 3), () {
+      if (!mounted) return;
+      setState(() {
+        _showRole = false;
+      });
+    });
+    app_state.gameStartedNotifier.addListener(_onGameEnded);
+  }
+
+  void _onGameEnded() {
+    if (!mounted) return;
+
+    if (!app_state.gameStartedNotifier.value) {
+      showSessionEnded(context);
+    }
+  }
+
+  @override
+  void dispose() {
+    app_state.gameStartedNotifier.removeListener(_onGameEnded);
+    super.dispose();
+    _hideTimer?.cancel();
+    _showAgainTimer?.cancel();
+    _startTimer?.cancel();
+  }
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -26,8 +64,57 @@ class _RenderActivesessionState extends State<RenderActivesession> {
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.center,
               children: [
-                M3EHeader(
-                  headerText: "Role: ${app_state.getRole()?.team.name}",
+                const SizedBox(height: 25),
+                Row(
+                  mainAxisAlignment: MainAxisAlignment.center,
+                  children: [
+                    M3EButton(
+                      onPressed: () {
+                        if (!_canRevealRole || _showRole) return;
+
+                        setState(() {
+                          _canRevealRole = false;
+                          _showRole = true;
+                        });
+
+                        _hideTimer?.cancel();
+                        _hideTimer = Timer(const Duration(seconds: 3), () {
+                          if (!mounted) return;
+                          setState(() => _showRole = false);
+                        });
+
+                        _showAgainTimer?.cancel();
+                        _showAgainTimer = Timer(
+                          const Duration(seconds: 10),
+                          () {
+                            if (!mounted) return;
+                            setState(() => _canRevealRole = true);
+                          },
+                        );
+                      },
+                      decoration: M3EButtonDecoration.styleFrom(
+                        backgroundColor: Colors.black,
+                      ),
+                      child: AnimatedOpacity(
+                        duration: const Duration(milliseconds: 500),
+                        opacity: _showRole ? 1.0 : 0.0,
+                        child: Text(
+                          "${app_state.getRole()?.team.name}", //Role: Innocent
+                          style: TextStyle(
+                            color: colorFromHex(app_state.getRole()?.team.hex),
+                            fontSize: 25,
+                          ),
+                        ),
+                      ),
+                    ),
+                    const SizedBox(width: 25),
+                    ValueListenableBuilder<int>(
+                      valueListenable: app_state.coinsNotifier,
+                      builder: (context, coins, _) {
+                        return M3EHeader(headerText: 'Coins: $coins');
+                      },
+                    ),
+                  ],
                 ),
                 const SizedBox(height: 25),
                 ValueListenableBuilder<double>(
@@ -147,13 +234,6 @@ class _RenderActivesessionState extends State<RenderActivesession> {
                         );
                       },
                     );
-                  },
-                ),
-                const SizedBox(height: 25),
-                ValueListenableBuilder<int>(
-                  valueListenable: app_state.coinsNotifier,
-                  builder: (context, coins, _) {
-                    return M3EHeader(headerText: 'Coins: $coins');
                   },
                 ),
                 const SizedBox(height: 25),
@@ -324,6 +404,63 @@ void showInventoryDialog(BuildContext context) {
                   ),
                   SizedBox(width: 8),
                 ],
+              ),
+            ],
+          ),
+        ),
+      );
+    },
+  );
+}
+
+void showSessionEnded(BuildContext context) {
+  showDialog(
+    context: context,
+    builder: (BuildContext context) {
+      return Dialog(
+        shape: RoundedRectangleBorder(
+          borderRadius: BorderRadius.circular(16.0),
+        ),
+        elevation: 16.0,
+        backgroundColor: const Color.fromARGB(255, 34, 68, 117),
+        child: Padding(
+          padding: const EdgeInsets.all(24.0),
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            crossAxisAlignment: CrossAxisAlignment.center,
+            children: [
+              //TODO: ValueListenableBuilder
+              Text(
+                'Game has Ended',
+                style: const TextStyle(
+                  fontSize: 30,
+                  fontWeight: FontWeight.bold,
+                  color: Colors.white,
+                ),
+              ),
+              ValueListenableBuilder<String>(
+                valueListenable: app_state.winnerTeam,
+                builder: (context, role, _) {
+                  return Padding(
+                    padding: EdgeInsets.all(5.0),
+                    child: Text(
+                      'Winner Team: ${app_state.winnerTeam.value}',
+                      style: TextStyle(fontSize: 20, color: Colors.white70),
+                    ),
+                  );
+                },
+              ),
+              ValueListenableBuilder(
+                valueListenable: app_state.reason,
+                builder: (context, value, child) {
+                  return Padding(
+                    padding: EdgeInsets.all(5.0),
+                    child: Text(
+                      'Reason: ${app_state.reason.value}',
+                      style: TextStyle(fontSize: 20, color: Colors.white70),
+                    ),
+                  );
+                },
               ),
             ],
           ),
@@ -508,14 +645,14 @@ void showLeaveConfirmDialog(BuildContext context) {
                   ElevatedButton(
                     onPressed: () async {
                       //Confirm Leave
-                      await leaveSession(
+                      leaveSession(
                         app_state.getIpAddress().toString(),
                         app_state.getCurrentSession().playerUuid,
                         app_state.getCurrentSession().token,
                       );
-                      if (!context.mounted) return;
                       Navigator.pop(context);
                       Navigator.pop(context);
+                      app_state.setGameStarted(false);
                     },
                     style: ButtonStyle(
                       backgroundColor: WidgetStateProperty.all(
@@ -540,4 +677,13 @@ void showLeaveConfirmDialog(BuildContext context) {
       );
     },
   );
+}
+
+Color colorFromHex(String? hex) {
+  if (hex == null) return Colors.white;
+  hex = hex.replaceAll('#', '').trim();
+  if (hex.length == 6) hex = 'FF$hex';
+  if (hex.length != 8) throw FormatException('Hex color must be 6 or 8 digits');
+
+  return Color(int.parse(hex, radix: 16));
 }

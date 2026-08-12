@@ -3,6 +3,7 @@ import 'package:creativetrainclient/Handler/handle_buttons_clientconfig.dart';
 import 'package:creativetrainclient/Handler/handle_client_api_requests.dart';
 import 'package:creativetrainclient/UI/render_activesession.dart';
 import 'package:creativetrainclient/UI/render_registerconfig.dart';
+import 'package:creativetrainclient/UI/render_roleconfiguration.dart';
 import 'package:creativetrainclient/Wrappers/RoleWrapper.dart';
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
@@ -29,9 +30,21 @@ class _RenderInactivesessionState extends State<RenderInactivesession> {
 
     if (app_state.gameStartedNotifier.value) {
       Navigator.of(context).pushReplacement(
-        CupertinoPageRoute(
-          builder: (_) => const RenderActivesession(),
-        ),
+        CupertinoPageRoute(builder: (_) => const RenderActivesession()),
+      );
+      showDialog(
+        context: context,
+        builder: (BuildContext dialogContext) {
+          return ValueListenableBuilder<RoleWrapper?>(
+            valueListenable: app_state.roleNotifier,
+            builder: (context, role, _) {
+              return ErrorDialogM3E(
+                errorHeader: 'Your Role:',
+                errorText: role?.team.name ?? 'Unknown',
+              );
+            },
+          );
+        },
       );
     }
   }
@@ -57,27 +70,42 @@ class _RenderInactivesessionState extends State<RenderInactivesession> {
                 Row(
                   children: [
                     const SizedBox(width: 40),
+
+                    if (app_state.getCurrentSession().isHost)
+                      M3EButton(
+                        onPressed: () {
+                          Navigator.of(context).push(
+                            CupertinoPageRoute(
+                              builder: (_) => const RenderRoleconfiguration(),
+                            ),
+                          );
+                        },
+                        decoration: M3EButtonDecoration.styleFrom(
+                          borderRadius: 20,
+                          hoveredRadius: 5,
+                          backgroundColor: const Color.fromARGB(
+                            255,
+                            3,
+                            68,
+                            125,
+                          ),
+                          foregroundColor: const Color.fromARGB(
+                            255,
+                            255,
+                            255,
+                            255,
+                          ),
+                        ),
+                        size: M3EButtonSize.custom(height: 65, width: 80),
+                        child: const Icon(Icons.settings, size: 35),
+                      ),
+                    if (app_state.getCurrentSession().isHost)
+                      const SizedBox(width: 7),
                     if (app_state.getCurrentSession().isHost)
                       Expanded(
                         child: M3EButton(
                           onPressed: () {
-                            print("start session");
                             startSession("temp role configR");
-
-                            showDialog(
-                              context: context,
-                              builder: (BuildContext dialogContext) {
-                                return ValueListenableBuilder<RoleWrapper?>(
-                                  valueListenable: app_state.roleNotifier,
-                                  builder: (context, role, _) {
-                                    return ErrorDialogM3E(
-                                      errorHeader: 'Your Role:',
-                                      errorText: role?.team.name ?? 'Unknown',
-                                    );
-                                  },
-                                );
-                              },
-                            );
                           },
                           decoration: M3EButtonDecoration.styleFrom(
                             backgroundColor: const Color.fromARGB(

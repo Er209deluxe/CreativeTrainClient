@@ -144,16 +144,8 @@ class _RenderRegisterconfigState extends State<RenderRegisterconfig> {
                       ipAddress,
                       _playerName.text,
                       _sessionUUID.text,
+                      context,
                     )) {
-                      showDialog(
-                        context: context,
-                        builder: (BuildContext dialogContext) {
-                          return ErrorDialogM3E(
-                            errorHeader: 'Already connected to session',
-                            errorText: 'Leave the session to join another one',
-                          );
-                        },
-                      );
                       return;
                     } else {
                       Navigator.of(context).push(

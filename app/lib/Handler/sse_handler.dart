@@ -59,3 +59,10 @@ void inventoryUpdate(String? data) {
     print("Failed to parse inventory update: $e");
   }
 }
+
+void gameEndData(String? data) {
+  if (data == null) return;
+  app_state.setGameStarted(false);
+  final json = jsonDecode(data);
+  app_state.updateSessionEndData(json);
+}
