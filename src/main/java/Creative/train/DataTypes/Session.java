@@ -4,6 +4,7 @@ import Creative.train.Backend.ExceptionTypes.UserAlreadyInSessionExcepion;
 import Creative.train.Backend.ExceptionTypes.UsernameAlreadyExistsException;
 import Creative.train.ConfigManagement.Wrappers.DepressionData;
 import Creative.train.GameLogic.GeneralConfig;
+import Creative.train.GameLogic.Roles.LicensedVillain;
 import Creative.train.GameLogic.Roles.Role;
 import Creative.train.Managers.QuestManager;
 import Creative.train.Managers.TimeManager;
@@ -13,18 +14,13 @@ import java.util.*;
 import java.util.stream.Collectors;
 
 public class Session {
-    /*DepressionData depressionData = new DepressionData(
-            100,100
-    );*/
+
     private GeneralConfig generalConfig;
-            /*new GeneralConfig(
-                    depressionData,
-                    50,
-                    7,1,
-                    50,
-                    30);*/
+
     private int aliveCivilians;
     private int aliveKillers;
+    private int aliveNeutrals;
+
     private boolean active = false;
     private final UUID sessionId;
     private final Map<UUID,Player> playerMap = new HashMap<>();
@@ -33,6 +29,8 @@ public class Session {
     private TimeManager timeManager;
     private QuestManager questManager;
 
+    List<Role> endPreventingNeutrals = new ArrayList<>();
+
     public Session(UUID hostUuid){
         sessionId = UUID.randomUUID();
         this.hostUuid = hostUuid;
@@ -40,25 +38,55 @@ public class Session {
     public Collection<Player> getAllPlayers(){
         return playerMap.values();
     }
+    public void addPreventingNeutral(Role role){
+            endPreventingNeutrals.add(role);
+    }
+    public void removePreventingNeutral(Role role){
+        endPreventingNeutrals.remove(role);
 
-    public void setAliveCivilians(int aliveCivilians) {
-        this.aliveCivilians = aliveCivilians;
     }
 
-    public void setAliveKillers(int aliveKillers) {
-        this.aliveKillers = aliveKillers;
+
+    public void incrementAliveCivilians(){
+        aliveCivilians++;
     }
 
+    public void incrementAliveKillers(){
+        aliveKillers++;
+    }
+    public void decrementAliveNeutrals(){
+        aliveNeutrals--;
+    }
+    public void incrementAliveNeutrals(){
+        aliveNeutrals++;
+    }
     public void decrementAlivePlayers(Player player){
+
         if(player.getRole().getTeam().equals(Role.Team.CIVILIAN)){
             aliveCivilians--;
-            if(aliveCivilians<=0) SessionManager.getInstance().endSession(getSessionId(), Role.Team.KILLER,"All Civilians died");
-            return;
         }
         if(player.getRole().getTeam().equals(Role.Team.KILLER)){
             aliveKillers--;
-            if(aliveKillers<=0) SessionManager.getInstance().endSession(getSessionId(), Role.Team.CIVILIAN,"All Killers died");
         }
+
+        if (aliveCivilians <= 0 && aliveKillers <= 0) {
+
+            for (Role role : endPreventingNeutrals) {
+                if (role instanceof LicensedVillain) {
+                    SessionManager.getInstance().endSession(
+                            getSessionId(),
+                            Role.Team.NEUTRAL,
+                            "Licensed Villain is the last one standing"
+                    );
+                    return;
+                }
+            }
+        }
+
+        if(!endPreventingNeutrals.isEmpty()) return;
+
+        if(aliveCivilians<=0) SessionManager.getInstance().endSession(getSessionId(), Role.Team.KILLER,"All Civilians died");
+        if(aliveKillers<=0) SessionManager.getInstance().endSession(getSessionId(), Role.Team.CIVILIAN,"All Killers died");
     }
 
     public GeneralConfig getGeneralConfig() {

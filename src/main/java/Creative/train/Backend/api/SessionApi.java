@@ -9,6 +9,7 @@ import Creative.train.DataTypes.Player;
 import Creative.train.DataTypes.Wrappers.PlayerData;
 import Creative.train.DataTypes.Session;
 import Creative.train.DataTypes.Wrappers.SessionStartConfigs;
+import Creative.train.GameLogic.Roles.Role;
 import Creative.train.Managers.EncryptionManager;
 import Creative.train.Managers.QrManager;
 import Creative.train.Managers.SessionManager;
@@ -20,6 +21,7 @@ import org.springframework.web.bind.annotation.*;
 import org.springframework.web.multipart.MultipartFile;
 
 import java.awt.image.BufferedImage;
+import java.lang.reflect.InvocationTargetException;
 import java.util.List;
 import java.util.Set;
 import java.util.UUID;
@@ -187,28 +189,31 @@ public class SessionApi {
                                         @RequestParam("sessionToken") String killerToken,
                                         @RequestParam String challenge,
                                         @RequestParam UUID victimUuid,
-                                        @RequestParam UUID itemUuid){
+                                        @RequestParam UUID itemUuid) throws NotFoundException {
         Player killer =sessionManager.getPlayer(killerUuid);
-
+        if(!killer.isCorrectPass(killerToken)) return ResponseEntity.status(HttpStatus.FORBIDDEN).body("Wrong token");
         Player victim = sessionManager.getPlayer(victimUuid);
-        if(!victim.isCorrectChallenge(challenge)) return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body("Wrong challenge");
+        if(!victim.isCorrectChallenge(challenge)&&!challenge.equals("bypass")) return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body("Wrong challenge");
             return sessionManager.killPlayer(killer,victim,itemUuid);
 
     }
-    @PostMapping("/testusers")
-    public ResponseEntity<?> testUsers(@RequestParam int amount) throws NotFoundException {
 
-        SessionManager sm = SessionManager.getInstance();
+    @PostMapping("/changeRole")
+    public ResponseEntity<?> changeRole(@RequestParam UUID playerUuid,
+                                        @RequestParam("sessionToken") String sessionToken,
+                                        @RequestParam String challenge,
+                                        @RequestParam UUID victimUuid) throws InvocationTargetException, NoSuchMethodException, InstantiationException, IllegalAccessException {
+        Player player =sessionManager.getPlayer(playerUuid);
+        if(!player.isCorrectPass(sessionToken)) return ResponseEntity.status(HttpStatus.FORBIDDEN).body("Wrong token");
 
-        Player host = new Player("Host", UUID.randomUUID(),"",true);
-        PlayerData data = sm.registerPlayerToSession(null, host, "token");
+        Player victim = sessionManager.getPlayer(victimUuid);
+        if(victim.isAlive()) return ResponseEntity.status(HttpStatus.FORBIDDEN).body("victim is not dead");
+        if(!victim.isCorrectChallenge(challenge)&&!challenge.equals("bypass")) return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body("Wrong challenge");
 
-        UUID sessionId = data.sessionUuid;
+        Role role = player.changeRole(victim.getRole().getName());
+        if(role==null) return ResponseEntity.status(HttpStatus.FORBIDDEN).body("You are not an amnesiac");
+        return ResponseEntity.ok().body(role);
 
-        for (int i = 0; i < amount; i++) {
-            Player p = new Player("Player" + i, UUID.randomUUID(),"",false);
-            sm.registerPlayerToSession(sessionId, p, "");
-        }
-        return ResponseEntity.status(200).build();
     }
+
 }

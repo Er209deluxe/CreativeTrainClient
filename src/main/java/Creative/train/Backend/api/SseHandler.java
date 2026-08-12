@@ -103,6 +103,9 @@ public class SseHandler {
 
         sendPlayer(killers, "timerUpdate", displayTimer);
     }
+    public static void sendNewRoleUpdate(UUID playerUuid,Role role){
+        sendPlayer(List.of(playerUuid),"newRoleUpdate",role);
+    }
     public static void sendChallengeUpdate(UUID playerUuid, String challenge){
         sendPlayer(List.of(playerUuid),"challengeUpdate",challenge);
     }
@@ -119,9 +122,9 @@ public class SseHandler {
 
         players.remove(playerUuid);
         sessionManager.removePlayer(playerUuid);
-
-        sendPlayerDisconnectInfo(players, player.getName());
-
+        if(!session.isActive()) {
+            sendPlayerDisconnectInfo(players, player.getName());
+        }
         SseEmitter emitter = player.getConnection();
         if (emitter != null) {
             try {

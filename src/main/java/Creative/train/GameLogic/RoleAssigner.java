@@ -66,9 +66,8 @@ public class RoleAssigner {
         while (roleList.size() < playerCount) {
             roleList.add(getRandomRole(noVigiInnocents,sessionUuid));
         }
-        Session session = sessionManager.getSession(sessionUuid);
-        session.setAliveKillers(sets);
-        session.setAliveCivilians(sets+noVigiInnocents.size());
+
+
         return roleList;
     }
 }

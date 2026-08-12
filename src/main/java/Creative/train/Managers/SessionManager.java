@@ -6,6 +6,7 @@ import Creative.train.Backend.api.SseHandler;
 import Creative.train.ConfigManagement.RoleLoader;
 import Creative.train.DataTypes.Player;
 import Creative.train.DataTypes.Wrappers.BasePlayerData;
+import Creative.train.DataTypes.Wrappers.DeathInformation;
 import Creative.train.DataTypes.Wrappers.PlayerData;
 import Creative.train.DataTypes.Session;
 import Creative.train.DataTypes.Wrappers.SessionEndData;
@@ -115,7 +116,8 @@ public class SessionManager {
         UUID sessionUuid=player.getSessionUUID();
         Session session = getSession(sessionUuid);
         if(session.isActive()){
-            setPlayerDead(player);
+            DeathInformation information = new DeathInformation(null,player,null);
+            setPlayerDead(information);
         }
         playerMap.remove(playerUuid);
         if(session==null) return;
@@ -171,19 +173,24 @@ public class SessionManager {
         }
         return true;
     }
-    public boolean isSessionActive(UUID sessionUuid){
+    public boolean isSessionActive(UUID sessionUuid) throws NotFoundException {
+        Session session = getSession(sessionUuid);
+        if(session==null) throw new NotFoundException("Session",sessionUuid);
         return getSession(sessionUuid).isActive();
     }
-    public void setPlayerDead(Player player){
-        player.setAlive(false);
-        SseHandler.sendDeathInfo(player.getPlayerId());
+    public void setPlayerDead(DeathInformation information){
+        Player victim = information.getVictim();
+        victim.setAlive(false);
+        victim.getRole().onDeath(information);
 
-        Session session = getSession(player.getSessionUUID());
-        session.decrementAlivePlayers(player);
+        SseHandler.sendDeathInfo(victim.getPlayerId());
+
+        Session session = getSession(victim.getSessionUUID());
+        session.decrementAlivePlayers(victim);
         session.getTimeManager().changeRemainingSecondsBy
                 (session.getGeneralConfig().getIncrementTimerOnKillInSeconds());
     }
-    public ResponseEntity<?> killPlayer(Player killer, Player victim, UUID itemUuid){
+    public ResponseEntity<?> killPlayer(Player killer, Player victim, UUID itemUuid) throws NotFoundException {
         Session session = getSession(killer.getSessionUUID());
         if(!isSessionActive(killer.getSessionUUID())) return ResponseEntity.status(HttpStatus.FORBIDDEN)
                 .body("Session is not active");
@@ -200,7 +207,8 @@ public class SessionManager {
             if(killer.getRole().getTeam().equals(Role.Team.KILLER)) {
                 killer.changeCoins(session.getGeneralConfig().getKillReward());
             }
-            setPlayerDead(victim);
+            DeathInformation information = new DeathInformation(killer,victim,weapon);
+            setPlayerDead(information);
             return ResponseEntity.status(HttpStatus.OK).build();
         }
         return ResponseEntity.status(HttpStatus.CONFLICT).body("Item is not a Weapon");

@@ -1,14 +1,12 @@
 package Creative.train.GameLogic.Roles;
 
-
 import Creative.train.DataTypes.Wrappers.DeathInformation;
 
 import java.util.UUID;
 
-public class Killer extends Role{
-
-    public Killer(UUID sessionUuid) {
-        super( sessionUuid,"Killer",Team.KILLER,false,"#d90408");
+public class Amnesiac extends Role{
+    public Amnesiac(UUID sessionUuid) {
+        super(sessionUuid,"Amnesiac",Team.NEUTRAL,false,"#8F8F8F");
     }
 
     @Override

@@ -278,7 +278,10 @@ function startStream() {
                 JSON.parse(
                     event.data
                 );
-
+                sessionStorage.setItem(
+                    "roleName",
+                    role.name
+                );
             showTransition(
                 `Session Started! Role: ${role.name}`,
                 role.hex
@@ -294,7 +297,7 @@ function startStream() {
                         "sessionUuid"
                     );
 
-            }, 1000);
+            }, 7000);
         }
     );
 
@@ -393,6 +396,51 @@ function showPlayerPopup(data) {
         div.title = `${p.role.name}`;
 
         container.appendChild(div);
+    });
+}
+async function uploadChangeRole(victimUuid, challenge) {
+    const playerUuid =
+        sessionStorage.getItem("playerUuid");
+
+    const sessionToken =
+        sessionStorage.getItem("sessionToken");
+
+    const res = await makePostRequest(
+        `/api/session/changeRole` +
+        `?playerUuid=${encodeURIComponent(playerUuid)}` +
+        `&victimUuid=${encodeURIComponent(victimUuid)}` +
+        `&challenge=${encodeURIComponent(challenge)}` +
+        `&sessionToken=${encodeURIComponent(sessionToken)}` +
+        `&ts=${Date.now()}`,
+        "POST"
+    );
+
+    if (!res.ok) {
+        alert(res.body);
+        return false;
+    }
+
+    return true;
+}
+window.addEventListener("load", () => {
+    const roleName = sessionStorage.getItem("roleName");
+    const changeRoleButton =
+        document.getElementById("changeRoleButton");
+
+    if (changeRoleButton && roleName === "Amnesiac") {
+        changeRoleButton.style.display = "block";
+    }
+});
+function changeRole() {
+    return openActionPopup({
+        titleText: "Change Role",
+        subtitleText:
+            "Enter the victim's information to change their role.",
+        buttonText: "Change Role",
+        buttonColor: "#7c3aed",
+
+        action: (victimUuid, challenge) =>
+            uploadChangeRole(victimUuid, challenge)
     });
 }
 /* ---------------- STREAM STOP ---------------- */
@@ -510,9 +558,40 @@ async function useItem(item) {
     // default behavior for non-weapons
     console.log("Used item:", item.name);
     return true;
-}function openKillPopup(item) {
+}
+function openKillPopup(item) {
+    return openActionPopup({
+        titleText: `Use ${item.name}`,
+        subtitleText:
+            "Enter the victim's information to confirm the kill.",
+        buttonText: "Confirm Kill",
+        buttonColor: "#dc2626",
+
+        action: (victimUuid, challenge) =>
+            uploadKill(item, victimUuid, challenge)
+    });
+}
+function inputStyle() {
+    return {
+        padding: "12px",
+        border: "1px solid #ccc",
+        borderRadius: "8px",
+        fontSize: "14px",
+        outline: "none",
+        width: "100%",
+        boxSizing: "border-box"
+    };
+}
+function openActionPopup({
+    titleText,
+    subtitleText,
+    buttonText,
+    buttonColor,
+    action
+}) {
     return new Promise((resolve) => {
         const overlay = document.createElement("div");
+
         Object.assign(overlay.style, {
             position: "fixed",
             inset: "0",
@@ -525,6 +604,7 @@ async function useItem(item) {
         });
 
         const box = document.createElement("div");
+
         Object.assign(box.style, {
             background: "#ffffff",
             borderRadius: "16px",
@@ -539,13 +619,13 @@ async function useItem(item) {
         });
 
         const title = document.createElement("h2");
-        title.textContent = `Use ${item.name}`;
+        title.textContent = titleText;
         title.style.margin = "0";
         title.style.textAlign = "center";
         title.style.color = "#222";
 
         const subtitle = document.createElement("p");
-        subtitle.textContent = "Enter the victim's information to confirm the kill.";
+        subtitle.textContent = subtitleText;
         subtitle.style.margin = "0";
         subtitle.style.textAlign = "center";
         subtitle.style.color = "#666";
@@ -557,14 +637,17 @@ async function useItem(item) {
 
         const uuidInput = document.createElement("input");
         uuidInput.type = "text";
-        uuidInput.placeholder = "e.g. a23390c2-b829-418e-8971-8dcd6dee5d8e";
+        uuidInput.placeholder =
+            "e.g. a23390c2-b829-418e-8971-8dcd6dee5d8e";
         uuidInput.style.color = "#222";
+
         Object.assign(uuidInput.style, inputStyle());
 
         const challengeLabel = document.createElement("label");
         challengeLabel.textContent = "Challenge";
         challengeLabel.style.fontWeight = "bold";
         challengeLabel.style.color = "#222";
+
         const challengeInput = document.createElement("input");
         challengeInput.type = "text";
         challengeInput.placeholder = "Enter current challenge";
@@ -573,6 +656,7 @@ async function useItem(item) {
         Object.assign(challengeInput.style, inputStyle());
 
         const buttonRow = document.createElement("div");
+
         Object.assign(buttonRow.style, {
             display: "flex",
             justifyContent: "flex-end",
@@ -582,6 +666,7 @@ async function useItem(item) {
 
         const cancelBtn = document.createElement("button");
         cancelBtn.textContent = "Cancel";
+
         Object.assign(cancelBtn.style, {
             padding: "10px 18px",
             border: "none",
@@ -592,12 +677,13 @@ async function useItem(item) {
         });
 
         const submitBtn = document.createElement("button");
-        submitBtn.textContent = "Confirm Kill";
+        submitBtn.textContent = buttonText;
+
         Object.assign(submitBtn.style, {
             padding: "10px 18px",
             border: "none",
             borderRadius: "8px",
-            background: "#dc2626",
+            background: buttonColor,
             color: "white",
             cursor: "pointer",
             fontWeight: "bold"
@@ -608,11 +694,16 @@ async function useItem(item) {
             const challenge = challengeInput.value.trim();
 
             if (!victimUuid || !challenge) {
-                alert("Please enter both the victim UUID and the challenge.");
+                alert(
+                    "Please enter both the victim UUID and the challenge."
+                );
                 return;
             }
 
-            const success = await uploadKill(item, victimUuid, challenge);
+            const success = await action(
+                victimUuid,
+                challenge
+            );
 
             document.body.removeChild(overlay);
             resolve(success);
@@ -623,7 +714,10 @@ async function useItem(item) {
             resolve(false);
         };
 
-        buttonRow.append(cancelBtn, submitBtn);
+        buttonRow.append(
+            cancelBtn,
+            submitBtn
+        );
 
         box.append(
             title,
@@ -640,18 +734,6 @@ async function useItem(item) {
 
         uuidInput.focus();
     });
-
-    function inputStyle() {
-        return {
-            padding: "12px",
-            border: "1px solid #ccc",
-            borderRadius: "8px",
-            fontSize: "14px",
-            outline: "none",
-            width: "100%",
-            boxSizing: "border-box"
-        };
-    }
 }
 async function uploadKill(item, victimUuid, challenge) {
     const playerUuid = sessionStorage.getItem("playerUuid");
