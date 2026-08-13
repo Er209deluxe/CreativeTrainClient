@@ -27,6 +27,10 @@ class app_state {
   static final ValueNotifier<String> winnerTeam = ValueNotifier("Unknown");
   static final ValueNotifier<String> reason = ValueNotifier("Unknown");
 
+  static final ValueNotifier<String> availableRoles = ValueNotifier(
+    'Innocent,Vigilante,Killer,LicensedVillain',
+  );
+
   static void updateSessionEndData(Map<String, dynamic> json) {
     gameEndDataNotifier.value = json;
 
@@ -93,8 +97,11 @@ class app_state {
     roleNotifier.value = roleData;
   }
 
-  static void updateSanity(double sanity, double depression) {
+  static void updateSanity(double sanity) {
     sanityNotifier.value = sanity.clamp(0.0, 1.0);
+  }
+
+  static void updateDepression(double depression) {
     depressionNotifier.value = depression.clamp(0.0, 1.0);
   }
 

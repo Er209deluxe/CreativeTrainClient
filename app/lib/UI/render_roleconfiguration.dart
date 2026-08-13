@@ -23,23 +23,16 @@ class _RenderRoleconfigurationState extends State<RenderRoleconfiguration> {
           GradientHomeBG(),
           Center(
             child: Column(
-              crossAxisAlignment: CrossAxisAlignment.center,
               children: [
                 const SizedBox(height: 25),
-                Row(
-                  children: [
-                    Expanded(
-                      child: SelectRoleToggleButtonGroup(
-                        initialIndex: _selected,
-                        onSelectionChanged: (int? newIndex) {
-                          // 2. Update parent state when child notifies
-                          setState(() {
-                            _selected = newIndex;
-                          });
-                        },
-                      ),
-                    ),
-                  ],
+                SelectRoleToggleButtonGroup(
+                  initialIndex: _selected,
+                  onSelectionChanged: (int? newIndex) {
+                    // 2. Update parent state when child notifies
+                    setState(() {
+                      _selected = newIndex;
+                    });
+                  },
                 ),
               ],
             ),

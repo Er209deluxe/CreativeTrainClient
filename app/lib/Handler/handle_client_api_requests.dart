@@ -95,38 +95,57 @@ Future<bool> startSession(String roleConfig) async {
   String? ipAddress = app_state.getIpAddress();
   String roleConfig = r'''
 {
-  "roleConfig": [
-    {
-      "name": "Innocent",
-      "enableShop": false,
-      "passiveIncome": true,
-      "taskIncome": 50,
-      "itemShop": [
-        {"name": "Knife", "price": 30}
-      ]
+  "roleConfig": {
+    "roleConfig": [
+      {
+        "name": "Innocent",
+        "team": "CIVILIAN",
+        "hex": "#00FF00",
+        "enableShop": false,
+        "passiveIncome": true,
+        "taskIncome": 50,
+        "itemShop": [
+          {"name": "Knife", "price": 30}
+        ]
+      },
+      {
+        "name": "Vigilante",
+        "team": "CIVILIAN",
+        "hex": "#FFD700",
+        "enableShop": true,
+        "passiveIncome": true,
+        "taskIncome": 50,
+        "itemShop": [
+          {"name": "Knife", "price": 25},
+          {"name": "Gun", "price": 50},
+          {"name": "Food", "price": 11}
+        ]
+      },
+      {
+        "name": "Killer",
+        "team": "KILLER",
+        "hex": "#FF0000",
+        "enableShop": true,
+        "passiveIncome": true,
+        "taskIncome": 100,
+        "itemShop": [
+          {"name": "Knife", "price": 14},
+          {"name": "Gun", "price": 18}
+        ]
+      }
+    ]
+  },
+  "generalConfig": {
+    "depressionData": {
+      "baseDepression": 90,
+      "baseSanity": 240
     },
-    {
-      "name": "Vigilante",
-      "enableShop": true,
-      "passiveIncome": true,
-      "taskIncome": 50,
-      "itemShop": [
-        {"name": "Knife", "price": 25},
-        {"name": "Gun", "price": 50},
-        {"name": "Food", "price": 11}
-      ]
-    },
-    {
-      "name": "Killer",
-      "enableShop": true,
-      "passiveIncome": true,
-      "taskIncome": 100,
-      "itemShop": [
-        {"name": "Knife", "price": 14},
-        {"name": "Gun", "price": 18}
-      ]
-    }
-  ]
+    "passiveIncome": 10,
+    "baseTimerMins": 10,
+    "baseTimerSecs": 0,
+    "killReward": 50,
+    "incrementTimerOnKillInSeconds": 30
+  }
 }
 ''';
   if (ipAddress == null) return false;

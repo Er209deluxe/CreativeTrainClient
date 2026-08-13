@@ -37,10 +37,16 @@ void sessionStart(String? data) {
 void sanityUpdate(String? data) {
   if (data == null) return;
   final json = jsonDecode(data);
+
+  if (json['sanity'] is String) return;
   final sanity = (json['sanity'] as num?)?.toDouble() ?? 1.0;
+  print("Sanity update: $sanity");
+  app_state.updateSanity(sanity);
+
+  if (json['depression'] is String) return;
   final depression = (json['depression'] as num?)?.toDouble() ?? 0.0;
-  print("Sanity update: $sanity, Depression: $depression");
-  app_state.updateSanity(sanity, depression);
+  print("Depression update: $depression");
+  app_state.updateDepression(depression);
 }
 
 void coinUpdate(String? data) {
