@@ -22,6 +22,7 @@ import org.springframework.web.multipart.MultipartFile;
 
 import java.awt.image.BufferedImage;
 import java.lang.reflect.InvocationTargetException;
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Set;
 import java.util.UUID;
@@ -104,9 +105,15 @@ public class SessionApi {
                                           @RequestParam("sessionUuid") UUID sessionUuid,
                                           @RequestParam("playerUuid") UUID playerUuid,
                                           @RequestBody SessionStartConfigs configs
-                                         ) throws JsonProcessingException {
+                                         ) throws JsonProcessingException, NotFoundException {
         JsonNode roleConfig = configs.getRoleConfig();
         JsonNode generalConfig = configs.getGeneralConfig();
+        if(roleConfig == null){
+            throw new NotFoundException("Role Config",null);
+        }
+        if(generalConfig == null){
+            throw new NotFoundException("General Config",null);
+        }
         Player host = SessionManager.getInstance().getPlayer(playerUuid);
         if(host==null) return ResponseEntity.status(HttpStatus.NOT_FOUND).body("Player UUID not found");
         if(!host.isCorrectPass(token))  return ResponseEntity.status(HttpStatus.FORBIDDEN).body("Wrong token");
@@ -129,6 +136,18 @@ public class SessionApi {
         if(!sessionManager.startSession(sessionUuid, roleConfig,generalConfig))
             return ResponseEntity.status(HttpStatus.BAD_REQUEST).body("Could not read JSON");
         return ResponseEntity.status(HttpStatus.OK).build();
+    }
+    @GetMapping("/allRoles")
+    public ResponseEntity<?> getAllRoles(){
+        List<Class<? extends Role>> roleList = new ArrayList<>();
+        roleList.addAll(GlobalVariableHolder.innocentClasses);
+        roleList.addAll(GlobalVariableHolder.neutralClasses);
+        roleList.addAll(GlobalVariableHolder.killerClasses);
+        List<String> nameList = new ArrayList<>();
+        for(var role : roleList){
+            nameList.add(role.getSimpleName());
+        }
+        return ResponseEntity.ok(nameList);
     }
     @GetMapping("/inventory")
     public ResponseEntity<?> getInventory(@RequestParam UUID playerUuid,

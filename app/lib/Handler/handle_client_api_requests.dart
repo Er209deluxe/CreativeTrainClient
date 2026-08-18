@@ -1,5 +1,4 @@
 import 'dart:async';
-import 'dart:collection';
 
 import 'package:creativetrainclient/Handler/handle_buttons_clientconfig.dart';
 import 'package:creativetrainclient/Handler/app_state.dart';
@@ -10,6 +9,9 @@ import 'package:http/http.dart' as http;
 import 'dart:convert';
 import 'package:flutter_client_sse/flutter_client_sse.dart';
 import 'package:flutter_client_sse/constants/sse_request_type_enum.dart';
+
+import '../Wrappers/GeneralConfig.dart';
+import '../Wrappers/RoleConfigData.dart';
 
 StreamSubscription? sseSubscription;
 Future<bool> handleTestConnectionToServer(
@@ -93,61 +95,46 @@ Future<bool> startSession(String roleConfig) async {
   String sessionUuid = app_state.getCurrentSession().sessionUuid;
   String playerUuid = app_state.getCurrentSession().playerUuid;
   String? ipAddress = app_state.getIpAddress();
-  String roleConfig = r'''
-{
-  "roleConfig": {
-    "roleConfig": [
-      {
-        "name": "Innocent",
-        "team": "CIVILIAN",
-        "hex": "#00FF00",
-        "enableShop": false,
-        "passiveIncome": true,
-        "taskIncome": 50,
-        "itemShop": [
-          {"name": "Knife", "price": 30}
-        ]
-      },
-      {
-        "name": "Vigilante",
-        "team": "CIVILIAN",
-        "hex": "#FFD700",
-        "enableShop": true,
-        "passiveIncome": true,
-        "taskIncome": 50,
-        "itemShop": [
-          {"name": "Knife", "price": 25},
-          {"name": "Gun", "price": 50},
-          {"name": "Food", "price": 11}
-        ]
-      },
-      {
-        "name": "Killer",
-        "team": "KILLER",
-        "hex": "#FF0000",
-        "enableShop": true,
-        "passiveIncome": true,
-        "taskIncome": 100,
-        "itemShop": [
-          {"name": "Knife", "price": 14},
-          {"name": "Gun", "price": 18}
-        ]
-      }
-    ]
-  },
-  "generalConfig": {
-    "depressionData": {
-      "baseDepression": 90,
-      "baseSanity": 240
-    },
-    "passiveIncome": 10,
-    "baseTimerMins": 10,
-    "baseTimerSecs": 0,
-    "killReward": 50,
-    "incrementTimerOnKillInSeconds": 30
-  }
-}
-''';
+
+  final generalConfig = GeneralConfig(
+    10, // baseTimerMins
+    0,  // baseTimerSecs
+    30, // incrementTimerOnKillInSeconds
+    100, // killReward
+    5,   // passiveIncome
+    DepressionData(
+      120, // baseDepression
+      60,  // baseSanity
+    ),
+  );
+
+  print(jsonEncode(generalConfig.toJson()));
+  final roleConfigData = RoleConfigData([
+    RoleConfig(
+      name: "Innocent",
+      passiveIncome: true,
+      taskIncome: 20,
+      baseInventory: [
+        InventoryItem("Food"),
+      ],
+      itemShop: [
+        ShopItem("Knife", 10),
+        ShopItem("Knife", 20),
+        ShopItem("Food", 13),
+        ShopItem("Gun", 50),
+      ],
+    ),
+    RoleConfig(
+      name: "Licensed Villain",
+      enabled: false,
+      passiveIncome: true,
+      taskIncome: 12,
+      itemShop: [
+        ShopItem("Gun", 0),
+      ],
+    ),
+  ]);
+  print(jsonEncode(roleConfigData.toJson()));
   if (ipAddress == null) return false;
 
   final uri = Uri.http(ipAddress, '/api/session/start', {
@@ -155,11 +142,17 @@ Future<bool> startSession(String roleConfig) async {
     'sessionUuid': sessionUuid,
     'playerUuid': playerUuid,
   });
-
+  final configs = {
+    "generalConfig": generalConfig.toJson(),
+    "roleConfig":
+    roleConfigData.roleConfig.map((e) => e.toJson()).toList(),
+  };
+  print(configs);
   final response = await http.post(
     uri,
     headers: {'Content-Type': 'application/json'},
-    body: roleConfig,
+    body: jsonEncode(configs),
+
   );
   print(response.body);
 

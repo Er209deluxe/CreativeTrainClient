@@ -1,0 +1,133 @@
+[
+  {
+    "name": "Innocent",
+    "passiveIncome": true,
+    "taskIncome": 20,
+    "baseInventory": [
+      {
+        "name": "Food"
+      }
+    ],
+    "itemShop": [
+      {
+        "name": "Knife",
+        "price": 10
+      },
+      {
+        "name": "Knife",
+        "price": 20
+      },
+      {
+        "name": "Food",
+        "price": 13
+      },
+      {
+        "name": "Gun",
+        "price": 50
+      }
+    ]
+  },
+  {
+    "name": "Licensed Villain",
+    "enabled": false,
+    "passiveIncome": true,
+    "taskIncome": 12,
+    "baseInventory": [],
+    "itemShop": [
+      {
+        "name": "Gun",
+        "price": 0
+      }
+    ]
+  },
+  {
+    "name": "Vigilante",
+    "passiveIncome": true,
+    "taskIncome": 30,
+    "baseInventory": [
+      {
+        "name": "Gun"
+      },
+      {
+        "name": "Food"
+      }
+    ],
+    "itemShop": [
+      {
+        "name": "Knife",
+        "price": 10
+      },
+      {
+        "name": "Gun",
+        "price": 10
+      },
+      {
+        "name": "Food",
+        "price": 10
+      }
+    ]
+  },
+  {
+    "name": "Killer",
+    "passiveIncome": true,
+    "taskIncome": 40,
+    "itemShop": [
+      {
+        "name": "Knife",
+        "price": 10
+      },
+      {
+        "name": "Gun",
+        "price": 10
+      }
+    ]
+  },
+  {
+    "name": "Amnesiac",
+    "enabled": true,
+    "passiveIncome": true,
+    "taskIncome": 40,
+    "itemShop": [
+      {
+        "name": "Knife",
+        "price": 10
+      },
+      {
+        "name": "Gun",
+        "price": 10
+      }
+    ]
+  },
+  {
+    "name": "Jester",
+    "enabled": false,
+    "passiveIncome": true,
+    "taskIncome": 40,
+    "itemShop": [
+      {
+        "name": "Knife",
+        "price": 10
+      },
+      {
+        "name": "Gun",
+        "price": 10
+      }
+    ]
+  },
+  {
+    "name": "CultLeader",
+    "enabled": false,
+    "passiveIncome": true,
+    "taskIncome": 40,
+    "itemShop": [
+      {
+        "name": "Knife",
+        "price": 10
+      },
+      {
+        "name": "Gun",
+        "price": 10
+      }
+    ]
+  }
+]

@@ -1,0 +1,11 @@
+{
+  "baseTimerMins": 3,
+  "baseTimerSecs": 0,
+  "incrementTimerOnKillInSeconds": 30,
+  "killReward": 50,
+  "passiveIncome": 50,
+  "depressionData": {
+    "baseDepression": 90,
+    "baseSanity": 240
+  }
+}

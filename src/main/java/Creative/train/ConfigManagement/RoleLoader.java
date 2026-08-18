@@ -12,11 +12,9 @@ import java.util.UUID;
 public class RoleLoader {
 
     private final ObjectMapper mapper = new ObjectMapper();
+    public void load(JsonNode roleNode, UUID sessionUuid) throws JsonProcessingException {
 
-    public void load(JsonNode root, UUID sessionUuid) throws JsonProcessingException {
-
-        JsonNode roleNode = root.get("roleConfig");
-        System.out.println(root.toPrettyString());
+        System.out.println(roleNode.toPrettyString());
 
         if (roleNode == null || !roleNode.isArray()) {
             throw new IllegalArgumentException("roleConfig missing or not an array");
@@ -26,14 +24,13 @@ public class RoleLoader {
 
             RoleData roleData = mapper.treeToValue(role, RoleData.class);
 
-            if(!roleData.enabled){
-                Class<? extends Role> roleClass = GlobalVariableHolder.getRoleClass(roleData.name);
+            if (!roleData.enabled) {
+                Class<? extends Role> roleClass =
+                        GlobalVariableHolder.getRoleClass(roleData.name);
                 GlobalVariableHolder.removeClass(roleClass);
             }
 
             RoleDataManager.addRoleData(sessionUuid, roleData.name, roleData);
-
-
         }
     }
 }

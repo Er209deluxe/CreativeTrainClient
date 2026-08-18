@@ -34,7 +34,7 @@ class RoleAssignerTest {
         GlobalVariableHolder.innocentClasses =
                 List.of(Innocent.class, Vigilante.class);
 
-        InputStream stream = getClass().getResourceAsStream("/testData/test.json");
+        InputStream stream = getClass().getResourceAsStream("/testData/RoleConfigTest.json");
         assertNotNull(stream);
 
         String json = new String(
