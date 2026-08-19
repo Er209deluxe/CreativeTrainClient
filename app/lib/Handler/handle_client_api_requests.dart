@@ -1,4 +1,5 @@
 import 'dart:async';
+import 'dart:collection';
 
 import 'package:creativetrainclient/Handler/handle_buttons_clientconfig.dart';
 import 'package:creativetrainclient/Handler/app_state.dart';
@@ -9,9 +10,6 @@ import 'package:http/http.dart' as http;
 import 'dart:convert';
 import 'package:flutter_client_sse/flutter_client_sse.dart';
 import 'package:flutter_client_sse/constants/sse_request_type_enum.dart';
-
-import '../Wrappers/GeneralConfig.dart';
-import '../Wrappers/RoleConfigData.dart';
 
 StreamSubscription? sseSubscription;
 Future<bool> handleTestConnectionToServer(
@@ -90,73 +88,65 @@ Future<bool> handleTestConnectionToServer(
   }
 }
 
-Future<bool> startSession(String roleConfig) async {
+Future<bool> startSession(BuildContext context) async {
   String token = app_state.getCurrentSession().token;
   String sessionUuid = app_state.getCurrentSession().sessionUuid;
   String playerUuid = app_state.getCurrentSession().playerUuid;
   String? ipAddress = app_state.getIpAddress();
-
-  final generalConfig = GeneralConfig(
-    10, // baseTimerMins
-    0,  // baseTimerSecs
-    30, // incrementTimerOnKillInSeconds
-    100, // killReward
-    5,   // passiveIncome
-    DepressionData(
-      120, // baseDepression
-      60,  // baseSanity
-    ),
-  );
-
-  print(jsonEncode(generalConfig.toJson()));
-  final roleConfigData = RoleConfigData([
-    RoleConfig(
-      name: "Innocent",
-      passiveIncome: true,
-      taskIncome: 20,
-      baseInventory: [
-        InventoryItem("Food"),
-      ],
-      itemShop: [
-        ShopItem("Knife", 10),
-        ShopItem("Knife", 20),
-        ShopItem("Food", 13),
-        ShopItem("Gun", 50),
-      ],
-    ),
-    RoleConfig(
-      name: "Licensed Villain",
-      enabled: false,
-      passiveIncome: true,
-      taskIncome: 12,
-      itemShop: [
-        ShopItem("Gun", 0),
-      ],
-    ),
-  ]);
-  print(jsonEncode(roleConfigData.toJson()));
   if (ipAddress == null) return false;
 
-  final uri = Uri.http(ipAddress, '/api/session/start', {
-    'token': token,
-    'sessionUuid': sessionUuid,
-    'playerUuid': playerUuid,
+  final configJson = jsonDecode(app_state.modifiedConfig.value);
+
+  final roleConfig = (configJson['roleConfig'] as List<dynamic>).map((role) {
+    final roleMap = Map<String, dynamic>.from(role as Map<String, dynamic>);
+    for (final key in ['baseInventory', 'itemShop']) {
+      final items = roleMap[key];
+      if (items is List) {
+        roleMap[key] = items.map((item) {
+          final itemMap = Map<String, dynamic>.from(item as Map<String, dynamic>);
+          itemMap.remove('type');
+          return itemMap;
+        }).toList();
+      }
+    }
+    return roleMap;
+  }).toList();
+
+  final requestBody = jsonEncode({
+    'roleConfig': roleConfig,
+    'generalConfig': configJson['generalConfig'],
   });
-  final configs = {
-    "generalConfig": generalConfig.toJson(),
-    "roleConfig":
-    roleConfigData.roleConfig.map((e) => e.toJson()).toList(),
-  };
-  print(configs);
-  final response = await http.post(
-    uri,
-    headers: {'Content-Type': 'application/json'},
-    body: jsonEncode(configs),
 
+  final uri = Uri.parse(
+    'http://$ipAddress/api/session/start?token=${Uri.encodeQueryComponent(token)}&sessionUuid=$sessionUuid&playerUuid=$playerUuid',
   );
-  print(response.body);
 
-  return true;
+  try {
+    final response = await http.post(
+      uri,
+      headers: {'Content-Type': 'application/json'},
+      body: requestBody,
+    );
+
+    if (response.statusCode < 200 || response.statusCode >= 300) {
+      showDialog(
+        context: context,
+        builder: (BuildContext dialogContext) {
+          return ErrorDialogM3E(
+            errorHeader: 'Session could not be started',
+            errorText: response.body.isEmpty
+                ? 'Server responded with status ${response.statusCode}'
+                : response.body,
+          );
+        },
+      );
+      return false;
+    }
+    return true;
+  } catch (e) {
+    print('Error starting session: $e');
+    return false;
+  }
 }
 /**
  * ipAddress: the ip Adress of the connected CreativeTrain server example: 127.0.0.1:8080
@@ -201,13 +191,12 @@ Future<bool> handleRegistration(
       jsonDecode(registerResponse.body) as Map<String, dynamic>;
   String sessionUuid = registrationJson["sessionUuid"];
 
-  final connectedUsersUrl = Uri.http(ipAddress, '/api/session/connectedUsers', {
-    'sessionUuid': sessionUuid,
-  });
-
-  final getHostUrl = Uri.http(ipAddress, '/api/session/hostName', {
-    'sessionUuid': sessionUuid,
-  });
+  final connectedUsersUrl = Uri.parse(
+    'http://$ipAddress/api/session/connectedUsers?sessionUuid=${Uri.encodeQueryComponent(sessionUuid)}',
+  );
+  final getHostUrl = Uri.parse(
+    'http://$ipAddress/api/session/hostName?sessionUuid=${Uri.encodeQueryComponent(sessionUuid)}',
+  );
 
   final futureResult = await Future.wait([
     http.get(connectedUsersUrl),
@@ -289,7 +278,7 @@ Future<bool> leaveSession(
   final registerResponse = await http.Response.fromStream(streamedResponse);
 
   if (registerResponse.statusCode < 200 || registerResponse.statusCode >= 300) {
-    throw Exception(registerResponse.body);
+    return false;
   }
   app_state.inSession = false;
   app_state.changeGameActivation(false);
@@ -324,11 +313,9 @@ Future<List<dynamic>> fetchInventory(
   String playerUuid,
   String sessionToken,
 ) async {
-  final inventoryUrl = Uri.http(ipAddress, '/api/session/inventory', {
-    'playerUuid': playerUuid,
-    'sessionToken': sessionToken,
-    'isShop': 'false',
-  });
+  final inventoryUrl = Uri.parse(
+    'http://$ipAddress/api/session/inventory?playerUuid=${Uri.encodeQueryComponent(playerUuid)}&sessionToken=${Uri.encodeQueryComponent(sessionToken)}&isShop=false',
+  );
 
   final inventoryResponse = await http.get(inventoryUrl);
 

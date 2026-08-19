@@ -25,10 +25,25 @@ class _RenderRoleconfigurationState extends State<RenderRoleconfiguration> {
             child: Column(
               children: [
                 const SizedBox(height: 25),
-                SelectRoleToggleButtonGroup(
+                Row(
+                  children: [
+                    const SizedBox(width: 25),
+                    M3EButton(
+                      onPressed: () {
+                        Navigator.pop(context);
+                      },
+                      decoration: M3EButtonDecoration.styleFrom(
+                        backgroundColor: Colors.blueAccent,
+                      ),
+                      size: M3EButtonSize.custom(height: 65, width: 65),
+                      child: Icon(Icons.arrow_back_ios, size: 30),
+                    ),
+                  ],
+                ),
+                const SizedBox(height: 10),
+                RenderRoleConfigEditor(
                   initialIndex: _selected,
                   onSelectionChanged: (int? newIndex) {
-                    // 2. Update parent state when child notifies
                     setState(() {
                       _selected = newIndex;
                     });
@@ -43,23 +58,21 @@ class _RenderRoleconfigurationState extends State<RenderRoleconfiguration> {
   }
 }
 
-class SelectRoleToggleButtonGroup extends StatefulWidget {
+class RenderRoleConfigEditor extends StatefulWidget {
   final int? initialIndex;
   final Function(int?) onSelectionChanged;
 
-  const SelectRoleToggleButtonGroup({
+  const RenderRoleConfigEditor({
     super.key,
-    required this.initialIndex,
     required this.onSelectionChanged,
+    this.initialIndex,
   });
 
   @override
-  State<SelectRoleToggleButtonGroup> createState() =>
-      _SelectRoleToggleButtonGroupState();
+  State<RenderRoleConfigEditor> createState() => _RenderRoleConfigEditorState();
 }
 
-class _SelectRoleToggleButtonGroupState
-    extends State<SelectRoleToggleButtonGroup> {
+class _RenderRoleConfigEditorState extends State<RenderRoleConfigEditor> {
   int? _selected;
 
   @override
@@ -70,28 +83,44 @@ class _SelectRoleToggleButtonGroupState
 
   @override
   Widget build(BuildContext context) {
-    return M3EToggleButtonGroup(
-      type: M3EButtonGroupType.connected,
-      selectedIndex: _selected,
-      size: M3EButtonSize.md,
-      decoration: M3EToggleButtonDecoration.styleFrom(
-        backgroundColor: const Color.fromARGB(255, 3, 59, 143),
-        foregroundColor: const Color.fromARGB(255, 255, 255, 255),
-        checkedBackgroundColor: const Color.fromARGB(255, 130, 142, 215),
-        checkedForegroundColor: Colors.white,
+    return Expanded(
+      child: ListView(
+        children: [
+          Center(
+            child: M3EToggleButtonGroup(
+              type: M3EButtonGroupType.connected,
+              selectedIndex: _selected,
+              size: M3EButtonSize.md,
+              decoration: M3EToggleButtonDecoration.styleFrom(
+                backgroundColor: const Color.fromARGB(255, 3, 59, 143),
+                foregroundColor: const Color.fromARGB(255, 255, 255, 255),
+                checkedBackgroundColor: const Color.fromARGB(
+                  255,
+                  130,
+                  142,
+                  215,
+                ),
+                checkedForegroundColor: Colors.white,
+              ),
+              onSelectedIndexChanged: (index) {
+                setState(() => _selected = index);
+                widget.onSelectionChanged(index);
+              },
+              actions: const [
+                M3EToggleButtonGroupAction(
+                  label: Text('Innocent', style: TextStyle(fontSize: 18)),
+                ),
+                M3EToggleButtonGroupAction(
+                  label: Text(
+                    'Get Roles from Server',
+                    style: TextStyle(fontSize: 18),
+                  ),
+                ),
+              ],
+            ),
+          ),
+        ],
       ),
-      onSelectedIndexChanged: (index) {
-        setState(() => _selected = index);
-        widget.onSelectionChanged(index);
-      },
-      actions: const [
-        M3EToggleButtonGroupAction(
-          label: Text('Innocent', style: TextStyle(fontSize: 18)),
-        ),
-        M3EToggleButtonGroupAction(
-          label: Text('Get Roles from Server', style: TextStyle(fontSize: 18)),
-        ),
-      ],
     );
   }
 }

@@ -105,7 +105,7 @@ class _RenderInactivesessionState extends State<RenderInactivesession> {
                       Expanded(
                         child: M3EButton(
                           onPressed: () {
-                            startSession("temp role configR");
+                            startSession(context);
                           },
                           decoration: M3EButtonDecoration.styleFrom(
                             backgroundColor: const Color.fromARGB(
