@@ -103,7 +103,9 @@ Future<bool> startSession(BuildContext context) async {
       final items = roleMap[key];
       if (items is List) {
         roleMap[key] = items.map((item) {
-          final itemMap = Map<String, dynamic>.from(item as Map<String, dynamic>);
+          final itemMap = Map<String, dynamic>.from(
+            item as Map<String, dynamic>,
+          );
           itemMap.remove('type');
           return itemMap;
         }).toList();
@@ -120,6 +122,8 @@ Future<bool> startSession(BuildContext context) async {
   final uri = Uri.parse(
     'http://$ipAddress/api/session/start?token=${Uri.encodeQueryComponent(token)}&sessionUuid=$sessionUuid&playerUuid=$playerUuid',
   );
+
+  print(requestBody);
 
   try {
     final response = await http.post(
