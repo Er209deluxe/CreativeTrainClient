@@ -2,7 +2,6 @@ package Creative.train.DataTypes;
 
 import Creative.train.Backend.ExceptionTypes.UserAlreadyInSessionExcepion;
 import Creative.train.Backend.ExceptionTypes.UsernameAlreadyExistsException;
-import Creative.train.ConfigManagement.Wrappers.DepressionData;
 import Creative.train.GameLogic.GeneralConfig;
 import Creative.train.GameLogic.Roles.LicensedVillain;
 import Creative.train.GameLogic.Roles.Role;
@@ -62,10 +61,10 @@ public class Session {
     }
     public void decrementAlivePlayers(Player player){
 
-        if(player.getRole().getTeam().equals(Role.Team.CIVILIAN)){
+        if(player.getRole().getRoleInfo().team().equals(Role.Team.CIVILIAN)){
             aliveCivilians--;
         }
-        if(player.getRole().getTeam().equals(Role.Team.KILLER)){
+        if(player.getRole().getRoleInfo().team().equals(Role.Team.KILLER)){
             aliveKillers--;
         }
 

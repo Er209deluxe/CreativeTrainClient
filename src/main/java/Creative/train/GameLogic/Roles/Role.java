@@ -2,9 +2,9 @@ package Creative.train.GameLogic.Roles;
 
 import Creative.train.ConfigManagement.RoleDataManager;
 import Creative.train.ConfigManagement.Wrappers.RoleData;
-import Creative.train.DataTypes.GlobalVariableHolder;
 import Creative.train.DataTypes.Session;
 import Creative.train.DataTypes.Wrappers.DeathInformation;
+import Creative.train.GameLogic.RoleInfo;
 import Creative.train.GameLogic.Items.Item;
 import Creative.train.Managers.SessionManager;
 
@@ -13,22 +13,25 @@ import java.util.*;
 public abstract class Role {
 
     protected final Session session;
-    protected final String name;
-    protected final Team team;
-    protected final String hex;
 
     protected boolean passiveIncome;
     protected int taskIncome;
 
+    protected final String name;
+    protected final Team team;
+    protected final String hex;
+
     private final Map<UUID,Item>  itemShop = new HashMap<>();
     List<Item> baseInventory;
 
-    public Role(UUID sessionUuid,String name,Team team,boolean endPreventingNeutral,String hex) {
-        RoleData data = RoleDataManager.getRoleData(sessionUuid,name);
+    public Role(UUID sessionUuid,boolean endPreventingNeutral){
         session = SessionManager.getInstance().getSession(sessionUuid);
-        this.name = name;
-        this.team = team;
-        this.hex = hex;
+        RoleInfo roleInfo = getRoleInfo();
+        this.name = roleInfo.name();
+        this.team = roleInfo.team();
+        this.hex = roleInfo.hex();
+        RoleData data = RoleDataManager.getRoleData(sessionUuid, name);
+        //if(data == null) throw new Exception("role data does not exist");
         this.passiveIncome = data.passiveIncome;
         this.taskIncome = data.taskIncome;
         this.baseInventory = data.baseInventory;
@@ -42,11 +45,8 @@ public abstract class Role {
             session.addPreventingNeutral(this);
         }
 
-        data.itemShop.forEach(item -> {
-            this.itemShop.put(item.getItemUuid(),  item);
-        });
+        data.itemShop.forEach(item -> this.itemShop.put(item.getItemUuid(),  item));
     }
-
 
     public abstract void onDeath(DeathInformation information);
 
@@ -65,12 +65,24 @@ public abstract class Role {
     public List<Item> getBaseInventory() {
         return baseInventory;
     }
+    public RoleInfo getRoleInfo() {
+        RoleInfo info = getClass().getAnnotation(RoleInfo.class);
 
-    public String getHex(){
-        return hex;
+        if (info == null) {
+            throw new IllegalStateException(
+                    getClass().getName() + " must be annotated with @RoleInfo"
+            );
+        }
+
+        return info;
     }
+
     public String getName() {
         return name;
+    }
+
+    public String getHex() {
+        return hex;
     }
 
     public Team getTeam() {

@@ -3,7 +3,6 @@ package Creative.train.Backend.api;
 import Creative.train.DataTypes.Player;
 import Creative.train.DataTypes.Session;
 import Creative.train.DataTypes.Wrappers.SessionEndData;
-import Creative.train.GameLogic.Quest;
 import Creative.train.GameLogic.Roles.Role;
 import Creative.train.Managers.SessionManager;
 import org.springframework.web.servlet.mvc.method.annotation.SseEmitter;
@@ -98,7 +97,7 @@ public class SseHandler {
                         SessionManager.getInstance()
                                 .getPlayer(uuid)
                                 .getRole()
-                                .getTeam() == Role.Team.KILLER)
+                                .getRoleInfo().team() == Role.Team.KILLER)
                 .toList();
 
         sendPlayer(killers, "timerUpdate", displayTimer);

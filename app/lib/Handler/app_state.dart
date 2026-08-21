@@ -1,4 +1,6 @@
 import 'dart:async';
+import 'package:creativetrainclient/Wrappers/GeneralConfig.dart';
+import 'package:creativetrainclient/Wrappers/RoleConfigData.dart';
 import 'package:flutter/cupertino.dart';
 import 'package:creativetrainclient/Handler/handle_client_api_requests.dart';
 import 'package:flutter/foundation.dart';
@@ -27,143 +29,44 @@ class app_state {
   static final ValueNotifier<String> winnerTeam = ValueNotifier("Unknown");
   static final ValueNotifier<String> reason = ValueNotifier("Unknown");
 
-  static final String standartConfig = r'''
-{
-    "roleConfig": [
-        {
-            "name": "Innocent",
-            "team": "CIVILIAN",
-            "hex": "#00FF00",
-            "enabled": true,
-            "passiveIncome": true,
-            "taskIncome": 50,
-            "baseInventory": [
-                {
-                    "type": "consumable",
-                    "name": "Food"
-                }
-            ],
-            "itemShop": [
-                {
-                    "type": "weapon",
-                    "name": "Knife",
-                    "price": 10
-                },
-                {
-                    "type": "weapon",
-                    "name": "Knife",
-                    "price": 20
-                },
-                {
-                    "type": "consumable",
-                    "name": "Food",
-                    "price": 13
-                },
-                {
-                    "type": "weapon",
-                    "name": "Gun",
-                    "price": 50
-                }
-            ]
-        },
-        {
-            "name": "LicensedVillain",
-            "team": "NEUTRAL",
-            "hex": "#888888",
-            "enabled": true,
-            "passiveIncome": true,
-            "taskIncome": 12,
-            "baseInventory": [
-                {
-                    "type": "consumable",
-                    "name": "Food"
-                }
-            ],
-            "itemShop": [
-                {
-                    "type": "weapon",
-                    "name": "Knife",
-                    "price": 20
-                },
-                {
-                    "type": "weapon",
-                    "name": "Gun",
-                    "price": 10
-                },
-                {
-                    "type": "consumable",
-                    "name": "Food",
-                    "price": 10
-                }
-            ]
-        },
-        {
-            "name": "Vigilante",
-            "team": "CIVILIAN",
-            "hex": "#FFD700",
-            "enabled": true,
-            "passiveIncome": true,
-            "taskIncome": 50,
-            "baseInventory": [
-                {
-                    "type": "weapon",
-                    "name": "Gun"
-                }
-            ],
-            "itemShop": [
-                {
-                    "type": "weapon",
-                    "name": "Knife",
-                    "price": 10
-                },
-                {
-                    "type": "weapon",
-                    "name": "Gun",
-                    "price": 10
-                },
-                {
-                    "type": "consumable",
-                    "name": "Food",
-                    "price": 10
-                }
-            ]
-        },
-        {
-            "name": "Killer",
-            "team": "KILLER",
-            "hex": "#FF0000",
-            "enabled": true,
-            "passiveIncome": true,
-            "taskIncome": 100,
-            "baseInventory": [],
-            "itemShop": [
-                {
-                    "type": "weapon",
-                    "name": "Knife",
-                    "price": 10
-                },
-                {
-                    "type": "weapon",
-                    "name": "Gun",
-                    "price": 10
-                }
-            ]
-        }
-    ],
-    "generalConfig": {
-        "baseTimerMins": 3,
-        "baseTimerSecs": 0,
-        "incrementTimerOnKillInSeconds": 30,
-        "killReward": 50,
-        "passiveIncome": 50,
-        "depressionData": {
-            "baseDepression": 90,
-            "baseSanity": 240
-        }
-    }
-}
-''';
-  static ValueNotifier<String> modifiedConfig = ValueNotifier(standartConfig);
+  static final GeneralConfig _defaultGeneralConfig = GeneralConfig(10, 0, 60, 50, 50, DepressionData(100, 100));
+  static final ValueNotifier<GeneralConfig> generalConfig = ValueNotifier(_defaultGeneralConfig);
+
+  static final RoleConfigData _roleConfigData = RoleConfigData([
+    RoleConfig(
+      name: "Innocent",
+      passiveIncome: true,
+      taskIncome: 20,
+      baseInventory: [
+        InventoryItem("Food"),
+      ],
+      itemShop: [
+        ShopItemConfig("Knife", 10),
+        ShopItemConfig("Knife", 20),
+        ShopItemConfig("Food", 13),
+        ShopItemConfig("Gun", 50),
+      ],
+    ),
+    RoleConfig(
+      name: "Vigilante",
+      enabled: true,
+      passiveIncome: true,
+      taskIncome: 12,
+      itemShop: [
+        ShopItemConfig("Gun", 0),
+      ],
+    ),
+    RoleConfig(
+      name: "Killer",
+      enabled: true,
+      passiveIncome: true,
+      taskIncome: 12,
+      itemShop: [
+        ShopItemConfig("Gun", 0),
+      ],
+    ),
+  ]);
+  static final ValueNotifier<RoleConfigData> roleConfig = ValueNotifier(_roleConfigData);
 
   static void updateSessionEndData(Map<String, dynamic> json) {
     gameEndDataNotifier.value = json;

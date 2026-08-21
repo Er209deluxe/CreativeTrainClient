@@ -45,18 +45,9 @@ public class GlobalVariableHolder {
         }
 
         roleClass = searchClass(killerClasses, className);
-        if (roleClass != null) {
-            return roleClass;
-        }
-
-        return null;
+        return roleClass;
     }
-    public static void removeClass(Class<? extends Role> classElement){
-            killerClasses.remove(classElement);
-            neutralClasses.remove(classElement);
-            innocentClasses.remove(classElement);
 
-    }
     private static Class<? extends Role> searchClass(List<Class<? extends Role>> classList,String className){
         for(Class<? extends Role> classItem : classList ){
             if(classItem.getSimpleName().equals(className)){

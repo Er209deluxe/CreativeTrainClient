@@ -15,8 +15,6 @@ import Creative.train.GameLogic.Items.Item;
 import Creative.train.GameLogic.Items.Weapon;
 import Creative.train.GameLogic.RoleAssigner;
 import Creative.train.GameLogic.Roles.Role;
-import com.fasterxml.jackson.core.JsonProcessingException;
-import com.fasterxml.jackson.core.ObjectCodec;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import org.springframework.http.HttpStatus;
@@ -124,12 +122,12 @@ public class SessionManager {
         session.removePlayer(playerUuid);
         System.out.println("removed:"+playerUuid);
     }
-    public boolean startSession(UUID sessionUuid,JsonNode roleJson,JsonNode configJson) throws JsonProcessingException {
+    public boolean startSession(UUID sessionUuid,JsonNode roleJson,JsonNode configJson) throws Exception {
         Session session = getSession(sessionUuid);
+        List<Class<? extends Role>> removedRoles = roleLoader(roleJson.get("roleConfig"),sessionUuid);
+        if(removedRoles == null) return false;
 
-        if(!roleLoader(roleJson,sessionUuid)) return false;
-
-        RoleAssigner.assignAllRoles(session);
+        RoleAssigner.assignAllRoles(session,removedRoles);
 
         ObjectMapper mapper = new ObjectMapper();
         GeneralConfig generalConfig =mapper.treeToValue(configJson, GeneralConfig.class);
@@ -142,6 +140,8 @@ public class SessionManager {
     public void endSession(UUID sessionUuid, Role.Team winners,String reason){
         SessionEndData sessionEndData = new SessionEndData();
         Session session = getSession(sessionUuid);
+        //if(session==null) return;
+
         session.stop();
         sessionEndData.winnerTeam = winners;
         sessionEndData.reason = reason;
@@ -163,15 +163,14 @@ public class SessionManager {
         session.getAllPlayerUuids().forEach(this::removePlayer);
         sessions.remove(session.getSessionId());
     }
-    public static boolean roleLoader(JsonNode json, UUID sessionUuid){
+    public static List<Class<? extends Role>> roleLoader(JsonNode json, UUID sessionUuid){
         RoleLoader loader = new RoleLoader();
         try {
-            loader.load(json, sessionUuid);
+            return loader.load(json, sessionUuid);
         } catch (IOException e){
             //failed to parse json
-            return false;
+            return null;
         }
-        return true;
     }
     public boolean isSessionActive(UUID sessionUuid) throws NotFoundException {
         Session session = getSession(sessionUuid);
@@ -201,14 +200,14 @@ public class SessionManager {
         if(item==null) return ResponseEntity.status(HttpStatus.CONFLICT).body("Item does not exist");
 
         if(item instanceof Weapon weapon){
-            if(!weapon.killAbility(victim)){
+            DeathInformation information = new DeathInformation(killer,victim,weapon);
+
+            if(!weapon.killAbility(information)){
              return ResponseEntity.status(HttpStatus.CONFLICT).body("Weapon is still on cooldown");
             }
-            if(killer.getRole().getTeam().equals(Role.Team.KILLER)) {
+            if(killer.getRole().getRoleInfo().team().equals(Role.Team.KILLER)) {
                 killer.changeCoins(session.getGeneralConfig().getKillReward());
             }
-            DeathInformation information = new DeathInformation(killer,victim,weapon);
-            setPlayerDead(information);
             return ResponseEntity.status(HttpStatus.OK).build();
         }
         return ResponseEntity.status(HttpStatus.CONFLICT).body("Item is not a Weapon");

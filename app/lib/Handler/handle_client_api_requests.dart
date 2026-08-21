@@ -1,6 +1,11 @@
 import 'dart:async';
 import 'dart:collection';
+import 'dart:convert';
+import 'dart:io';
 
+import 'package:http/http.dart' as http;
+
+import 'package:creativetrainclient/Handler/app_state.dart';
 import 'package:creativetrainclient/Handler/handle_buttons_clientconfig.dart';
 import 'package:creativetrainclient/Handler/app_state.dart';
 import 'package:creativetrainclient/Handler/sse_handler.dart';
@@ -11,6 +16,9 @@ import 'dart:convert';
 import 'package:flutter_client_sse/flutter_client_sse.dart';
 import 'package:flutter_client_sse/constants/sse_request_type_enum.dart';
 
+import '../Wrappers/GeneralConfig.dart';
+import '../Wrappers/RoleConfigData.dart';
+
 StreamSubscription? sseSubscription;
 Future<bool> handleTestConnectionToServer(
   String pUrl,
@@ -20,7 +28,10 @@ Future<bool> handleTestConnectionToServer(
   var response;
   try {
     response = await http.get(url);
-  } on http.ClientException {}
+  } on http.ClientException catch (e) {
+    print('Connection test failed: $e');
+    response = null;
+  }
   if (response != null) {
     if (response.statusCode != 200) {
       print('Request failed with status: ${response.statusCode}.');
@@ -95,28 +106,24 @@ Future<bool> startSession(BuildContext context) async {
   String? ipAddress = app_state.getIpAddress();
   if (ipAddress == null) return false;
 
-  final configJson = jsonDecode(app_state.modifiedConfig.value);
+  final generalConfig = GeneralConfig(
+    10, // baseTimerMins
+    0,  // baseTimerSecs
+    30, // incrementTimerOnKillInSeconds
+    100, // killReward
+    5,   // passiveIncome
+    DepressionData(
+      120, // baseDepression
+      60,  // baseSanity
+    ),
+  );
 
-  final roleConfig = (configJson['roleConfig'] as List<dynamic>).map((role) {
-    final roleMap = Map<String, dynamic>.from(role as Map<String, dynamic>);
-    for (final key in ['baseInventory', 'itemShop']) {
-      final items = roleMap[key];
-      if (items is List) {
-        roleMap[key] = items.map((item) {
-          final itemMap = Map<String, dynamic>.from(
-            item as Map<String, dynamic>,
-          );
-          itemMap.remove('type');
-          return itemMap;
-        }).toList();
-      }
-    }
-    return roleMap;
-  }).toList();
+  print(jsonEncode(generalConfig.toJson()));
+
 
   final requestBody = jsonEncode({
-    'roleConfig': roleConfig,
-    'generalConfig': configJson['generalConfig'],
+    'roleConfig': app_state.roleConfig.value.toJson(),
+    'generalConfig': app_state.generalConfig.value.toJson(),
   });
 
   final uri = Uri.parse(
@@ -266,27 +273,41 @@ StreamSubscription<SSEModel> startStream(
     }
   });
 }
-
 Future<bool> leaveSession(
-  String ipAddress,
-  String playerUuid,
-  String sessionToken,
-) async {
-  final leaveUrl = Uri.http(ipAddress, '/api/session/leaveGame');
+    String ipAddress,
+    String playerUuid,
+    String sessionToken,
+    ) async {
+  try {
+    final leaveUrl = Uri.parse(
+      'http://$ipAddress/api/session/leaveGame',
+    );
 
-  final leaveRequest = http.MultipartRequest('POST', leaveUrl)
-    ..fields['playerUuid'] = playerUuid
-    ..fields['sessionToken'] = sessionToken;
+    final leaveRequest = http.MultipartRequest('POST', leaveUrl)
+      ..fields['playerUuid'] = playerUuid
+      ..fields['sessionToken'] = sessionToken;
 
-  final streamedResponse = await leaveRequest.send();
-  final registerResponse = await http.Response.fromStream(streamedResponse);
+    final streamedResponse = await leaveRequest.send();
+    final response = await http.Response.fromStream(streamedResponse);
 
-  if (registerResponse.statusCode < 200 || registerResponse.statusCode >= 300) {
+    if (response.statusCode < 200 || response.statusCode >= 300) {
+      return false;
+    }
+
+    app_state.inSession = false;
+    app_state.changeGameActivation(false);
+
+    return true;
+  } on SocketException catch (e) {
+    print('Could not connect to server: $e');
+    return false;
+  } on http.ClientException catch (e) {
+    print('HTTP request failed: $e');
+    return false;
+  } catch (e) {
+    print('Unexpected error leaving session: $e');
     return false;
   }
-  app_state.inSession = false;
-  app_state.changeGameActivation(false);
-  return true;
 }
 
 Future<String> buyItem(
@@ -329,4 +350,27 @@ Future<List<dynamic>> fetchInventory(
   }
 
   return jsonDecode(inventoryResponse.body) as List<dynamic>;
+}
+Future<List<Map<String, dynamic>>> getAllRoles() async {
+  String? ipAddress = app_state.getIpAddress();
+
+  if (ipAddress == null) {
+    throw Exception("Ip Address not found");
+  }
+
+  final getRolesUri = Uri.parse(
+    'http://$ipAddress/api/session/allRoles',
+  );
+
+  final response = await http.get(getRolesUri);
+
+  if (response.statusCode == 200) {
+    final List<dynamic> data = jsonDecode(response.body);
+
+    return data.cast<Map<String, dynamic>>();
+  } else {
+    throw Exception(
+      'Failed to load roles: ${response.statusCode} ${response.body}',
+    );
+  }
 }

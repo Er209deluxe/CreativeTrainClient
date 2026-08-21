@@ -12,18 +12,15 @@ class RoleConfigData {
 
 class RoleConfig {
   String name;
-  String team;
-  String hex;
+
   bool enabled;
   bool passiveIncome;
   int taskIncome;
   List<InventoryItem> baseInventory;
-  List<ShopItem> itemShop;
+  List<ShopItemConfig> itemShop;
 
   RoleConfig({
     required this.name,
-    required this.team,
-    required this.hex,
     this.enabled = true,
     required this.passiveIncome,
     required this.taskIncome,
@@ -31,11 +28,26 @@ class RoleConfig {
     this.itemShop = const [],
   });
 
+  RoleConfig copyWith({
+    String? name,
+    bool? enabled,
+    bool? passiveIncome,
+    int? taskIncome,
+    List<InventoryItem>? baseInventory,
+    List<ShopItemConfig>? itemShop,
+  }) {
+    return RoleConfig(
+      name: name ?? this.name,
+      enabled: enabled ?? this.enabled,
+      passiveIncome: passiveIncome ?? this.passiveIncome,
+      taskIncome: taskIncome ?? this.taskIncome,
+      baseInventory: baseInventory ?? this.baseInventory,
+      itemShop: itemShop ?? this.itemShop,
+    );
+  }
   Map<String, dynamic> toJson() {
     return {
       "name": name,
-      "team": team,
-      "hex": hex,
       "enabled": enabled,
       "passiveIncome": passiveIncome,
       "taskIncome": taskIncome,
@@ -46,30 +58,26 @@ class RoleConfig {
 }
 
 class InventoryItem {
-  String type;
   String name;
 
-  InventoryItem(this.type, this.name);
+  InventoryItem(this.name);
 
   Map<String, dynamic> toJson() {
     return {
-      "type": type,
       "name": name,
     };
   }
 }
 
-class ShopItem {
-  String type;
+class ShopItemConfig {
   String name;
   int price;
   int? cooldownInSeconds;
 
-  ShopItem(this.type, this.name, this.price, {this.cooldownInSeconds});
+  ShopItemConfig(this.name, this.price, {this.cooldownInSeconds});
 
   Map<String, dynamic> toJson() {
     return {
-      "type": type,
       "name": name,
       "price": price,
       if (cooldownInSeconds != null) "cooldownInSeconds": cooldownInSeconds,

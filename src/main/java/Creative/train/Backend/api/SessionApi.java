@@ -8,12 +8,13 @@ import Creative.train.DataTypes.GlobalVariableHolder;
 import Creative.train.DataTypes.Player;
 import Creative.train.DataTypes.Wrappers.PlayerData;
 import Creative.train.DataTypes.Session;
+import Creative.train.GameLogic.RoleInfo;
+import Creative.train.DataTypes.Wrappers.RoleInfoResponse;
 import Creative.train.DataTypes.Wrappers.SessionStartConfigs;
 import Creative.train.GameLogic.Roles.Role;
 import Creative.train.Managers.EncryptionManager;
 import Creative.train.Managers.QrManager;
 import Creative.train.Managers.SessionManager;
-import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.JsonNode;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
@@ -105,7 +106,7 @@ public class SessionApi {
                                           @RequestParam("sessionUuid") UUID sessionUuid,
                                           @RequestParam("playerUuid") UUID playerUuid,
                                           @RequestBody SessionStartConfigs configs
-                                         ) throws JsonProcessingException, NotFoundException {
+                                         ) throws Exception {
         JsonNode roleConfig = configs.getRoleConfig();
         JsonNode generalConfig = configs.getGeneralConfig();
         if(roleConfig == null){
@@ -136,18 +137,32 @@ public class SessionApi {
         if(!sessionManager.startSession(sessionUuid, roleConfig,generalConfig))
             return ResponseEntity.status(HttpStatus.BAD_REQUEST).body("Could not read JSON");
         return ResponseEntity.status(HttpStatus.OK).build();
-    }
-    @GetMapping("/allRoles")
-    public ResponseEntity<?> getAllRoles(){
+    }@GetMapping("/allRoles")
+    public ResponseEntity<?> getAllRoles() {
         List<Class<? extends Role>> roleList = new ArrayList<>();
         roleList.addAll(GlobalVariableHolder.innocentClasses);
         roleList.addAll(GlobalVariableHolder.neutralClasses);
         roleList.addAll(GlobalVariableHolder.killerClasses);
-        List<String> nameList = new ArrayList<>();
-        for(var role : roleList){
-            nameList.add(role.getSimpleName());
+
+        List<RoleInfoResponse> roles = new ArrayList<>();
+
+        for (Class<? extends Role> role : roleList) {
+            RoleInfo info = role.getAnnotation(RoleInfo.class);
+
+            if (info == null) {
+                throw new IllegalStateException(
+                        role.getName() + " is missing @RoleInfo"
+                );
+            }
+
+            roles.add(new RoleInfoResponse(
+                    role.getSimpleName(),
+                    info.hex(),
+                    info.team()
+            ));
         }
-        return ResponseEntity.ok(nameList);
+
+        return ResponseEntity.ok(roles);
     }
     @GetMapping("/inventory")
     public ResponseEntity<?> getInventory(@RequestParam UUID playerUuid,
@@ -213,7 +228,8 @@ public class SessionApi {
         if(!killer.isCorrectPass(killerToken)) return ResponseEntity.status(HttpStatus.FORBIDDEN).body("Wrong token");
         Player victim = sessionManager.getPlayer(victimUuid);
         if(!victim.isCorrectChallenge(challenge)&&!challenge.equals("bypass")) return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body("Wrong challenge");
-            return sessionManager.killPlayer(killer,victim,itemUuid);
+
+        return sessionManager.killPlayer(killer,victim,itemUuid);
 
     }
 
@@ -229,7 +245,7 @@ public class SessionApi {
         if(victim.isAlive()) return ResponseEntity.status(HttpStatus.FORBIDDEN).body("victim is not dead");
         if(!victim.isCorrectChallenge(challenge)&&!challenge.equals("bypass")) return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body("Wrong challenge");
 
-        Role role = player.changeRole(victim.getRole().getName());
+        Role role = player.changeRole(victim.getRole().getRoleInfo().name());
         if(role==null) return ResponseEntity.status(HttpStatus.FORBIDDEN).body("You are not an amnesiac");
         return ResponseEntity.ok().body(role);
 

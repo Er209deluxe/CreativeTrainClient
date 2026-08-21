@@ -7,13 +7,15 @@ import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 
+import java.util.ArrayList;
+import java.util.List;
 import java.util.UUID;
 
 public class RoleLoader {
 
     private final ObjectMapper mapper = new ObjectMapper();
-    public void load(JsonNode roleNode, UUID sessionUuid) throws JsonProcessingException {
-
+    public List<Class<? extends Role>> load(JsonNode roleNode, UUID sessionUuid) throws JsonProcessingException {
+        List<Class<? extends Role>> removedRoles = new ArrayList<>();
         System.out.println(roleNode.toPrettyString());
 
         if (roleNode == null || !roleNode.isArray()) {
@@ -24,13 +26,14 @@ public class RoleLoader {
 
             RoleData roleData = mapper.treeToValue(role, RoleData.class);
 
-            if (!roleData.enabled) {
+            if (roleData.enabled) {
                 Class<? extends Role> roleClass =
                         GlobalVariableHolder.getRoleClass(roleData.name);
-                GlobalVariableHolder.removeClass(roleClass);
+                removedRoles.add(roleClass);
             }
 
             RoleDataManager.addRoleData(sessionUuid, roleData.name, roleData);
         }
+        return removedRoles;
     }
 }
