@@ -14,26 +14,27 @@ import java.util.UUID;
 public class RoleLoader {
 
     private final ObjectMapper mapper = new ObjectMapper();
-    public List<Class<? extends Role>> load(JsonNode roleNode, UUID sessionUuid) throws JsonProcessingException {
+    public List<Class<? extends Role>> load(JsonNode roleNode, UUID sessionUuid) throws Exception {
         List<Class<? extends Role>> removedRoles = new ArrayList<>();
-        System.out.println(roleNode.toPrettyString());
+            System.out.println(roleNode.toPrettyString());
 
-        if (roleNode == null || !roleNode.isArray()) {
-            throw new IllegalArgumentException("roleConfig missing or not an array");
-        }
-
-        for (JsonNode role : roleNode) {
-
-            RoleData roleData = mapper.treeToValue(role, RoleData.class);
-
-            if (roleData.enabled) {
-                Class<? extends Role> roleClass =
-                        GlobalVariableHolder.getRoleClass(roleData.name);
-                removedRoles.add(roleClass);
+            if (roleNode == null || !roleNode.isArray()) {
+                throw new IllegalArgumentException("roleConfig missing or not an array");
             }
 
-            RoleDataManager.addRoleData(sessionUuid, roleData.name, roleData);
-        }
-        return removedRoles;
+            for (JsonNode role : roleNode) {
+
+                RoleData roleData = mapper.treeToValue(role, RoleData.class);
+
+                if (roleData.enabled) {
+                    Class<? extends Role> roleClass =
+                            GlobalVariableHolder.getRoleClass(roleData.name);
+                    removedRoles.add(roleClass);
+                }
+
+                RoleDataManager.addRoleData(sessionUuid, roleData.name, roleData);
+            }
+            return removedRoles;
+
     }
 }

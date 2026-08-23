@@ -27,7 +27,7 @@ public class RoleAssigner {
             roles.remove(index);
         }
     }
-    private static Role getRandomRole(List<Class<? extends Role>> classList,UUID sessionUuid){
+    private static Role getRandomRole(List<Class<? extends Role>> classList,UUID sessionUuid) throws Exception {
         int max = classList.size();
         int index = (int) (Math.random() * max);
 
@@ -35,11 +35,12 @@ public class RoleAssigner {
 
             return classList.get(index).getDeclaredConstructor(UUID.class).newInstance(sessionUuid);
         } catch (Exception e) {
-        System.err.println(
-                "Failed to create role: " + classList.get(index).getName()
-        );
-        e.printStackTrace();
-
+            if(classList.size()>=index&&index!=0) {
+                System.err.println(
+                        "Failed to create role: " + classList.get(index).getName()
+                );
+                throw new Exception("Failed to create role: " + classList.get(index).getName());
+            }
         if (e instanceof java.lang.reflect.InvocationTargetException ite) {
             Throwable cause = ite.getCause();
             System.err.println("Actual constructor exception:");
@@ -47,8 +48,7 @@ public class RoleAssigner {
                 cause.printStackTrace();
             }
         }
-
-        return null;
+        throw new Exception("no available roles to create");
     }
 
     }
