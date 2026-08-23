@@ -133,10 +133,16 @@ public class SessionApi {
             return ResponseEntity.status(404).body("Player not found");
         }
 
+        try {
+            sessionManager.startSession(sessionUuid, roleConfig, generalConfig);
+        } catch (Exception e) {
+            return ResponseEntity
+                    .status(HttpStatus.BAD_REQUEST)
+                    .body(e.getMessage());
+        }
 
-        if(!sessionManager.startSession(sessionUuid, roleConfig,generalConfig))
-            return ResponseEntity.status(HttpStatus.BAD_REQUEST).body("Could not read JSON");
-        return ResponseEntity.status(HttpStatus.OK).build();
+        return ResponseEntity.ok().build();
+
     }@GetMapping("/allRoles")
     public ResponseEntity<?> getAllRoles() {
         List<Class<? extends Role>> roleList = new ArrayList<>();
