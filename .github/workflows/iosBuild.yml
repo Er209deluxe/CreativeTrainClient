@@ -1,27 +1,40 @@
-name: Build and distribute
+name: Build unsigned IPA
 
 on:
-  push:
-    branches:
-      - main
+  workflow_dispatch:
 
 jobs:
   build:
-    name: build
-    runs-on: macos-latest
+    runs-on: macos-15
+
     steps:
       - uses: actions/checkout@v4
 
-      - uses: cedvdb/action-flutter-build-ios@v1
-        with:
-          build-cmd: flutter build ipa --release --flavor dev --export-options-plist=ios/GithubActionsExportOptions.plist
-          certificate-base64: ${{ secrets.IOS_BUILD_CERTIFICATE_BASE64 }}
-          certificate-password: ${{ secrets.IOS_BUILD_CERTIFICATE_PASSWORD }}
-          provisioning-profile-base64: ${{ secrets.IOS_MOBILE_PROVISIONING_PROFILE_BASE64 }}
-          keychain-password: ${{ secrets.IOS_GITHUB_KEYCHAIN_PASSWORD }}
+      - name: Install dependencies
+        run: |
+          bundle install
+          bundle exec pod install --project-directory=.
 
-      - name: Archive IPA
+      - name: Build unsigned app
+        run: |
+          xcodebuild \
+            -workspace MyApp.xcworkspace \
+            -scheme MyApp \
+            -configuration Release \
+            -sdk iphoneos \
+            -derivedDataPath build \
+            CODE_SIGNING_ALLOWED=NO \
+            CODE_SIGNING_REQUIRED=NO \
+            archive
+
+      - name: Package unsigned IPA
+        run: |
+          mkdir -p Payload
+          cp -R build/Build/Products/Release-iphoneos/MyApp.app Payload/
+          zip -r MyApp-unsigned.ipa Payload
+
+      - name: Upload unsigned IPA
         uses: actions/upload-artifact@v4
         with:
-          name: release-ipa
-          path: build/ios/ipa/App-dev.ipa
+          name: unsigned-ipa
+          path: MyApp-unsigned.ipa
