@@ -18,14 +18,15 @@ jobs:
       - name: Build unsigned app
         run: |
           xcodebuild \
-            -workspace MyApp.xcworkspace \
-            -scheme MyApp \
-            -configuration Release \
-            -sdk iphoneos \
-            -derivedDataPath build \
+           -project MyApp.xcodeproj \
+           -scheme MyApp \
+           -sdk iphonesimulator \
+           -configuration Debug \
+           -derivedDataPath build \
             CODE_SIGNING_ALLOWED=NO \
             CODE_SIGNING_REQUIRED=NO \
-            archive
+            build
+
 
       - name: Package unsigned IPA
         run: |
