@@ -21,6 +21,7 @@ class RenderRoleconfiguration extends StatefulWidget {
 
 class _RenderRoleconfigurationState extends State<RenderRoleconfiguration> {
   String _section = 'roles';
+  String _previousSection = 'roles';
   String _profile = 'p1';
 
   @override
@@ -54,10 +55,13 @@ class _RenderRoleconfigurationState extends State<RenderRoleconfiguration> {
                       Expanded(
                         child: Align(
                           alignment: Alignment.centerLeft,
-                          child: _SectionDropdown(
+                          child: _SectionToggleGroup(
                             value: _section,
                             onChanged: (value) {
-                              setState(() => _section = value);
+                              setState(() {
+                                _previousSection = _section;
+                                _section = value;
+                              });
                             },
                           ),
                         ),
@@ -78,18 +82,54 @@ class _RenderRoleconfigurationState extends State<RenderRoleconfiguration> {
                 ),
                 const SizedBox(height: 5),
                 Expanded(
-                  child: ValueListenableBuilder<GeneralConfig>(
-                    valueListenable: app_state.generalConfig,
-                    builder: (context, generalConfigData, _) {
-                      Map<String, dynamic> config;
+                  child: ClipRect(
+                    child: AnimatedSwitcher(
+                      duration: const Duration(milliseconds: 300),
+                      switchInCurve: Curves.easeOutCubic,
+                      switchOutCurve: Curves.easeInCubic,
+                      transitionBuilder: (child, animation) {
+                        final isCurrent =
+                            child.key == ValueKey<String>(_section);
+                        final movedDown =
+                            _sectionOrder(_section) >=
+                            _sectionOrder(_previousSection);
 
-                      if (_section == 'general') {
-                        return _GeneralConfigEditor(config: generalConfigData);
-                      }
-                      return _RoleConfigEditor(
-                        config: app_state.roleConfig.value,
-                      );
-                    },
+                        final Offset enterFrom;
+                        if (isCurrent) {
+                          enterFrom = movedDown
+                              ? const Offset(1, 0)
+                              : const Offset(-1, 0);
+                        } else {
+                          enterFrom = movedDown
+                              ? const Offset(-1, 0)
+                              : const Offset(1, 0);
+                        }
+
+                        return SlideTransition(
+                          position: Tween<Offset>(
+                            begin: enterFrom,
+                            end: Offset.zero,
+                          ).animate(animation),
+                          child: child,
+                        );
+                      },
+                      child: KeyedSubtree(
+                        key: ValueKey<String>(_section),
+                        child: ValueListenableBuilder<GeneralConfig>(
+                          valueListenable: app_state.generalConfig,
+                          builder: (context, generalConfigData, _) {
+                            if (_section == 'general') {
+                              return _GeneralConfigEditor(
+                                config: generalConfigData,
+                              );
+                            }
+                            return _RoleConfigEditor(
+                              config: app_state.roleConfig.value,
+                            );
+                          },
+                        ),
+                      ),
+                    ),
                   ),
                 ),
               ],
@@ -101,40 +141,36 @@ class _RenderRoleconfigurationState extends State<RenderRoleconfiguration> {
   }
 }
 
-class _SectionDropdown extends StatelessWidget {
+class _SectionToggleGroup extends StatelessWidget {
   final String value;
   final ValueChanged<String> onChanged;
 
-  const _SectionDropdown({required this.value, required this.onChanged});
+  const _SectionToggleGroup({required this.value, required this.onChanged});
 
   @override
   Widget build(BuildContext context) {
-    return Theme(
-      data: ThemeData.dark(useMaterial3: true),
-      child: DropdownButton<String>(
-        value: value,
-        isDense: true,
-        underline: const SizedBox.shrink(),
-        iconEnabledColor: Colors.white,
-        dropdownColor: const Color(0xFF223E5F),
-        style: const TextStyle(color: Colors.white, fontSize: 18),
-        items: const [
-          DropdownMenuItem(
-            value: 'roles',
-            child: Text('Role Config', style: TextStyle(color: Colors.white)),
-          ),
-          DropdownMenuItem(
-            value: 'general',
-            child: Text(
-              'General Config',
-              style: TextStyle(color: Colors.white),
-            ),
-          ),
-        ],
-        onChanged: (v) {
-          if (v != null) onChanged(v);
-        },
+    return M3EToggleButtonGroup(
+      type: M3EButtonGroupType.connected,
+      size: M3EButtonSize.md,
+      selectedIndex: _sectionOrder(value),
+      onSelectedIndexChanged: (index) {
+        if (index == null) return;
+        onChanged(index == 0 ? 'roles' : 'general');
+      },
+      decoration: M3EToggleButtonDecoration.styleFrom(
+        backgroundColor: Colors.blue,
+        foregroundColor: Colors.white,
+        checkedBackgroundColor: Colors.lightBlue,
+        checkedForegroundColor: Colors.white,
       ),
+      actions: const [
+        M3EToggleButtonGroupAction(
+          label: Text('Role Config', style: TextStyle(fontSize: 16)),
+        ),
+        M3EToggleButtonGroupAction(
+          label: Text('General Config', style: TextStyle(fontSize: 16)),
+        ),
+      ],
     );
   }
 }
@@ -176,6 +212,8 @@ class _ProfileDropdown extends StatelessWidget {
     );
   }
 }
+
+int _sectionOrder(String section) => section == 'general' ? 1 : 0;
 
 Color _hexToColor(String? hex) {
   final cleaned = (hex ?? '').replaceFirst('#', '');
@@ -233,6 +271,20 @@ class _RoleConfigEditorState extends State<_RoleConfigEditor> {
     if (_roles.isEmpty) return null;
 
     return _roles[_effectiveSelectedRole];
+  }
+
+  bool _isRoleDisabled(int index) {
+    final roleName = _roles[index]['name'] as String?;
+
+    if (roleName == null) return false;
+
+    for (final config in widget.config.roleConfig) {
+      if (config.name == roleName) {
+        return !config.enabled;
+      }
+    }
+
+    return false;
   }
 
   @override
@@ -293,10 +345,12 @@ class _RoleConfigEditorState extends State<_RoleConfigEditor> {
             style: const TextStyle(fontSize: 14),
           ),
           decoration: M3EToggleButtonDecoration.styleFrom(
-            backgroundColor: _hexToColor(_roles[i]['hex'] as String?),
+            backgroundColor: _isRoleDisabled(i)
+                ? Colors.grey
+                : _hexToColor(_roles[i]['hex'] as String?),
             foregroundColor: Colors.white,
-            checkedBackgroundColor: Colors.blueGrey.shade400,
-            checkedForegroundColor: _hexToColor(_roles[i]['hex'] as String?),
+            checkedBackgroundColor: Colors.lightBlue,
+            checkedForegroundColor: Colors.white,
           ),
         ),
     ];
@@ -325,119 +379,122 @@ class _RoleConfigEditorState extends State<_RoleConfigEditor> {
         Expanded(
           child: ClipRect(
             child: AnimatedSwitcher(
-            duration: const Duration(milliseconds: 300),
-            switchInCurve: Curves.easeOutCubic,
-            switchOutCurve: Curves.easeInCubic,
-            transitionBuilder: (child, animation) {
-              final isCurrent =
-                  child.key == ValueKey<int>(_effectiveSelectedRole);
-              final movedRight =
-                  _effectiveSelectedRole >= _previousSelectedRole;
+              duration: const Duration(milliseconds: 300),
+              switchInCurve: Curves.easeOutCubic,
+              switchOutCurve: Curves.easeInCubic,
+              transitionBuilder: (child, animation) {
+                final isCurrent =
+                    child.key == ValueKey<int>(_effectiveSelectedRole);
+                final movedRight =
+                    _effectiveSelectedRole >= _previousSelectedRole;
 
-              final Offset enterFrom;
-              if (isCurrent) {
-                enterFrom = movedRight
-                    ? const Offset(1, 0)
-                    : const Offset(-1, 0);
-              } else {
-                enterFrom = movedRight
-                    ? const Offset(-1, 0)
-                    : const Offset(1, 0);
-              }
+                final Offset enterFrom;
+                if (isCurrent) {
+                  enterFrom = movedRight
+                      ? const Offset(1, 0)
+                      : const Offset(-1, 0);
+                } else {
+                  enterFrom = movedRight
+                      ? const Offset(-1, 0)
+                      : const Offset(1, 0);
+                }
 
-              return SlideTransition(
-                position: Tween<Offset>(
-                  begin: enterFrom,
-                  end: Offset.zero,
-                ).animate(animation),
-                child: child,
-              );
-            },
-            child: KeyedSubtree(
-              key: ValueKey<int>(_effectiveSelectedRole),
-              child: ListView(
-            padding: const EdgeInsets.symmetric(horizontal: 25, vertical: 8),
-            children: [
-              Text(
-                roleName,
-                style: const TextStyle(
-                  color: Colors.white,
-                  fontSize: 26,
-                  fontWeight: FontWeight.bold,
-                ),
-              ),
-
-              const SizedBox(height: 12),
-
-              _LabeledSwitch(
-                label: 'Enabled',
-                value: role.enabled,
-                onChanged: (v) {
-                  setState(() {
-                    role.enabled = v;
-                  });
-                },
-              ),
-
-              _LabeledSwitch(
-                label: 'Passive Income',
-                value: role.passiveIncome,
-                onChanged: (v) {
-                  setState(() {
-                    role.passiveIncome = v;
-                  });
-                },
-              ),
-              const SizedBox(height: 20),
-
-              Row(
-                children: [
-                  const Expanded(
-                    child: Text(
-                      'Task Income',
-                      style: TextStyle(color: Colors.white, fontSize: 18),
+                return SlideTransition(
+                  position: Tween<Offset>(
+                    begin: enterFrom,
+                    end: Offset.zero,
+                  ).animate(animation),
+                  child: child,
+                );
+              },
+              child: KeyedSubtree(
+                key: ValueKey<int>(_effectiveSelectedRole),
+                child: ListView(
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: 25,
+                    vertical: 8,
+                  ),
+                  children: [
+                    Text(
+                      roleName,
+                      style: const TextStyle(
+                        color: Colors.white,
+                        fontSize: 26,
+                        fontWeight: FontWeight.bold,
+                      ),
                     ),
-                  ),
 
-                  NumberInput(
-                    label: 'Task Income',
-                    value: role.taskIncome,
-                    onChanged: (v) {
-                      setState(() {
-                        role.taskIncome = v;
-                      });
-                    },
-                  ),
-                ],
-              ),
+                    const SizedBox(height: 12),
 
-              const SizedBox(height: 16),
+                    _LabeledSwitch(
+                      label: 'Enabled',
+                      value: role.enabled,
+                      onChanged: (v) {
+                        setState(() {
+                          role.enabled = v;
+                        });
+                      },
+                    ),
 
-              _ItemListEditor(
-                header: 'Base Inventory',
-                items: role.baseInventory,
-                showPrice: false,
-                onChanged: () {
-                  setState(() {});
-                },
-              ),
+                    _LabeledSwitch(
+                      label: 'Passive Income',
+                      value: role.passiveIncome,
+                      onChanged: (v) {
+                        setState(() {
+                          role.passiveIncome = v;
+                        });
+                      },
+                    ),
+                    const SizedBox(height: 20),
 
-              const SizedBox(height: 24),
+                    Row(
+                      children: [
+                        const Expanded(
+                          child: Text(
+                            'Task Income',
+                            style: TextStyle(color: Colors.white, fontSize: 18),
+                          ),
+                        ),
 
-              _ItemListEditor(
-                header: 'Item Shop',
-                items: role.itemShop,
-                showPrice: true,
-                onChanged: () {
-                  setState(() {});
-                },
-              ),
-            ],
+                        NumberInput(
+                          label: 'Task Income',
+                          value: role.taskIncome,
+                          onChanged: (v) {
+                            setState(() {
+                              role.taskIncome = v;
+                            });
+                          },
+                        ),
+                      ],
+                    ),
+
+                    const SizedBox(height: 16),
+
+                    _ItemListEditor(
+                      header: 'Base Inventory',
+                      items: role.baseInventory,
+                      showPrice: false,
+                      onChanged: () {
+                        setState(() {});
+                      },
+                    ),
+
+                    const SizedBox(height: 24),
+
+                    _ItemListEditor(
+                      header: 'Item Shop',
+                      items: role.itemShop,
+                      showPrice: true,
+                      onChanged: () {
+                        setState(() {});
+                      },
+                    ),
+                  ],
+                ),
               ),
             ),
           ),
         ),
-      ),
       ],
     );
   }
