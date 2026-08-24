@@ -1,4 +1,4 @@
-name: Build unsigned IPA
+name: Build TrollStore IPA
 
 on:
   workflow_dispatch:
@@ -8,34 +8,50 @@ jobs:
     runs-on: macos-15
 
     steps:
-      - uses: actions/checkout@v4
+      - name: Checkout
+        uses: actions/checkout@v4
 
-      - name: Install dependencies
+      - name: Install CocoaPods if needed
         run: |
-          bundle install
-          bundle exec pod install --project-directory=.
+          if [ -f Podfile ]; then
+            brew install cocoapods
+            pod install --repo-update
+          fi
 
-      - name: Build unsigned app
+      - name: Build unsigned device app
         run: |
           xcodebuild \
-           -project MyApp.xcodeproj \
-           -scheme MyApp \
-           -sdk iphonesimulator \
-           -configuration Debug \
-           -derivedDataPath build \
+            -project MyApp.xcodeproj \
+            -scheme MyApp \
+            -sdk iphoneos \
+            -configuration Release \
+            -derivedDataPath build \
             CODE_SIGNING_ALLOWED=NO \
             CODE_SIGNING_REQUIRED=NO \
+            CODE_SIGN_IDENTITY="" \
+            DEVELOPMENT_TEAM="" \
             build
 
-
-      - name: Package unsigned IPA
+      - name: Package IPA
         run: |
-          mkdir -p Payload
-          cp -R build/Build/Products/Release-iphoneos/MyApp.app Payload/
-          zip -r MyApp-unsigned.ipa Payload
+          set -e
 
-      - name: Upload unsigned IPA
+          APP_PATH="build/Build/Products/Release-iphoneos/MyApp.app"
+
+          test -d "$APP_PATH" || {
+            echo "App not found at $APP_PATH"
+            find build -name "*.app" -print
+            exit 1
+          }
+
+          rm -rf Payload MyApp-trollstore.ipa
+          mkdir Payload
+          cp -R "$APP_PATH" Payload/
+
+          /usr/bin/zip -r -y MyApp-trollstore.ipa Payload
+
+      - name: Upload IPA
         uses: actions/upload-artifact@v4
         with:
-          name: unsigned-ipa
-          path: MyApp-unsigned.ipa
+          name: MyApp-trollstore-ipa
+          path: MyApp-trollstore.ipa
