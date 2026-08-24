@@ -101,7 +101,7 @@ class _RenderActivesessionState extends State<RenderActivesession> {
                         child: Text(
                           "${app_state.getRole()?.team.name}", //Role: Innocent
                           style: TextStyle(
-                            color: colorFromHex(app_state.getRole()?.team.hex),
+                            color: _hexToColor(app_state.getRole()?.team.hex),
                             fontSize: 25,
                           ),
                         ),
@@ -294,6 +294,12 @@ class _RenderActivesessionState extends State<RenderActivesession> {
       ),
     );
   }
+}
+
+Color _hexToColor(String? hex) {
+  final cleaned = (hex ?? '').replaceFirst('#', '');
+  final value = int.tryParse(cleaned, radix: 16);
+  return value != null ? Color(0xFF000000 | value) : Colors.grey;
 }
 
 void showInventoryDialog(BuildContext context) {
@@ -677,13 +683,4 @@ void showLeaveConfirmDialog(BuildContext context) {
       );
     },
   );
-}
-
-Color colorFromHex(String? hex) {
-  if (hex == null) return Colors.white;
-  hex = hex.replaceAll('#', '').trim();
-  if (hex.length == 6) hex = 'FF$hex';
-  if (hex.length != 8) throw FormatException('Hex color must be 6 or 8 digits');
-
-  return Color(int.parse(hex, radix: 16));
 }

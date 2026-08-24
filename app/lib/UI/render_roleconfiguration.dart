@@ -51,7 +51,7 @@ class _RenderRoleconfigurationState extends State<RenderRoleconfiguration> {
                         size: M3EButtonSize.custom(height: 65, width: 65),
                         child: const Icon(Icons.arrow_back_ios, size: 30),
                       ),
-                      const SizedBox(width: 25),
+                      const SizedBox(width: 10),
                       Expanded(
                         child: Align(
                           alignment: Alignment.centerLeft,
@@ -66,16 +66,11 @@ class _RenderRoleconfigurationState extends State<RenderRoleconfiguration> {
                           ),
                         ),
                       ),
-                      Expanded(
-                        child: Align(
-                          alignment: Alignment.centerLeft,
-                          child: _ProfileDropdown(
-                            value: _profile,
-                            onChanged: (value) {
-                              setState(() => _profile = value);
-                            },
-                          ),
-                        ),
+                      _ProfileDropdown(
+                        value: _profile,
+                        onChanged: (value) {
+                          setState(() => _profile = value);
+                        },
                       ),
                     ],
                   ),
