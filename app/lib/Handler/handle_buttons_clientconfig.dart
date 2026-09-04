@@ -10,6 +10,7 @@ import 'package:flutter/services.dart';
 import 'package:http/http.dart' as http;
 import 'package:m3e_buttons/m3e_buttons.dart';
 import 'package:flutter/services.dart' show rootBundle;
+import 'package:flutter/foundation.dart';
 
 bool validateInput(int? validationType, String pInput) {
   // 0 DomainValidation | 1 IP validation
@@ -71,7 +72,12 @@ class _DomainPressActionState extends State<DomainPressAction> {
     if (port == '') {
       port = '8080';
     }
-    String ipAddress = '127.0.0.1:$port';
+
+    String ipAddress = '0.0.0.0:$port';
+
+    if (kDebugMode) {
+      ipAddress = '127.0.0.1:$port';
+    }
     if (!(ip1.isEmpty || ip2.isEmpty || ip3.isEmpty || ip4.isEmpty)) {
       ipAddress = '$ip1.$ip2.$ip3.$ip4:$port';
     }
@@ -217,8 +223,7 @@ class _DomainPressActionState extends State<DomainPressAction> {
                   builder: (BuildContext dialogContext) {
                     return ErrorDialogM3E(
                       errorHeader: 'Invalid IP-Adress',
-                      errorText:
-                          'Please input a Valid IP-Adress for e.g. 192.178.5.21. If no Port is given the Client will try 8080',
+                      errorText: 'Please input a Valid IP-Adress for e.g. 192.178.5.21. If no Port is given the Client will try 8080',
                     );
                   },
                 );
@@ -271,8 +276,7 @@ class _DomainPressActionState extends State<DomainPressAction> {
                   builder: (BuildContext dialogContext) {
                     return ErrorDialogM3E(
                       errorHeader: 'Invalid Domain Name',
-                      errorText:
-                          'Please input a valid domain Name for e.g. example.com',
+                      errorText: 'Please input a valid domain Name for e.g. example.com',
                     );
                   },
                 );
@@ -428,8 +432,7 @@ Future<void> validInput(
   if (await handleTestConnectionToServer(pUrl + "/api/validateApi", context)) {
     Navigator.pop(context);
     // Session Control screen
-    Navigator.of(
-      context,
-    ).push(CupertinoPageRoute(builder: (_) => RenderRegisterconfig()));
+    Navigator.of(context)
+        .push(CupertinoPageRoute(builder: (_) => RenderRegisterconfig()));
   }
 }
