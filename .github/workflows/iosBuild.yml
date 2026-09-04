@@ -28,37 +28,45 @@ jobs:
         working-directory: app
     env:
       BUILD_FLAVOR: ${{ (github.ref == 'refs/tags/stable' || (github.event_name == 'release' && !github.event.release.prerelease)) && 'production' || 'nightly' }}
+
     steps:
       - name: ⬆️ Checkout
         uses: actions/checkout@v7
+
       - name: 🦀 Setup Rust
         uses: actions-rust-lang/setup-rust-toolchain@v1
         with:
           rust-src-dir: app
-      - uses: subosito/flutter-action@v2.23.0
+
+      - name: 🐦 Setup Flutter
+        uses: subosito/flutter-action@v2.23.0
         with:
           flutter-version-file: app/pubspec.yaml
           cache: true
+
       - name: 📦 Get dependencies
-        run: |
-          flutter pub get
-      - name: 🎨 Apply native branding
-        run: dart run scripts/apply_branding.dart ${{ env.BUILD_FLAVOR }} ios
+        run: flutter pub get
+
       - name: 🏭 Build
         run: |
-          flutter build ios --release --no-codesign -v --dart-define=flavor=${{ env.BUILD_FLAVOR }}
-      - name: Packing IPA
+          flutter build ios \
+            --release \
+            --no-codesign \
+            -v \
+            --dart-define=flavor=${{ env.BUILD_FLAVOR }}
+
+      - name: 📦 Package IPA
         run: |
-          cd build/ios/iphoneos/
+          cd build/ios/iphoneos
           rm -rf Payload
           mkdir Payload
           cp -R Runner.app Payload/
           rm -f linwood-butterfly-ios.ipa
           zip -vr linwood-butterfly-ios.ipa Payload/
-      #          ls -l linwood-butterfly-ios.ipa
-      - name: Archive
+
+      - name: 📤 Upload IPA
         uses: actions/upload-artifact@v7
         with:
           name: ipa-build
           path: app/build/ios/iphoneos/linwood-butterfly-ios.ipa
-          compression-level: 0 # https://github.com/LinwoodDev/Butterfly/blob/develop/.github/workflows/build.yml
+          compression-level: 0
