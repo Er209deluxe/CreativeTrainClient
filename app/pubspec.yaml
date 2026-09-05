@@ -1,5 +1,5 @@
 name: creativetrainclient
-description: "A new Flutter project."
+description: "A client for the murder mystery/ werewolf game \"CreativeTrain\" by CreativeN025 on github "
 
 version: 1.0.0
 
@@ -9,8 +9,11 @@ environment:
 dependencies:
   flutter:
     sdk: flutter
+  nfc_manager: ^4.2.1
+  nfc_manager_ndef: ^1.1.0
   google_fonts: ^8.1.0
   animated_splash_screen: ^1.3.0
+
   m3e_buttons: ^0.0.3
   font_awesome_flutter: ^11.0.0
   m3e_collection: ^0.3.7
@@ -22,6 +25,7 @@ dev_dependencies:
     sdk: flutter
   flutter_lints: ^6.0.0
   flutter_launcher_icons: ^0.14.4
+
 
 flutter:
 

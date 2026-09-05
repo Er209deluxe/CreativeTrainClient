@@ -1,8 +1,10 @@
+import 'dart:async';
 import 'dart:math' as math;
 
 import 'package:creativetrainclient/UI/render_homepage.dart';
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
+import 'package:nfc_manager/nfc_manager.dart';
 
 class AnimatedSplashPage extends StatefulWidget {
   const AnimatedSplashPage({super.key});
@@ -15,6 +17,8 @@ class _AnimatedSplashPageState extends State<AnimatedSplashPage>
     with TickerProviderStateMixin {
   late final AnimationController _waveCtrl;
   late final AnimationController _glowCtrl;
+
+  bool _checkingNfc = false;
 
   bool _showLogo = false;
   bool _showText = false;
@@ -51,12 +55,62 @@ class _AnimatedSplashPageState extends State<AnimatedSplashPage>
     Future<void>.delayed(Duration(seconds: 3), () async {
       if (!mounted) return;
 
-      Navigator.of(
-        context,
-      ).pushReplacement(CupertinoPageRoute(builder: (_) => HomePage()));
+      _checkNfcAndContinue();
     });
-    super.initState();
+
   }
+  Future<void> _checkNfcAndContinue() async {
+    if (_checkingNfc) return;
+
+    _checkingNfc = true;
+
+    bool isAvailable = false;
+    String? error;
+
+    try {
+      final availability =
+      await NfcManager.instance.checkAvailability();
+
+      isAvailable =
+          availability == NfcAvailability.enabled;
+    } catch (e) {
+      error = e.toString();
+    }
+
+    if (!mounted) return;
+
+    await showDialog<void>(
+      context: context,
+      barrierDismissible: false,
+      builder: (context) => AlertDialog(
+        title: const Text('NFC Status'),
+        content: Text(
+          error != null
+              ? 'Could not check NFC availability.\n\n$error'
+              : isAvailable
+              ? 'NFC is available on this device.'
+              : 'NFC is not available on this device.',
+        ),
+        actions: [
+          TextButton(
+            onPressed: () {
+              Navigator.of(context).pop();
+            },
+            child: const Text('OK'),
+          ),
+        ],
+      ),
+    );
+
+    if (!mounted) return;
+
+    Navigator.of(context).pushReplacement(
+      CupertinoPageRoute(
+        builder: (_) => const HomePage(),
+      ),
+    );
+  }
+
 
   @override
   void dispose() {
@@ -109,7 +163,7 @@ class _AnimatedSplashPageState extends State<AnimatedSplashPage>
                   curve: Curves.easeInOut,
                   child: SplashTexts(
                     appName: 'CTC',
-                    description: 'A CreativeTrain Client for a selfhosted Game',
+                    description: 'A CreativeTrain Client for a self hosted Game',
                   ), //test
                 ),
               ],
@@ -224,7 +278,6 @@ class _WavePaint extends CustomPainter {
 
   @override
   void paint(Canvas canvas, Size size) {
-    // Layer waves
     final Paint paint1 = Paint()
       ..color = Colors.white.withValues(alpha: .06)
       ..style = PaintingStyle.fill;

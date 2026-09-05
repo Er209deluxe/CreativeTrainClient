@@ -159,6 +159,34 @@ Future<bool> startSession(BuildContext context) async {
     return false;
   }
 }
+
+Future<bool> killPlayer(String ipAddress,String victimUuid,String itemUuid, BuildContext context) async {
+final killUrl = Uri.http(ipAddress, 'api/session/kill');
+final killRequest = http.MultipartRequest('POST', killUrl)..fields['killerUuid'] = " ";
+  killRequest.fields['sessionToken'] = app_state.getCurrentSession().token;
+  killRequest.fields['challenge'] = app_state.getChallenge();
+  killRequest.fields['victimUuid'] = victimUuid;
+  killRequest.fields['itemUuid'] = itemUuid;
+
+  final streamedResponse = killRequest.send();
+  final killResponse = await http.Response.fromStream(await streamedResponse);
+  if(killResponse.statusCode==200) {
+    return true;
+  }
+showDialog(
+  context: context,
+  builder: (BuildContext dialogContext) {
+    return ErrorDialogM3E(
+      errorHeader: 'Couldn\'t kill player',
+      errorText: killResponse.body.isEmpty
+          ? 'Server responded with status ${killResponse.statusCode}'
+          : killResponse.body,
+    );
+  },
+);
+  return false;
+}
+
 /**
  * ipAddress: the ip Adress of the connected CreativeTrain server example: 127.0.0.1:8080
  * playerName: the name of the player

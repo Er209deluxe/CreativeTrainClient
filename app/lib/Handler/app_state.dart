@@ -32,6 +32,9 @@ class app_state {
   static final GeneralConfig _defaultGeneralConfig = GeneralConfig(10, 0, 60, 50, 50, DepressionData(100, 100));
   static final ValueNotifier<GeneralConfig> generalConfig = ValueNotifier(_defaultGeneralConfig);
 
+  static String getChallenge(){
+    return _challenge;
+}
   static final RoleConfigData _roleConfigData = RoleConfigData([
     RoleConfig(
       name: "Innocent",
