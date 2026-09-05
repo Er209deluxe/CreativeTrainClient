@@ -1,6 +1,8 @@
 package Creative.train.GameLogic.Items;
 
 import Creative.train.DataTypes.Player;
+import Creative.train.DataTypes.Wrappers.DeathInformation;
+import Creative.train.Managers.SessionManager;
 import Creative.train.Managers.ThreadManager;
 
 import java.util.ArrayList;
@@ -10,20 +12,21 @@ import java.util.concurrent.TimeUnit;
 public class Weapon extends Item{
     protected final int cooldownInSeconds;
     protected long cooldownEnd;
-    protected int killDelay;
+    protected int killDelay=20;
     public Weapon(String name,int cooldownInSeconds,int killDelay){
         super(name,new ArrayList<>(List.of("Weapon")));
         this.cooldownInSeconds = cooldownInSeconds;
     }
 
-    public boolean killAbility(Player player) {
+    public boolean killAbility(DeathInformation information) {
         if (System.currentTimeMillis() < cooldownEnd) {
             return false;
         }
 
+        cooldownEnd = System.currentTimeMillis() + cooldownInSeconds * 1000L;
+
         ThreadManager.getScheduler().schedule(() -> {
-            killPlayer(player);
-            cooldownEnd = System.currentTimeMillis() + cooldownInSeconds * 1000L;
+            SessionManager.getInstance().setPlayerDead(information);
         }, killDelay, TimeUnit.SECONDS);
 
         return true;

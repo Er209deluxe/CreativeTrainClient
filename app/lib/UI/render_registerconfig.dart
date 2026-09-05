@@ -107,7 +107,6 @@ class _RenderRegisterconfigState extends State<RenderRegisterconfig> {
                   const SizedBox(height: 68),
                 M3EButton(
                   onPressed: () async {
-
                     String? ipAddress = app_state.getIpAddress();
 
                     if (ipAddress == null) {
@@ -146,6 +145,7 @@ class _RenderRegisterconfigState extends State<RenderRegisterconfig> {
                       _playerName.text,
                       _sessionUUID.text,
                       context,
+                      hostSession,
                     )) {
                       return;
                     } else {

@@ -124,7 +124,9 @@ public class SessionManager {
     }
     public boolean startSession(UUID sessionUuid,JsonNode roleJson,JsonNode configJson) throws Exception {
         Session session = getSession(sessionUuid);
-        List<Class<? extends Role>> removedRoles = roleLoader(roleJson.get("roleConfig"),sessionUuid);
+        List<Class<? extends Role>> removedRoles;
+            removedRoles = roleLoader(roleJson.get("roleConfig"), sessionUuid);
+
         if(removedRoles == null) return false;
 
         RoleAssigner.assignAllRoles(session,removedRoles);
@@ -163,7 +165,7 @@ public class SessionManager {
         session.getAllPlayerUuids().forEach(this::removePlayer);
         sessions.remove(session.getSessionId());
     }
-    public static List<Class<? extends Role>> roleLoader(JsonNode json, UUID sessionUuid){
+    public static List<Class<? extends Role>> roleLoader(JsonNode json, UUID sessionUuid) throws Exception {
         RoleLoader loader = new RoleLoader();
         try {
             return loader.load(json, sessionUuid);

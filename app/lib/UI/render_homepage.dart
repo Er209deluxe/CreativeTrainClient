@@ -1,3 +1,4 @@
+import 'package:creativetrainclient/Handler/handle_buttons_clientconfig.dart';
 import 'package:creativetrainclient/UI/render_clientconfig.dart';
 import 'package:creativetrainclient/UI/render_registerconfig.dart';
 import 'package:flutter/cupertino.dart';
@@ -27,49 +28,54 @@ class _HomePageState extends State<HomePage> {
               crossAxisAlignment: CrossAxisAlignment.center,
               mainAxisSize: MainAxisSize.min,
               children: [
-                M3EToggleButtonGroup(
-                  selectedIndex: _selected,
-                  onSelectedIndexChanged: (index) {
-                    setState(() {
-                      _selected = index;
-                    });
-                    // Press Action
-                    if (index == 1) {
-                      Navigator.of(context).push(
-                        CupertinoPageRoute(builder: (_) => ClientConfigPage()),
-                      );
-                    }
-                  },
-                  size: M3EButtonSize.custom(height: 150, width: 300),
-                  direction: Axis.vertical,
-                  decoration: M3EToggleButtonDecoration.styleFrom(
+                M3EButton(
+                  size: M3EButtonSize.custom(height: 140, width: 310),
+                  decoration: M3EButtonDecoration.styleFrom(
                     backgroundColor: const Color.fromARGB(255, 3, 59, 143),
                     foregroundColor: const Color.fromARGB(255, 255, 255, 255),
-                    checkedBackgroundColor: const Color.fromARGB(
-                      255,
-                      130,
-                      142,
-                      215,
-                    ),
-                    checkedForegroundColor: Colors.white,
                   ),
-                  actions: [
-                    M3EToggleButtonGroupAction(
-                      icon: const Icon(Icons.cloud, size: 50),
-                      label: const Text(
-                        'Server',
-                        style: TextStyle(fontSize: 50),
-                      ),
-                    ),
-                    M3EToggleButtonGroupAction(
-                      icon: const Icon(Icons.phone_android, size: 50),
-                      label: const Text(
-                        'Client',
-                        style: TextStyle(fontSize: 50),
-                      ),
-                    ),
-                  ],
+                  child: Row(
+                    mainAxisAlignment: MainAxisAlignment.center,
+                    children: [
+                      Icon(Icons.cloud, size: 50),
+                      const SizedBox(width: 10),
+                      Text('Server', style: TextStyle(fontSize: 50)),
+                    ],
+                  ),
+                  onPressed: () {
+                    showDialog(
+                      context: context,
+                      builder: (BuildContext dialogContext) {
+                        return ErrorDialogM3E(
+                          errorHeader: 'Unavailable',
+                          errorText: 'Coming soon...',
+                        );
+                      },
+                    );
+                  },
                 ),
+                const SizedBox(height: 20),
+                M3EButton(
+                  size: M3EButtonSize.custom(height: 140, width: 310),
+                  decoration: M3EButtonDecoration.styleFrom(
+                    backgroundColor: const Color.fromARGB(255, 3, 59, 143),
+                    foregroundColor: const Color.fromARGB(255, 255, 255, 255),
+                  ),
+                  child: Row(
+                    mainAxisAlignment: MainAxisAlignment.center,
+                    children: [
+                      Icon(Icons.phone_android, size: 50),
+                      const SizedBox(width: 10),
+                      Text('Client', style: TextStyle(fontSize: 50)),
+                    ],
+                  ),
+                  onPressed: () {
+                    Navigator.of(context).push(
+                      CupertinoPageRoute(builder: (_) => ClientConfigPage()),
+                    );
+                  },
+                ),
+                const SizedBox(height: 20),
               ],
             ),
           ),

@@ -1,27 +1,72 @@
-name: Build and distribute
+name: Flutter build
 
 on:
   push:
     branches:
       - main
+      - develop
+    tags:
+      - stable
+      - nightly
+  release:
+    types: [published]
+  pull_request:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: build-${{ github.ref }}
+  cancel-in-progress: true
 
 jobs:
-  build:
-    name: build
-    runs-on: macos-latest
+  build-ipa:
+    name: build-ipa (iOS)
+    runs-on: macos-26
+    defaults:
+      run:
+        working-directory: app
+    env:
+      BUILD_FLAVOR: ${{ (github.ref == 'refs/tags/stable' || (github.event_name == 'release' && !github.event.release.prerelease)) && 'production' || 'nightly' }}
+
     steps:
-      - uses: actions/checkout@v4
+      - name: ⬆️ Checkout
+        uses: actions/checkout@v7
 
-      - uses: cedvdb/action-flutter-build-ios@v1
+      - name: 🦀 Setup Rust
+        uses: actions-rust-lang/setup-rust-toolchain@v1
         with:
-          build-cmd: flutter build ipa --release --flavor dev --export-options-plist=ios/GithubActionsExportOptions.plist
-          certificate-base64: ${{ secrets.IOS_BUILD_CERTIFICATE_BASE64 }}
-          certificate-password: ${{ secrets.IOS_BUILD_CERTIFICATE_PASSWORD }}
-          provisioning-profile-base64: ${{ secrets.IOS_MOBILE_PROVISIONING_PROFILE_BASE64 }}
-          keychain-password: ${{ secrets.IOS_GITHUB_KEYCHAIN_PASSWORD }}
+          rust-src-dir: app
 
-      - name: Archive IPA
-        uses: actions/upload-artifact@v4
+      - name: 🐦 Setup Flutter
+        uses: subosito/flutter-action@v2.23.0
         with:
-          name: release-ipa
-          path: build/ios/ipa/App-dev.ipa
+          flutter-version-file: app/pubspec.yaml
+          cache: true
+
+      - name: 📦 Get dependencies
+        run: flutter pub get
+
+      - name: 🏭 Build
+        run: |
+          flutter build ios \
+            --release \
+            --no-codesign \
+            -v \
+            --dart-define=flavor=${{ env.BUILD_FLAVOR }}
+
+      - name: 📦 Package IPA
+        run: |
+          cd build/ios/iphoneos
+          rm -rf Payload
+          mkdir Payload
+          cp -R Runner.app Payload/
+          rm -f linwood-butterfly-ios.ipa
+          zip -vr linwood-butterfly-ios.ipa Payload/
+
+      - name: 📤 Upload IPA
+        uses: actions/upload-artifact@v7
+        with:
+          name: ipa-build
+          path: app/build/ios/iphoneos/linwood-butterfly-ios.ipa
+          compression-level: 0

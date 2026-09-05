@@ -108,18 +108,17 @@ Future<bool> startSession(BuildContext context) async {
 
   final generalConfig = GeneralConfig(
     10, // baseTimerMins
-    0,  // baseTimerSecs
+    0, // baseTimerSecs
     30, // incrementTimerOnKillInSeconds
     100, // killReward
-    5,   // passiveIncome
+    5, // passiveIncome
     DepressionData(
       120, // baseDepression
-      60,  // baseSanity
+      60, // baseSanity
     ),
   );
 
   print(jsonEncode(generalConfig.toJson()));
-
 
   final requestBody = jsonEncode({
     'roleConfig': app_state.roleConfig.value.toJson(),
@@ -197,8 +196,9 @@ showDialog(
 Future<bool> handleRegistration(
   String ipAddress,
   String playerName,
-  String? joinedSession,
+  String joinedSession,
   BuildContext context,
+  bool host,
 ) async {
   print(joinedSession);
   if (app_state.inSession) return false;
@@ -207,9 +207,20 @@ Future<bool> handleRegistration(
 
   final registerRequest = http.MultipartRequest('POST', registerUrl)
     ..fields['playerName'] = playerName;
-  if (joinedSession != null) {
-    registerRequest.fields['joinedSession'] = joinedSession;
+
+  if (joinedSession == '' && !host) {
+    showDialog(
+      context: context,
+      builder: (BuildContext dialogContext) {
+        return ErrorDialogM3E(
+          errorHeader: 'No UUID',
+          errorText: 'No session UUID was given',
+        );
+      },
+    );
+    return false;
   }
+  registerRequest.fields['joinedSession'] = joinedSession;
   final streamedResponse = await registerRequest.send();
   final registerResponse = await http.Response.fromStream(streamedResponse);
 
@@ -301,15 +312,14 @@ StreamSubscription<SSEModel> startStream(
     }
   });
 }
+
 Future<bool> leaveSession(
-    String ipAddress,
-    String playerUuid,
-    String sessionToken,
-    ) async {
+  String ipAddress,
+  String playerUuid,
+  String sessionToken,
+) async {
   try {
-    final leaveUrl = Uri.parse(
-      'http://$ipAddress/api/session/leaveGame',
-    );
+    final leaveUrl = Uri.parse('http://$ipAddress/api/session/leaveGame');
 
     final leaveRequest = http.MultipartRequest('POST', leaveUrl)
       ..fields['playerUuid'] = playerUuid
@@ -379,6 +389,7 @@ Future<List<dynamic>> fetchInventory(
 
   return jsonDecode(inventoryResponse.body) as List<dynamic>;
 }
+
 Future<List<Map<String, dynamic>>> getAllRoles() async {
   String? ipAddress = app_state.getIpAddress();
 
@@ -386,9 +397,7 @@ Future<List<Map<String, dynamic>>> getAllRoles() async {
     throw Exception("Ip Address not found");
   }
 
-  final getRolesUri = Uri.parse(
-    'http://$ipAddress/api/session/allRoles',
-  );
+  final getRolesUri = Uri.parse('http://$ipAddress/api/session/allRoles');
 
   final response = await http.get(getRolesUri);
 
