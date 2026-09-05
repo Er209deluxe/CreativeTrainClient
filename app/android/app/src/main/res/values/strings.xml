@@ -1,0 +1,13 @@
+<resources>
+
+    <string name="app_name">CreativeTrain</string>
+
+    <string name="nfc_service_description">
+        CreativeTrain NFC
+    </string>
+
+    <string name="nfc_aid_description">
+        CreativeTrain
+    </string>
+
+</resources>

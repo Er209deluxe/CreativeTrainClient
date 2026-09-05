@@ -1,6 +1,7 @@
 import 'dart:async';
 import 'dart:math' as math;
 
+import 'package:creativetrainclient/Handler/handle_client_api_requests.dart';
 import 'package:creativetrainclient/UI/render_homepage.dart';
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
@@ -25,17 +26,21 @@ class _AnimatedSplashPageState extends State<AnimatedSplashPage>
 
   @override
   void initState() {
-    _waveCtrl = AnimationController(vsync: this, duration: Duration(seconds: 8))
-      ..repeat(reverse: true);
+    super.initState();
+
+    _waveCtrl = AnimationController(
+      vsync: this,
+      duration: const Duration(seconds: 8),
+    )..repeat(reverse: true);
 
     _glowCtrl = AnimationController(
       vsync: this,
-      duration: Duration(milliseconds: 1800),
+      duration: const Duration(milliseconds: 1800),
       lowerBound: 0.0,
       upperBound: 1.0,
     )..repeat(reverse: true);
 
-    Future<void>.delayed(Duration(milliseconds: 300), () {
+    Future<void>.delayed(const Duration(milliseconds: 300), () {
       if (mounted) {
         setState(() {
           _showLogo = true;
@@ -43,7 +48,7 @@ class _AnimatedSplashPageState extends State<AnimatedSplashPage>
       }
     });
 
-    Future<void>.delayed(Duration(milliseconds: 800), () {
+    Future<void>.delayed(const Duration(milliseconds: 800), () {
       if (mounted) {
         setState(() {
           _showText = true;
@@ -51,13 +56,11 @@ class _AnimatedSplashPageState extends State<AnimatedSplashPage>
       }
     });
 
-    //Navigate(Switch) After Delay to home Page
-    Future<void>.delayed(Duration(seconds: 3), () async {
+    Future<void>.delayed(const Duration(seconds: 10), () async {
       if (!mounted) return;
 
-      _checkNfcAndContinue();
+      await _checkNfcAndContinue();
     });
-
   }
   Future<void> _checkNfcAndContinue() async {
     if (_checkingNfc) return;
@@ -162,7 +165,7 @@ class _AnimatedSplashPageState extends State<AnimatedSplashPage>
                   duration: Duration(milliseconds: 600),
                   curve: Curves.easeInOut,
                   child: SplashTexts(
-                    appName: 'CTC',
+                    appName: 'CTC v1',
                     description: 'A CreativeTrain Client for a self hosted Game',
                   ), //test
                 ),

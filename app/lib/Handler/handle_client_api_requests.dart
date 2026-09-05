@@ -3,6 +3,8 @@ import 'dart:collection';
 import 'dart:convert';
 import 'dart:io';
 
+import 'package:creativetrainclient/Handler/NfcTags.dart';
+import 'package:flutter/services.dart';
 import 'package:http/http.dart' as http;
 
 import 'package:creativetrainclient/Handler/app_state.dart';
@@ -18,6 +20,7 @@ import 'package:flutter_client_sse/constants/sse_request_type_enum.dart';
 
 import '../Wrappers/GeneralConfig.dart';
 import '../Wrappers/RoleConfigData.dart';
+import 'NfcPeer.dart';
 
 StreamSubscription? sseSubscription;
 Future<bool> handleTestConnectionToServer(
@@ -270,6 +273,7 @@ Future<bool> handleRegistration(
   );
   app_state.setCurrentSession(returnResponse);
   app_state.changeGameActivation(true);
+  NfcTags.setSessionUuid(sessionUuid);
   return true;
 }
 

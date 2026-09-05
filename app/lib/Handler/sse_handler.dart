@@ -3,6 +3,8 @@ import 'dart:convert';
 import 'package:creativetrainclient/Handler/app_state.dart';
 import 'package:creativetrainclient/Wrappers/RoleWrapper.dart';
 
+import 'NfcTags.dart';
+
 void playerJoined(String? data) {
   if (data != null) {
     print("${data.replaceAll('\n', '')} joined");
@@ -17,12 +19,18 @@ void playerLeft(String? data) {
   }
 }
 
-void updateChallenge(String? challenge) {
+Future<void> updateChallenge(String? challenge) async {
   if (challenge == null) {
     return;
   }
   print("Challenge: ${challenge.replaceAll('\n', '')}");
   app_state.updateChallenge(challenge);
+  await NfcTags.setPlayerInfo(
+    playerUuid:
+    app_state.getCurrentSession().playerUuid,
+    challenge:
+    app_state.getChallenge(),
+  );
 }
 
 void sessionStart(String? data) {
