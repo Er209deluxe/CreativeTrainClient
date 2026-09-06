@@ -267,7 +267,12 @@ function startStream() {
             document.getElementById("quest").textContent = event.data;
         }
     );
-
+    eventSource.addEventListener(
+        "challengeUpdate",
+        async (event) => {
+            sessionStorage.setItem("challenge", event.data);
+        }
+    );
     /* ---------- SESSION START ---------- */
 
     eventSource.addEventListener(
@@ -552,25 +557,119 @@ async function useItem(item) {
     const tags = item.tags || [];
 
     if (tags.includes("Weapon")) {
-        return await openKillPopup(item);
+
+        const existingKillToken =
+            sessionStorage.getItem("killToken");
+
+        // First click:
+        // No token -> open popup and start interaction
+        if (!existingKillToken) {
+            return await openKillPopup(item);
+        }
+
+        // Second click:
+        // Token exists -> actually perform kill
+        return await confirmKill();
     }
 
-    // default behavior for non-weapons
     console.log("Used item:", item.name);
+    return true;
+}
+
+async function startKillInteraction(item, victimUuid, challenge) {
+    const playerUuid = sessionStorage.getItem("playerUuid");
+    const sessionToken = sessionStorage.getItem("sessionToken");
+    const sessionUuid = sessionStorage.getItem("sessionUuid");
+
+    const res = await makePostRequest(
+        `/api/session/killInteraction` +
+        `?killerUuid=${encodeURIComponent(playerUuid)}` +
+        `&sessionToken=${encodeURIComponent(sessionToken)}` +
+        `&challenge=${encodeURIComponent(challenge)}` +
+        `&victimUuid=${encodeURIComponent(victimUuid)}` +
+        `&itemUuid=${encodeURIComponent(item.itemUuid)}` +
+        `&sessionUuid=${encodeURIComponent(sessionUuid)}` +
+        `&ts=${Date.now()}`,
+        "POST"
+    );
+
+    if (!res.ok) {
+        alert(res.body);
+        return false;
+    }
+
+    // Backend returns the killToken as plain text
+    const killToken = res.body.trim();
+
+    if (!killToken) {
+        alert("No kill token received.");
+        return false;
+    }
+
+    sessionStorage.setItem("killToken", killToken);
+
+    console.log("Kill interaction started.");
+    console.log("Kill token:", killToken);
+
+    return true;
+}
+
+
+async function confirmKill() {
+    const playerUuid = sessionStorage.getItem("playerUuid");
+    const sessionToken = sessionStorage.getItem("sessionToken");
+    const sessionUuid = sessionStorage.getItem("sessionUuid");
+    const killToken = sessionStorage.getItem("killToken");
+
+    if (!killToken) {
+        alert("No active kill interaction.");
+        return false;
+    }
+
+    const res = await makePostRequest(
+        `/api/session/kill` +
+        `?killerUuid=${encodeURIComponent(playerUuid)}` +
+        `&sessionToken=${encodeURIComponent(sessionToken)}` +
+        `&sessionUuid=${encodeURIComponent(sessionUuid)}` +
+        `&killToken=${encodeURIComponent(killToken)}` +
+        `&ts=${Date.now()}`,
+        "POST"
+    );
+
+    if (!res.ok) {
+        alert(res.body);
+
+        // Optional: remove token if the server rejected it
+        sessionStorage.removeItem("killToken");
+
+        return false;
+    }
+
+    // Kill succeeded, so the token should no longer be used
+    sessionStorage.removeItem("killToken");
+
+    console.log("Kill successful.");
+
     return true;
 }
 function openKillPopup(item) {
     return openActionPopup({
         titleText: `Use ${item.name}`,
         subtitleText:
-            "Enter the victim's information to confirm the kill.",
-        buttonText: "Confirm Kill",
+            "Enter the victim's information to start the kill.",
+        buttonText: "Start Kill",
         buttonColor: "#dc2626",
 
-        action: (victimUuid, challenge) =>
-            uploadKill(item, victimUuid, challenge)
+        action: async (victimUuid, challenge) => {
+            return await startKillInteraction(
+                item,
+                victimUuid,
+                challenge
+            );
+        }
     });
 }
+
 function inputStyle() {
     return {
         padding: "12px",

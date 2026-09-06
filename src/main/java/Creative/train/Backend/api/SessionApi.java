@@ -8,6 +8,7 @@ import Creative.train.DataTypes.GlobalVariableHolder;
 import Creative.train.DataTypes.Player;
 import Creative.train.DataTypes.Wrappers.PlayerData;
 import Creative.train.DataTypes.Session;
+import Creative.train.GameLogic.Items.Item;
 import Creative.train.GameLogic.RoleInfo;
 import Creative.train.DataTypes.Wrappers.RoleInfoResponse;
 import Creative.train.DataTypes.Wrappers.SessionStartConfigs;
@@ -224,19 +225,38 @@ public class SessionApi {
 
         return ResponseEntity.ok(host.getName());
     }
-    @PostMapping("/kill")
-    public ResponseEntity<?> killPlayer(@RequestParam UUID killerUuid,
-                                        @RequestParam("sessionToken") String killerToken,
-                                        @RequestParam String challenge,
-                                        @RequestParam UUID victimUuid,
-                                        @RequestParam UUID itemUuid) throws NotFoundException {
+
+    @PostMapping("/killInteraction")
+    public ResponseEntity<?> killInteraction(@RequestParam UUID killerUuid,
+                                             @RequestParam("sessionToken") String killerToken,
+                                             @RequestParam String challenge,
+                                             @RequestParam UUID victimUuid,
+                                             @RequestParam UUID itemUuid,
+                                             @RequestParam UUID sessionUuid) throws Exception {
         Player killer =sessionManager.getPlayer(killerUuid);
         if(!killer.isCorrectPass(killerToken)) return ResponseEntity.status(HttpStatus.FORBIDDEN).body("Wrong token");
         Player victim = sessionManager.getPlayer(victimUuid);
-        if(!victim.isCorrectChallenge(challenge)&&!challenge.equals("bypass")) return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body("Wrong challenge");
+        if(!victim.isCorrectChallenge(challenge)) return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body("Wrong challenge");
+        Item killItem = killer.getItem(itemUuid);
+        if(killItem == null) return ResponseEntity.status(HttpStatus.CONFLICT).body("Item not found");
 
-        return sessionManager.killPlayer(killer,victim,itemUuid);
+        String killToken = sessionManager.startKillAction(killer,victim,itemUuid,sessionUuid);
 
+        return ResponseEntity.ok().body(killToken);
+    }
+    @PostMapping("/kill")
+    public ResponseEntity<?> killPlayer(@RequestParam UUID killerUuid,
+                                        @RequestParam("sessionToken") String killerToken,
+                                        @RequestParam UUID sessionUuid,
+                                        @RequestParam String killToken){
+        Player killer =sessionManager.getPlayer(killerUuid);
+        if(!killer.isCorrectPass(killerToken)) return ResponseEntity.status(HttpStatus.FORBIDDEN).body("Wrong token");
+        try {
+            sessionManager.killPlayer(sessionUuid, killToken);
+        } catch(Exception e){
+            return ResponseEntity.status(HttpStatus.NOT_FOUND).body(e);
+        }
+        return ResponseEntity.ok().build();
     }
 
     @PostMapping("/changeRole")

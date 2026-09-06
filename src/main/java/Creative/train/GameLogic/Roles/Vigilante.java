@@ -1,6 +1,6 @@
 package Creative.train.GameLogic.Roles;
 
-import Creative.train.DataTypes.Wrappers.DeathInformation;
+import Creative.train.DataTypes.Wrappers.KillInformation;
 import Creative.train.GameLogic.RoleInfo;
 
 import java.util.UUID;
@@ -12,7 +12,7 @@ public class Vigilante extends Role{
     }
 
     @Override
-    public void onDeath(DeathInformation information){
+    public void onDeath(KillInformation information){
         //todo: drop gun
     }
 }

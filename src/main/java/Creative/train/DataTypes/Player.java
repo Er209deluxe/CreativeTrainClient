@@ -5,9 +5,8 @@ import Creative.train.Backend.ExceptionTypes.NotEnoughCoinsException;
 import Creative.train.Backend.ExceptionTypes.NotFoundException;
 import Creative.train.Backend.api.SseHandler;
 import Creative.train.DataTypes.Wrappers.BasePlayerData;
-import Creative.train.DataTypes.Wrappers.DeathInformation;
+import Creative.train.DataTypes.Wrappers.KillInformation;
 import Creative.train.DataTypes.Wrappers.PlayerData;
-import Creative.train.GameLogic.GeneralConfig;
 import Creative.train.GameLogic.Items.Item;
 import Creative.train.GameLogic.Quest;
 import Creative.train.GameLogic.Roles.Amnesiac;
@@ -102,7 +101,7 @@ public class Player {
         if(getBaseData().sanity<=0){
             updateSanity(getBaseData().sanity, getBaseData().depression-1);
             if(getBaseData().depression<=0){
-                DeathInformation information = new DeathInformation(null,this,null);
+                KillInformation information = new KillInformation(null,this,null);
                 SessionManager.getInstance().setPlayerDead(information);
             }
             return;

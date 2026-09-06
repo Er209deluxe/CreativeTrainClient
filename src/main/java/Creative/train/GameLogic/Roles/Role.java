@@ -3,7 +3,7 @@ package Creative.train.GameLogic.Roles;
 import Creative.train.ConfigManagement.RoleDataManager;
 import Creative.train.ConfigManagement.Wrappers.RoleData;
 import Creative.train.DataTypes.Session;
-import Creative.train.DataTypes.Wrappers.DeathInformation;
+import Creative.train.DataTypes.Wrappers.KillInformation;
 import Creative.train.GameLogic.RoleInfo;
 import Creative.train.GameLogic.Items.Item;
 import Creative.train.Managers.SessionManager;
@@ -48,7 +48,7 @@ public abstract class Role {
         data.itemShop.forEach(item -> this.itemShop.put(item.getItemUuid(),  item));
     }
 
-    public abstract void onDeath(DeathInformation information);
+    public abstract void onDeath(KillInformation information);
 
     public int getTaskIncome() {
         return taskIncome;

@@ -1,6 +1,6 @@
 package Creative.train.GameLogic.Roles;
 
-import Creative.train.DataTypes.Wrappers.DeathInformation;
+import Creative.train.DataTypes.Wrappers.KillInformation;
 import Creative.train.GameLogic.RoleInfo;
 
 import java.util.UUID;
@@ -17,7 +17,7 @@ public class CultLeader extends Role{
     }
 
     @Override
-    public void onDeath(DeathInformation information){
+    public void onDeath(KillInformation information){
         session.removePreventingNeutral(this);
 
     }

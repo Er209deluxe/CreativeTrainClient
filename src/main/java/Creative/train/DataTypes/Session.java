@@ -2,9 +2,11 @@ package Creative.train.DataTypes;
 
 import Creative.train.Backend.ExceptionTypes.UserAlreadyInSessionExcepion;
 import Creative.train.Backend.ExceptionTypes.UsernameAlreadyExistsException;
+import Creative.train.DataTypes.Wrappers.KillInformation;
 import Creative.train.GameLogic.GeneralConfig;
 import Creative.train.GameLogic.Roles.LicensedVillain;
 import Creative.train.GameLogic.Roles.Role;
+import Creative.train.Managers.EncryptionManager;
 import Creative.train.Managers.QuestManager;
 import Creative.train.Managers.TimeManager;
 import Creative.train.Managers.SessionManager;
@@ -22,7 +24,10 @@ public class Session {
 
     private boolean active = false;
     private final UUID sessionId;
+
     private final Map<UUID,Player> playerMap = new HashMap<>();
+    private final Map<String, KillInformation> killActions= new HashMap<>();
+
     private final UUID hostUuid;
 
     private TimeManager timeManager;
@@ -33,6 +38,17 @@ public class Session {
     public Session(UUID hostUuid){
         sessionId = UUID.randomUUID();
         this.hostUuid = hostUuid;
+    }
+    public void removeKillAction(String killToken){
+        killActions.remove(killToken);
+    }
+    public KillInformation getKillAction(String killToken){
+        return killActions.get(killToken);
+    }
+    public String addKillAction(KillInformation killInfo){
+        String killToken = EncryptionManager.generateNewToken();
+        killActions.put(killToken, killInfo);
+        return killToken;
     }
     public Collection<Player> getAllPlayers(){
         return playerMap.values();

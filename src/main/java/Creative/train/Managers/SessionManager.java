@@ -6,7 +6,7 @@ import Creative.train.Backend.api.SseHandler;
 import Creative.train.ConfigManagement.RoleLoader;
 import Creative.train.DataTypes.Player;
 import Creative.train.DataTypes.Wrappers.BasePlayerData;
-import Creative.train.DataTypes.Wrappers.DeathInformation;
+import Creative.train.DataTypes.Wrappers.KillInformation;
 import Creative.train.DataTypes.Wrappers.PlayerData;
 import Creative.train.DataTypes.Session;
 import Creative.train.DataTypes.Wrappers.SessionEndData;
@@ -17,8 +17,6 @@ import Creative.train.GameLogic.RoleAssigner;
 import Creative.train.GameLogic.Roles.Role;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
-import org.springframework.http.HttpStatus;
-import org.springframework.http.ResponseEntity;
 
 import java.io.IOException;
 import java.util.*;
@@ -114,7 +112,7 @@ public class SessionManager {
         UUID sessionUuid=player.getSessionUUID();
         Session session = getSession(sessionUuid);
         if(session.isActive()){
-            DeathInformation information = new DeathInformation(null,player,null);
+            KillInformation information = new KillInformation(null,player,null);
             setPlayerDead(information);
         }
         playerMap.remove(playerUuid);
@@ -179,7 +177,7 @@ public class SessionManager {
         if(session==null) throw new NotFoundException("Session",sessionUuid);
         return getSession(sessionUuid).isActive();
     }
-    public void setPlayerDead(DeathInformation information){
+    public void setPlayerDead(KillInformation information){
         Player victim = information.getVictim();
         victim.setAlive(false);
         victim.getRole().onDeath(information);
@@ -191,27 +189,38 @@ public class SessionManager {
         session.getTimeManager().changeRemainingSecondsBy
                 (session.getGeneralConfig().getIncrementTimerOnKillInSeconds());
     }
-    public ResponseEntity<?> killPlayer(Player killer, Player victim, UUID itemUuid) throws NotFoundException {
-        Session session = getSession(killer.getSessionUUID());
-        if(!isSessionActive(killer.getSessionUUID())) return ResponseEntity.status(HttpStatus.FORBIDDEN)
-                .body("Session is not active");
-        if(!killer.isAlive()) return ResponseEntity.status(HttpStatus.CONFLICT).body("You are not alive");
-        if(!victim.isAlive()) return ResponseEntity.status(HttpStatus.CONFLICT).body("Victim is already dead");
+    public String startKillAction(Player killer, Player victim, UUID itemUuid, UUID sessionUuid) throws Exception {
+        if(!isSessionActive(killer.getSessionUUID())) throw new Exception("Session is not active");
+        if(!killer.isAlive()) throw new Exception("You are not alive");
+        if(!victim.isAlive()) throw new Exception("Victim is already dead");
 
         Item item = killer.getItem(itemUuid);
-        if(item==null) return ResponseEntity.status(HttpStatus.CONFLICT).body("Item does not exist");
+        if(item==null) throw new Exception("Item does not exist");
 
-        if(item instanceof Weapon weapon){
-            DeathInformation information = new DeathInformation(killer,victim,weapon);
-
-            if(!weapon.killAbility(information)){
-             return ResponseEntity.status(HttpStatus.CONFLICT).body("Weapon is still on cooldown");
-            }
-            if(killer.getRole().getRoleInfo().team().equals(Role.Team.KILLER)) {
-                killer.changeCoins(session.getGeneralConfig().getKillReward());
-            }
-            return ResponseEntity.status(HttpStatus.OK).build();
+        if(!(item instanceof Weapon weapon)){
+            throw new Exception("Item is not a Weapon");
         }
-        return ResponseEntity.status(HttpStatus.CONFLICT).body("Item is not a Weapon");
+        KillInformation information = new KillInformation(killer,victim,weapon);
+        long expireTime = System.currentTimeMillis()+30*1000;
+        information.setExpireTime(expireTime);
+        if(!weapon.isOnCooldown()){
+            throw new Exception("Weapon is still on cooldown");
+        }
+        return getSession(sessionUuid).addKillAction(information);
+    }
+    public void killPlayer(UUID sessionUuid, String killToken) throws Exception {
+        Session session = getSession(sessionUuid);
+        KillInformation killInformation = session.getKillAction(killToken);
+        Player killer = killInformation.getKiller();
+
+        if(killInformation.getExpireTime()<System.currentTimeMillis()){
+            session.removeKillAction(killToken);
+            throw new Exception("kill has expired");
+        }
+        killInformation.getItem().killAbility(killInformation);
+
+        if(killer.getRole().getRoleInfo().team().equals(Role.Team.KILLER)) {
+            killer.changeCoins(session.getGeneralConfig().getKillReward());
+        }
     }
 }
