@@ -38,74 +38,49 @@ class NfcHostApduService : HostApduService() {
         extras: Bundle?
     ): ByteArray {
 
-        Log.d(TAG, "APDU RECEIVED: ${commandApdu.toHex()}")
-
-        // --------------------------------
-        // TAG 1: SELECT AID
-        // --------------------------------
+        Log.d(
+            TAG,
+            "APDU RECEIVED: ${commandApdu.toHex()}"
+        )
 
         if (isSelectAid(commandApdu)) {
 
-            Log.d(TAG, "SELECT AID RECEIVED")
+            Log.d(
+                TAG,
+                "SELECT AID RECEIVED"
+            )
 
             return byteArrayOf(
-                0x48, 0x45, 0x4C, 0x4C, 0x4F, // HELLO
-                0x90.toByte(), 0x00
+                0x48,
+                0x45,
+                0x4C,
+                0x4C,
+                0x4F,
+                0x90.toByte(),
+                0x00
             )
         }
 
-        // --------------------------------
-        // GET DATA
-        // --------------------------------
-
+        // GET NFC PEER DATA
         if (
             commandApdu.size >= 5 &&
             commandApdu[0] == 0x80.toByte() &&
-            commandApdu[1] == 0xCA.toByte()
+            commandApdu[1] == 0xCA.toByte() &&
+            commandApdu[2] == 0x00.toByte()
         ) {
+            // Pass 'this' as the context
+            val json = NfcTagStore.getJson(this)
 
-            val tagType = commandApdu[2].toInt() and 0xFF
-
-            Log.d(TAG, "GET DATA TAG TYPE: $tagType")
-
-            val json = when (tagType) {
-
-                // TAG 1
-                1 -> {
-                    Log.d(TAG, "READING sessionuuid TAG")
-                    NfcTagStore.getSessionUuidJson()
-                }
-
-                // TAG 2
-                2 -> {
-                    Log.d(TAG, "READING playerInfo TAG")
-                    NfcTagStore.getPlayerInfoJson()
-                }
-
-                else -> {
-                    Log.w(TAG, "UNKNOWN TAG TYPE: $tagType")
-                    null
-                }
-            }
-
-            if (json == null) {
-                Log.w(TAG, "TAG $tagType HAS NO DATA")
-                return byteArrayOf(
-                    0x6A.toByte(),
-                    0x82.toByte() // file/data not found
-                )
-            }
-
-            Log.d(TAG, "TAG RESPONSE: $json")
+            Log.d(TAG, "NFC PEER DATA: $json")
 
             return json.toByteArray(Charsets.UTF_8) +
-                    byteArrayOf(
-                        0x90.toByte(),
-                        0x00
-                    )
+                    byteArrayOf(0x90.toByte(), 0x00)
         }
 
-        Log.w(TAG, "UNKNOWN APDU")
+        Log.w(
+            TAG,
+            "UNKNOWN APDU"
+        )
 
         return byteArrayOf(
             0x6D.toByte(),

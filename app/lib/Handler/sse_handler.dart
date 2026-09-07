@@ -36,14 +36,8 @@ Future<void> updateChallenge(String? challenge) async {
 
   // Switch NFC completely from session mode
   // to player mode.
-  await NfcPeer.clearSessionUuid();
 
-  await NfcPeer.setPlayerInfo(
-    playerUuid:
-    app_state.getCurrentSession().playerUuid,
-    challenge:
-    app_state.getChallenge(),
-  );
+
 
   debugPrint(
     'NFC MODE: PLAYER INFO',

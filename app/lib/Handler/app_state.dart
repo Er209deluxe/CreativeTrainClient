@@ -1,4 +1,5 @@
 import 'dart:async';
+import 'package:creativetrainclient/Handler/NfcPeer.dart';
 import 'package:creativetrainclient/Wrappers/GeneralConfig.dart';
 import 'package:creativetrainclient/Wrappers/RoleConfigData.dart';
 import 'package:flutter/cupertino.dart';
@@ -102,7 +103,8 @@ class app_state {
     return _gameStarted;
   }
 
-  static void updateChallenge(String challenge) {
+  static Future<void> updateChallenge(String challenge) async {
+    await NfcPeer.setChallenge(challenge);
     _challenge = challenge;
   }
 
@@ -124,12 +126,14 @@ class app_state {
     return _ipAddress;
   }
 
-  static void setCurrentSession(RegisterResponse sessionData) {
+  static Future<void> setCurrentSession(RegisterResponse sessionData) async {
     if (inSession) {
       return;
     }
     inSession = true;
     _currentSession = sessionData;
+    await NfcPeer.setSessionUuid(sessionData.sessionUuid);
+    await NfcPeer.setPlayerUuid(sessionData.playerUuid);
   }
 
   static void setRole(RoleWrapper roleData) {

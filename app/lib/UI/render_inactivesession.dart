@@ -23,24 +23,12 @@ class _RenderInactivesessionState extends State<RenderInactivesession> {
   void initState() {
     super.initState();
 
-    _setupNfc();
-
+    NfcPeer.stopReader();
     app_state.gameStartedNotifier.addListener(
       _onGameStarted,
     );
   }
 
-  Future<void> _setupNfc() async {
-    await NfcPeer.clear();
-
-    await NfcPeer.setSessionUuid(
-      app_state.getCurrentSession().sessionUuid,
-    );
-
-    debugPrint(
-      'NFC MODE: SESSION UUID',
-    );
-  }
 
   Future<void> _onGameStarted() async {
     if (!mounted) return;
@@ -48,15 +36,6 @@ class _RenderInactivesessionState extends State<RenderInactivesession> {
     if (!app_state.gameStartedNotifier.value) {
       return;
     }
-
-    // Game has started.
-    //
-    // Stop advertising the session UUID.
-    await NfcPeer.clearSessionUuid();
-
-    debugPrint(
-      'NFC MODE: GAME STARTED - SESSION UUID CLEARED',
-    );
 
     if (!mounted) return;
 

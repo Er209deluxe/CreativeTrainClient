@@ -1,5 +1,5 @@
 import 'dart:convert';
-
+import 'package:flutter/cupertino.dart';
 import 'package:flutter/services.dart';
 
 class NfcPeer {
@@ -7,17 +7,13 @@ class NfcPeer {
   MethodChannel('nfc_peer');
 
   static void Function(
-      String type,
       String json,
       )? _messageHandler;
 
   static bool _handlerRegistered = false;
 
   static void setMessageHandler(
-      void Function(
-          String type,
-          String json,
-          )? handler,
+      void Function(String json)? handler,
       ) {
     _messageHandler = handler;
 
@@ -47,27 +43,38 @@ class NfcPeer {
       return null;
     }
 
-    final type = arguments['type'];
     final json = arguments['json'];
 
-    if (type is! String || json is! String) {
+    if (json is! String) {
       return null;
     }
 
-    _messageHandler?.call(
-      type,
-      json,
-    );
+    _messageHandler?.call(json);
 
     return null;
   }
+  static Future<bool> isNfcAvailable() async {
+    try {
+      final bool? available =
+      await _channel.invokeMethod<bool>(
+        'isNfcAvailable',
+      );
 
+      return available ?? false;
+    } catch (e) {
+      debugPrint(
+        'Failed to check NFC availability: $e',
+      );
+
+      return false;
+    }
+  }
   // ------------------------------------------------------------
-  // SESSION UUID
+  // NFC DATA
   // ------------------------------------------------------------
 
   static Future<void> setSessionUuid(
-      String sessionUuid,
+      String? sessionUuid,
       ) async {
     await _channel.invokeMethod(
       'setSessionUuid',
@@ -77,58 +84,32 @@ class NfcPeer {
     );
   }
 
-  static Future<void> clearSessionUuid() async {
+  static Future<void> setPlayerUuid(
+      String? playerUuid,
+      ) async {
     await _channel.invokeMethod(
-      'clearSessionUuid',
+      'setPlayerUuid',
+      {
+        'playerUuid': playerUuid,
+      },
     );
   }
 
-  // ------------------------------------------------------------
-  // PLAYER INFO
-  // ------------------------------------------------------------
-
-  static Future<void> setPlayerInfo({
-    required String playerUuid,
-    required String challenge,
-  }) async {
+  static Future<void> setChallenge(
+      String? challenge,
+      ) async {
     await _channel.invokeMethod(
-      'setPlayerInfo',
+      'setChallenge',
       {
-        'playerUuid': playerUuid,
         'challenge': challenge,
       },
     );
   }
 
-  static Future<void> clearPlayerInfo() async {
-    await _channel.invokeMethod(
-      'clearPlayerInfo',
-    );
-  }
-
-  // ------------------------------------------------------------
-  // CLEAR EVERYTHING
-  // ------------------------------------------------------------
-
   static Future<void> clear() async {
+    print("Cleared NFC tags");
     await _channel.invokeMethod(
       'clearTags',
-    );
-  }
-
-  // ------------------------------------------------------------
-  // HCE
-  // ------------------------------------------------------------
-
-  static Future<void> start() async {
-    await _channel.invokeMethod(
-      'startEmulator',
-    );
-  }
-
-  static Future<void> stop() async {
-    await _channel.invokeMethod(
-      'stopEmulator',
     );
   }
 
@@ -152,9 +133,7 @@ class NfcPeer {
   // PARSING
   // ------------------------------------------------------------
 
-  static String? parseSessionUuid(
-      String json,
-      ) {
+  static NfcPeerData? parseData(String json) {
     try {
       final decoded = jsonDecode(json);
 
@@ -162,39 +141,10 @@ class NfcPeer {
         return null;
       }
 
-      final uuid = decoded['sessionuuid'];
-
-      if (uuid is String && uuid.isNotEmpty) {
-        return uuid;
-      }
-    } catch (_) {
-      return null;
-    }
-
-    return null;
-  }
-
-  static PlayerInfo? parsePlayerInfo(
-      String json,
-      ) {
-    try {
-      final decoded = jsonDecode(json);
-
-      if (decoded is! Map) {
-        return null;
-      }
-
-      final playerUuid = decoded['playeruuid'];
-      final challenge = decoded['challenge'];
-
-      if (playerUuid is! String ||
-          challenge is! String) {
-        return null;
-      }
-
-      return PlayerInfo(
-        playerUuid: playerUuid,
-        challenge: challenge,
+      return NfcPeerData(
+        sessionUuid: decoded['sessionuuid'] as String?,
+        playerUuid: decoded['playeruuid'] as String?,
+        challenge: decoded['challenge'] as String?,
       );
     } catch (_) {
       return null;
@@ -202,12 +152,14 @@ class NfcPeer {
   }
 }
 
-class PlayerInfo {
-  final String playerUuid;
-  final String challenge;
+class NfcPeerData {
+  final String? sessionUuid;
+  final String? playerUuid;
+  final String? challenge;
 
-  const PlayerInfo({
-    required this.playerUuid,
-    required this.challenge,
+  const NfcPeerData({
+    this.sessionUuid,
+    this.playerUuid,
+    this.challenge,
   });
 }

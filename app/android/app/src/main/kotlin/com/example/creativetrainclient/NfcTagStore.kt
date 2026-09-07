@@ -1,80 +1,44 @@
 package com.example.creativetrainclient
 
+import android.content.Context
 import android.util.Log
 import org.json.JSONObject
 
 object NfcTagStore {
 
     private const val TAG = "NFC_TAG_STORE"
+    private const val PREFS = "nfc_tag_prefs"
 
-    private var sessionUuid: String? = null
-
-    private var playerUuid: String? = null
-    private var challenge: String? = null
-
-    // -------------------------
-    // SESSION UUID TAG
-    // -------------------------
-
-    fun setSessionUuid(value: String) {
-        sessionUuid = value
-        Log.d(TAG, "sessionuuid set: $value")
+    fun setSessionUuid(context: Context, value: String?) {
+        context.getSharedPreferences(PREFS, Context.MODE_PRIVATE)
+            .edit().putString("sessionuuid", value).apply()
+        Log.d(TAG, "sessionuuid updated: $value")
     }
 
-    fun clearSessionUuid() {
-        sessionUuid = null
-        Log.d(TAG, "sessionuuid cleared")
+    fun setPlayerUuid(context: Context, value: String?) {
+        context.getSharedPreferences(PREFS, Context.MODE_PRIVATE)
+            .edit().putString("playeruuid", value).apply()
+        Log.d(TAG, "playeruuid updated: $value")
     }
 
-    fun getSessionUuidJson(): String? {
-        val value = sessionUuid ?: return null
+    fun setChallenge(context: Context, value: String?) {
+        context.getSharedPreferences(PREFS, Context.MODE_PRIVATE)
+            .edit().putString("challenge", value).apply()
+        Log.d(TAG, "challenge updated: $value")
+    }
 
+    fun clear(context: Context) {
+        context.getSharedPreferences(PREFS, Context.MODE_PRIVATE)
+            .edit().clear().apply()
+        Log.d(TAG, "NFC tag cleared")
+    }
+
+    fun getJson(context: Context): String {
+        val prefs = context.getSharedPreferences(PREFS, Context.MODE_PRIVATE)
         return JSONObject()
-            .put("sessionuuid", value)
+            .put("sessionuuid", prefs.getString("sessionuuid", null) ?: JSONObject.NULL)
+            .put("playeruuid", prefs.getString("playeruuid", null) ?: JSONObject.NULL)
+            .put("challenge", prefs.getString("challenge", null) ?: JSONObject.NULL)
             .toString()
-    }
-
-    // -------------------------
-    // PLAYER INFO TAG
-    // -------------------------
-
-    fun setPlayerInfo(
-        playerUuidValue: String,
-        challengeValue: String
-    ) {
-        playerUuid = playerUuidValue
-        challenge = challengeValue
-
-        Log.d(TAG, "playerInfo set")
-        Log.d(TAG, "playeruuid: $playerUuidValue")
-        Log.d(TAG, "challenge: $challengeValue")
-    }
-
-    fun clearPlayerInfo() {
-        playerUuid = null
-        challenge = null
-        Log.d(TAG, "playerInfo cleared")
-    }
-
-    fun getPlayerInfoJson(): String? {
-        val uuid = playerUuid ?: return null
-        val challengeValue = challenge ?: return null
-
-        return JSONObject()
-            .put("playeruuid", uuid)
-            .put("challenge", challengeValue)
-            .toString()
-    }
-
-    // -------------------------
-    // CLEAR EVERYTHING
-    // -------------------------
-
-    fun clearAll() {
-        sessionUuid = null
-        playerUuid = null
-        challenge = null
-
-        Log.d(TAG, "all NFC tags cleared")
     }
 }

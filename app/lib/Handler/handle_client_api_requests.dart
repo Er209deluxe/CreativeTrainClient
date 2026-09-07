@@ -270,21 +270,11 @@ Future<bool> handleRegistration(
     returnResponse.playerUuid,
     returnResponse.token,
   );
-  app_state.setCurrentSession(
+  await app_state.setCurrentSession(
     returnResponse,
   );
 
   app_state.changeGameActivation(true);
-
-  await NfcPeer.clear();
-
-  await NfcPeer.setSessionUuid(
-    sessionUuid,
-  );
-
-  debugPrint(
-    'NFC MODE: SESSION UUID',
-  );
 
   return true;
 }

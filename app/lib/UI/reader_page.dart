@@ -9,7 +9,8 @@ class ReaderPage extends StatefulWidget {
   State<ReaderPage> createState() => _ReaderPageState();
 }
 
-class _ReaderPageState extends State<ReaderPage> {
+// 1. Added WidgetsBindingObserver for App Lifecycle management
+class _ReaderPageState extends State<ReaderPage> with WidgetsBindingObserver {
   static const MethodChannel _channel = MethodChannel('nfc_peer');
 
   bool _readerRunning = false;
@@ -26,8 +27,21 @@ class _ReaderPageState extends State<ReaderPage> {
   @override
   void initState() {
     super.initState();
-
+    // Register the lifecycle observer
+    WidgetsBinding.instance.addObserver(this);
     _channel.setMethodCallHandler(_handleNativeMessage);
+  }
+
+  // 2. Handle app going to the background/foreground
+  @override
+  void didChangeAppLifecycleState(AppLifecycleState state) {
+    if (state == AppLifecycleState.paused && _readerRunning) {
+      // Pause hardware when app goes to background
+      _channel.invokeMethod('stopReader');
+    } else if (state == AppLifecycleState.resumed && _readerRunning) {
+      // Restart hardware when app comes back to foreground
+      _channel.invokeMethod('startReader');
+    }
   }
 
   Future<dynamic> _handleNativeMessage(MethodCall call) async {
@@ -35,17 +49,20 @@ class _ReaderPageState extends State<ReaderPage> {
       return null;
     }
 
-    final value = call.arguments;
+    final dynamic value = call.arguments;
 
+    // 3. Safely cast the incoming Kotlin Map
     if (value is Map) {
-      final type = value['type'];
-      final json = value['json'];
+      try {
+        final map = Map<String, dynamic>.from(value);
+        final type = map['type']?.toString();
+        final json = map['json']?.toString();
 
-      if (json is String) {
-        _displayJson(
-          json,
-          type is String ? type : null,
-        );
+        if (json != null) {
+          _displayJson(json, type);
+        }
+      } catch (e) {
+        debugPrint("Error parsing NFC map: $e");
       }
     } else if (value is String) {
       _displayJson(value, null);
@@ -75,6 +92,8 @@ class _ReaderPageState extends State<ReaderPage> {
         _jsonText = null;
       });
 
+      // Note: Your Kotlin code doesn't actually extract 'tagType'
+      // but it's completely safe to send it anyway.
       await _channel.invokeMethod(
         'startReader',
         {
@@ -136,10 +155,7 @@ class _ReaderPageState extends State<ReaderPage> {
   String _prettyJson(String value) {
     try {
       final decoded = jsonDecode(value);
-
-      return const JsonEncoder
-          .withIndent('  ')
-          .convert(decoded);
+      return const JsonEncoder.withIndent('  ').convert(decoded);
     } catch (_) {
       return value;
     }
@@ -149,38 +165,32 @@ class _ReaderPageState extends State<ReaderPage> {
     switch (_selectedTagType) {
       case 1:
         return 'Session UUID';
-
       case 2:
         return 'Player Info';
-
       default:
         return 'NFC Data';
     }
   }
 
   String _tagTitle() {
+    // Your Kotlin code sends type as "nfcPeer" by default,
+    // so this will nicely fall back to 'NFC Data' in the UI.
     switch (_tagType) {
       case 'sessionUuid':
         return 'Session UUID';
-
       case 'playerInfo':
         return 'Player Info';
-
       default:
         return 'NFC Data';
     }
   }
 
   IconData _tagIcon() {
-    switch (_tagType ?? (_selectedTagType == 1
-        ? 'sessionUuid'
-        : 'playerInfo')) {
+    switch (_tagType ?? (_selectedTagType == 1 ? 'sessionUuid' : 'playerInfo')) {
       case 'sessionUuid':
         return Icons.key;
-
       case 'playerInfo':
         return Icons.person;
-
       default:
         return Icons.nfc;
     }
@@ -188,10 +198,11 @@ class _ReaderPageState extends State<ReaderPage> {
 
   @override
   void dispose() {
+    // 4. Clean up the observer
+    WidgetsBinding.instance.removeObserver(this);
+
     _channel.setMethodCallHandler(null);
-
     _channel.invokeMethod('stopReader');
-
     super.dispose();
   }
 
@@ -223,9 +234,7 @@ class _ReaderPageState extends State<ReaderPage> {
               const SizedBox(height: 24),
 
               Text(
-                _readerRunning
-                    ? 'Reader is active'
-                    : 'Reader is stopped',
+                _readerRunning ? 'Reader is active' : 'Reader is stopped',
                 textAlign: TextAlign.center,
                 style: theme.textTheme.headlineSmall,
               ),
@@ -313,16 +322,12 @@ class _ReaderPageState extends State<ReaderPage> {
                       ),
                   ],
                 ),
-
                 const SizedBox(height: 8),
-
                 Text(
                   _tagTitle(),
                   style: theme.textTheme.headlineSmall,
                 ),
-
                 const SizedBox(height: 16),
-
                 Expanded(
                   child: Container(
                     width: double.infinity,
@@ -342,16 +347,13 @@ class _ReaderPageState extends State<ReaderPage> {
                     ),
                   ),
                 ),
-
                 const SizedBox(height: 16),
-
                 OutlinedButton(
                   onPressed: _clearResult,
                   child: const Text('Clear'),
                 ),
               ] else if (_error != null) ...[
                 const SizedBox(height: 16),
-
                 Text(
                   'Error',
                   style: TextStyle(
@@ -359,17 +361,14 @@ class _ReaderPageState extends State<ReaderPage> {
                     fontWeight: FontWeight.bold,
                   ),
                 ),
-
                 const SizedBox(height: 8),
-
                 Text(
                   _error!,
                   textAlign: TextAlign.center,
                 ),
               ],
 
-              if (_jsonText == null)
-                const Spacer(),
+              if (_jsonText == null) const Spacer(),
 
               if (!_readerRunning)
                 SizedBox(
@@ -377,9 +376,7 @@ class _ReaderPageState extends State<ReaderPage> {
                   child: ElevatedButton.icon(
                     onPressed: _startReader,
                     icon: const Icon(Icons.contactless),
-                    label: Text(
-                      'Read ${_selectedTagTitle()}',
-                    ),
+                    label: Text('Read ${_selectedTagTitle()}'),
                   ),
                 )
               else
@@ -391,7 +388,6 @@ class _ReaderPageState extends State<ReaderPage> {
                     label: const Text('Stop NFC Reader'),
                   ),
                 ),
-
               const SizedBox(height: 16),
             ],
           ),

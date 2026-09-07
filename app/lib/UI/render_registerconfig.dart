@@ -1,5 +1,3 @@
-import 'dart:convert';
-
 import 'package:creativetrainclient/Handler/app_state.dart';
 import 'package:creativetrainclient/Handler/handle_buttons_clientconfig.dart';
 import 'package:creativetrainclient/Handler/handle_client_api_requests.dart';
@@ -8,7 +6,6 @@ import 'package:creativetrainclient/UI/render_inactivesession.dart';
 import 'package:creativetrainclient/configs/UI/standartm3edesign.dart';
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
-import 'package:flutter/services.dart';
 import 'package:m3e_buttons/m3e_buttons.dart';
 
 import '../Handler/NfcPeer.dart';
@@ -21,13 +18,17 @@ class RenderRegisterconfig extends StatefulWidget {
       _RenderRegisterconfigState();
 }
 
-class _RenderRegisterconfigState extends State<RenderRegisterconfig> {
+class _RenderRegisterconfigState
+    extends State<RenderRegisterconfig> {
+
   final TextEditingController _playerName =
   TextEditingController();
 
   final TextEditingController _sessionUUID =
   TextEditingController();
+
   bool hostSession = false;
+
   @override
   void initState() {
     super.initState();
@@ -54,46 +55,70 @@ class _RenderRegisterconfigState extends State<RenderRegisterconfig> {
   }
 
   void _handleNfcMessage(
-      String type,
       String json,
       ) {
-    // We only want the session UUID tag
-    // on the registration screen.
-    if (type != 'sessionUuid') {
-      return;
-    }
+    debugPrint(
+      'NFC DATA RECEIVED: $json',
+    );
 
-    final uuid = NfcPeer.parseSessionUuid(json);
+    final data =
+    NfcPeer.parseData(json);
 
-    if (uuid == null || uuid.isEmpty) {
+    if (data == null) {
       debugPrint(
-        'Invalid session UUID received from NFC',
+        'Invalid NFC data received',
       );
 
       return;
     }
 
+    final sessionUuid =
+        data.sessionUuid;
+
+    if (sessionUuid == null ||
+        sessionUuid.isEmpty) {
+      debugPrint(
+        'No session UUID found in NFC data',
+      );
+
+      return;
+    }
+
+    // The host does not need to read a session UUID.
     if (!mounted || hostSession) {
       return;
     }
 
     setState(() {
-      _sessionUUID.text = uuid;
+      _sessionUUID.text =
+          sessionUuid;
 
       _sessionUUID.selection =
           TextSelection.collapsed(
-            offset: _sessionUUID.text.length,
+            offset:
+            _sessionUUID.text.length,
           );
     });
 
     debugPrint(
-      'Session UUID filled from NFC: $uuid',
+      'Session UUID filled from NFC: '
+          '$sessionUuid',
     );
+
+    // The other values are available too if
+    // this screen ever needs them:
+    //
+    // data.playerUuid
+    // data.challenge
   }
+
   @override
   void dispose() {
     NfcPeer.stopReader();
-    NfcPeer.setMessageHandler(null);
+
+    NfcPeer.setMessageHandler(
+      null,
+    );
 
     _playerName.dispose();
     _sessionUUID.dispose();
@@ -115,52 +140,74 @@ class _RenderRegisterconfigState extends State<RenderRegisterconfig> {
               MainAxisAlignment.center,
               crossAxisAlignment:
               CrossAxisAlignment.center,
-              mainAxisSize: MainAxisSize.min,
+              mainAxisSize:
+              MainAxisSize.min,
               children: [
+
                 Row(
                   mainAxisAlignment:
                   MainAxisAlignment.center,
                   crossAxisAlignment:
                   CrossAxisAlignment.center,
-                  mainAxisSize: MainAxisSize.min,
+                  mainAxisSize:
+                  MainAxisSize.min,
                   children: [
-                    const SizedBox(width: 15),
+
+                    const SizedBox(
+                      width: 15,
+                    ),
 
                     const M3EHeader(
-                      headerText: 'Host a Session',
+                      headerText:
+                      'Host a Session',
                     ),
 
                     Checkbox(
-                      value: hostSession,
-                      onChanged: (bool? value) {
+                      value:
+                      hostSession,
+                      onChanged:
+                          (bool? value) {
                         setState(() {
-                          hostSession = value ?? false;
+                          hostSession =
+                              value ?? false;
                         });
                       },
                     ),
                   ],
                 ),
 
-                const SizedBox(height: 13),
+                const SizedBox(
+                  height: 13,
+                ),
 
                 // Player name
                 Row(
                   children: [
-                    const SizedBox(width: 15),
+
+                    const SizedBox(
+                      width: 15,
+                    ),
 
                     Expanded(
                       child: TextField(
                         maxLength: 20,
-                        style: const TextStyle(
-                          color: Colors.white,
+                        style:
+                        const TextStyle(
+                          color:
+                          Colors.white,
                         ),
-                        controller: _playerName,
+                        controller:
+                        _playerName,
                         decoration:
                         const InputDecoration(
-                          labelText: 'Player Name',
-                          labelStyle: TextStyle(
-                            color: Colors.white,
-                            fontSize: 16,
+                          labelText:
+                          'Player Name',
+                          labelStyle:
+                          TextStyle(
+                            color:
+                            Colors.white,
+                            fontSize:
+                            16,
                           ),
                           border:
                           OutlineInputBorder(),
@@ -168,7 +215,9 @@ class _RenderRegisterconfigState extends State<RenderRegisterconfig> {
                       ),
                     ),
 
-                    const SizedBox(width: 15),
+                    const SizedBox(
+                      width: 15,
+                    ),
                   ],
                 ),
 
@@ -176,22 +225,31 @@ class _RenderRegisterconfigState extends State<RenderRegisterconfig> {
                 if (!hostSession)
                   Row(
                     children: [
-                      const SizedBox(width: 15),
+
+                      const SizedBox(
+                        width: 15,
+                      ),
 
                       Expanded(
                         child: TextField(
                           maxLength: 36,
-                          style: const TextStyle(
-                            color: Colors.white,
+                          style:
+                          const TextStyle(
+                            color:
+                            Colors.white,
                           ),
-                          controller: _sessionUUID,
+                          controller:
+                          _sessionUUID,
                           decoration:
                           const InputDecoration(
                             labelText:
                             'Session UUID',
-                            labelStyle: TextStyle(
-                              color: Colors.white,
-                              fontSize: 16,
+                            labelStyle:
+                            TextStyle(
+                              color:
+                              Colors.white,
+                              fontSize:
+                              16,
                             ),
                             border:
                             OutlineInputBorder(),
@@ -199,14 +257,19 @@ class _RenderRegisterconfigState extends State<RenderRegisterconfig> {
                         ),
                       ),
 
-                      const SizedBox(width: 15),
+                      const SizedBox(
+                        width: 15,
+                      ),
                     ],
                   )
                 else
-                  const SizedBox(height: 68),
+                  const SizedBox(
+                    height: 68,
+                  ),
 
                 M3EButton(
                   onPressed: () async {
+
                     final String? ipAddress =
                     app_state.getIpAddress();
 
@@ -227,7 +290,9 @@ class _RenderRegisterconfigState extends State<RenderRegisterconfig> {
                       return;
                     }
 
-                    if (_playerName.text.isEmpty) {
+                    if (_playerName
+                        .text
+                        .isEmpty) {
                       showDialog(
                         context: context,
                         builder:
@@ -247,7 +312,8 @@ class _RenderRegisterconfigState extends State<RenderRegisterconfig> {
                     if (hostSession) {
                       _sessionUUID.clear();
 
-                      app_state.inSession = false;
+                      app_state.inSession =
+                      false;
                     }
 
                     final registered =
@@ -276,10 +342,13 @@ class _RenderRegisterconfigState extends State<RenderRegisterconfig> {
                   },
                   decoration:
                   M3EButtonDecoration(),
-                  size: M3EButtonSize.lg,
-                  child: const Text(
+                  size:
+                  M3EButtonSize.lg,
+                  child:
+                  const Text(
                     'Register',
-                    style: TextStyle(
+                    style:
+                    TextStyle(
                       fontSize: 22,
                     ),
                   ),
@@ -302,10 +371,13 @@ bool isValidIp(
   if (ipAddress == null) {
     showDialog(
       context: context,
-      builder: (BuildContext dialogContext) {
+      builder:
+          (BuildContext dialogContext) {
         return const ErrorDialogM3E(
-          errorHeader: 'Missing ip address',
-          errorText: 'Ip address not found',
+          errorHeader:
+          'Missing ip address',
+          errorText:
+          'Ip address not found',
         );
       },
     );
@@ -318,20 +390,45 @@ bool isValidIp(
 
 
 /// Gradient background.
-class GradientHomeBG extends StatelessWidget {
-  const GradientHomeBG({super.key});
+class GradientHomeBG
+    extends StatelessWidget {
+
+  const GradientHomeBG({
+    super.key,
+  });
 
   @override
-  Widget build(BuildContext context) {
+  Widget build(
+      BuildContext context,
+      ) {
     return Container(
-      decoration: const BoxDecoration(
-        gradient: LinearGradient(
-          begin: Alignment.topLeft,
-          end: Alignment.bottomRight,
+      decoration:
+      const BoxDecoration(
+        gradient:
+        LinearGradient(
+          begin:
+          Alignment.topLeft,
+          end:
+          Alignment.bottomRight,
           colors: [
-            Color.fromARGB(255, 119, 50, 43),
-            Color.fromARGB(255, 97, 6, 92),
-            Color.fromARGB(255, 21, 38, 87),
+            Color.fromARGB(
+              255,
+              119,
+              50,
+              43,
+            ),
+            Color.fromARGB(
+              255,
+              97,
+              6,
+              92,
+            ),
+            Color.fromARGB(
+              255,
+              21,
+              38,
+              87,
+            ),
           ],
         ),
       ),
