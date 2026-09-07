@@ -1,106 +1,80 @@
 package com.example.creativetrainclient
 
+import android.util.Log
 import org.json.JSONObject
 
 object NfcTagStore {
 
-// ============================================================
-// SESSION UUID
-// ============================================================
+    private const val TAG = "NFC_TAG_STORE"
 
-@Volatile
-private var sessionUuid: String? = null
+    private var sessionUuid: String? = null
 
-// ============================================================
-// PLAYER INFO
-// ============================================================
+    private var playerUuid: String? = null
+    private var challenge: String? = null
 
-@Volatile
-private var playerUuid: String? = null
+    // -------------------------
+    // SESSION UUID TAG
+    // -------------------------
 
-@Volatile
-private var challenge: String? = null
+    fun setSessionUuid(value: String) {
+        sessionUuid = value
+        Log.d(TAG, "sessionuuid set: $value")
+    }
 
-// ============================================================
-// SESSION UUID
-// ============================================================
+    fun clearSessionUuid() {
+        sessionUuid = null
+        Log.d(TAG, "sessionuuid cleared")
+    }
 
-@Synchronized
-fun setSessionUuid(
-value: String
-) {
-sessionUuid = value
-}
+    fun getSessionUuidJson(): String? {
+        val value = sessionUuid ?: return null
 
-@Synchronized
-fun getSessionUuidJson(): String? {
+        return JSONObject()
+            .put("sessionuuid", value)
+            .toString()
+    }
 
-val value = sessionUuid
-?: return null
+    // -------------------------
+    // PLAYER INFO TAG
+    // -------------------------
 
-return JSONObject()
-    .put(
-"sessionUuid",
-value
-)
-    .toString()
-}
+    fun setPlayerInfo(
+        playerUuidValue: String,
+        challengeValue: String
+    ) {
+        playerUuid = playerUuidValue
+        challenge = challengeValue
 
-@Synchronized
-fun clearSessionUuid() {
-sessionUuid = null
-}
+        Log.d(TAG, "playerInfo set")
+        Log.d(TAG, "playeruuid: $playerUuidValue")
+        Log.d(TAG, "challenge: $challengeValue")
+    }
 
-// ============================================================
-// PLAYER INFO
-// ============================================================
+    fun clearPlayerInfo() {
+        playerUuid = null
+        challenge = null
+        Log.d(TAG, "playerInfo cleared")
+    }
 
-@Synchronized
-fun setPlayerInfo(
-playerUuidValue: String,
-challengeValue: String
-) {
-playerUuid = playerUuidValue
-challenge = challengeValue
-}
+    fun getPlayerInfoJson(): String? {
+        val uuid = playerUuid ?: return null
+        val challengeValue = challenge ?: return null
 
-@Synchronized
-fun getPlayerInfoJson(): String? {
+        return JSONObject()
+            .put("playeruuid", uuid)
+            .put("challenge", challengeValue)
+            .toString()
+    }
 
-val player =
-playerUuid
-?: return null
+    // -------------------------
+    // CLEAR EVERYTHING
+    // -------------------------
 
-val challengeValue =
-challenge
-?: return null
+    fun clearAll() {
+        sessionUuid = null
+        playerUuid = null
+        challenge = null
 
-return JSONObject()
-    .put(
-"playerUuid",
-player
-)
-    .put(
-"challenge",
-challengeValue
-)
-    .toString()
-}
-
-@Synchronized
-fun clearPlayerInfo() {
-playerUuid = null
-challenge = null
-}
-
-// ============================================================
-// CLEAR EVERYTHING
-// ============================================================
-
-@Synchronized
-fun clearAll() {
-sessionUuid = null
-playerUuid = null
-challenge = null
-}
+        Log.d(TAG, "all NFC tags cleared")
+    }
 }

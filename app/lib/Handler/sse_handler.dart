@@ -1,9 +1,10 @@
 import 'dart:convert';
 
+import 'package:creativetrainclient/Handler/NfcPeer.dart';
 import 'package:creativetrainclient/Handler/app_state.dart';
 import 'package:creativetrainclient/Wrappers/RoleWrapper.dart';
+import 'package:flutter/cupertino.dart';
 
-import 'NfcTags.dart';
 
 void playerJoined(String? data) {
   if (data != null) {
@@ -18,18 +19,34 @@ void playerLeft(String? data) {
     app_state.playerLeft(data);
   }
 }
-
 Future<void> updateChallenge(String? challenge) async {
-  if (challenge == null) {
+  if (challenge == null || challenge.trim().isEmpty) {
     return;
   }
-  print("Challenge: ${challenge.replaceAll('\n', '')}");
-  app_state.updateChallenge(challenge);
-  await NfcTags.setPlayerInfo(
+
+  final cleanChallenge = challenge.trim();
+
+  debugPrint(
+    'Challenge received: $cleanChallenge',
+  );
+
+  app_state.updateChallenge(
+    cleanChallenge,
+  );
+
+  // Switch NFC completely from session mode
+  // to player mode.
+  await NfcPeer.clearSessionUuid();
+
+  await NfcPeer.setPlayerInfo(
     playerUuid:
     app_state.getCurrentSession().playerUuid,
     challenge:
     app_state.getChallenge(),
+  );
+
+  debugPrint(
+    'NFC MODE: PLAYER INFO',
   );
 }
 

@@ -1,6 +1,6 @@
 import 'dart:async';
 
-import 'package:creativetrainclient/Handler/NfcTags.dart';
+import 'package:creativetrainclient/Handler/NfcPeer.dart';
 import 'package:creativetrainclient/Handler/app_state.dart';
 import 'package:creativetrainclient/Handler/handle_buttons_clientconfig.dart';
 import 'package:creativetrainclient/Handler/handle_client_api_requests.dart';
@@ -35,7 +35,6 @@ class _RenderActivesessionState extends State<RenderActivesession> {
       });
     });
     app_state.gameStartedNotifier.addListener(_onGameEnded);
-    NfcTags.clearSessionUuid();
   }
 
   void _onGameEnded() {

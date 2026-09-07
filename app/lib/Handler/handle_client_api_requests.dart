@@ -3,7 +3,6 @@ import 'dart:collection';
 import 'dart:convert';
 import 'dart:io';
 
-import 'package:creativetrainclient/Handler/NfcTags.dart';
 import 'package:flutter/services.dart';
 import 'package:http/http.dart' as http;
 
@@ -271,9 +270,22 @@ Future<bool> handleRegistration(
     returnResponse.playerUuid,
     returnResponse.token,
   );
-  app_state.setCurrentSession(returnResponse);
+  app_state.setCurrentSession(
+    returnResponse,
+  );
+
   app_state.changeGameActivation(true);
-  NfcTags.setSessionUuid(sessionUuid);
+
+  await NfcPeer.clear();
+
+  await NfcPeer.setSessionUuid(
+    sessionUuid,
+  );
+
+  debugPrint(
+    'NFC MODE: SESSION UUID',
+  );
+
   return true;
 }
 
@@ -415,3 +427,4 @@ Future<List<Map<String, dynamic>>> getAllRoles() async {
     );
   }
 }
+

@@ -1,5 +1,4 @@
 import 'dart:convert';
-
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 
@@ -15,6 +14,10 @@ class _ReaderPageState extends State<ReaderPage> {
 
   bool _readerRunning = false;
   bool _reading = false;
+
+  // 1 = Session UUID
+  // 2 = Player Info
+  int _selectedTagType = 1;
 
   String? _tagType;
   String? _jsonText;
@@ -34,20 +37,6 @@ class _ReaderPageState extends State<ReaderPage> {
 
     final value = call.arguments;
 
-    // New native format:
-    //
-    // {
-    //   "type": "sessionUuid",
-    //   "json": "{\"sessionUuid\":\"...\"}"
-    // }
-    //
-    // or:
-    //
-    // {
-    //   "type": "playerInfo",
-    //   "json": "{\"playerUuid\":\"...\",\"challenge\":\"...\"}"
-    // }
-
     if (value is Map) {
       final type = value['type'];
       final json = value['json'];
@@ -58,10 +47,7 @@ class _ReaderPageState extends State<ReaderPage> {
           type is String ? type : null,
         );
       }
-    }
-
-    // Backwards compatibility if native sends just a String.
-    else if (value is String) {
+    } else if (value is String) {
       _displayJson(value, null);
     }
 
@@ -69,9 +55,7 @@ class _ReaderPageState extends State<ReaderPage> {
   }
 
   void _displayJson(String value, String? type) {
-    if (!mounted) {
-      return;
-    }
+    if (!mounted) return;
 
     setState(() {
       _reading = false;
@@ -91,11 +75,14 @@ class _ReaderPageState extends State<ReaderPage> {
         _jsonText = null;
       });
 
-      await _channel.invokeMethod('startReader');
+      await _channel.invokeMethod(
+        'startReader',
+        {
+          'tagType': _selectedTagType,
+        },
+      );
     } catch (e) {
-      if (!mounted) {
-        return;
-      }
+      if (!mounted) return;
 
       setState(() {
         _readerRunning = false;
@@ -109,23 +96,32 @@ class _ReaderPageState extends State<ReaderPage> {
     try {
       await _channel.invokeMethod('stopReader');
 
-      if (!mounted) {
-        return;
-      }
+      if (!mounted) return;
 
       setState(() {
         _readerRunning = false;
         _reading = false;
       });
     } catch (e) {
-      if (!mounted) {
-        return;
-      }
+      if (!mounted) return;
 
       setState(() {
         _error = e.toString();
       });
     }
+  }
+
+  void _selectTagType(int type) {
+    if (_readerRunning) {
+      return;
+    }
+
+    setState(() {
+      _selectedTagType = type;
+      _tagType = null;
+      _jsonText = null;
+      _error = null;
+    });
   }
 
   void _clearResult() {
@@ -141,9 +137,24 @@ class _ReaderPageState extends State<ReaderPage> {
     try {
       final decoded = jsonDecode(value);
 
-      return const JsonEncoder.withIndent('  ').convert(decoded);
+      return const JsonEncoder
+          .withIndent('  ')
+          .convert(decoded);
     } catch (_) {
       return value;
+    }
+  }
+
+  String _selectedTagTitle() {
+    switch (_selectedTagType) {
+      case 1:
+        return 'Session UUID';
+
+      case 2:
+        return 'Player Info';
+
+      default:
+        return 'NFC Data';
     }
   }
 
@@ -161,7 +172,9 @@ class _ReaderPageState extends State<ReaderPage> {
   }
 
   IconData _tagIcon() {
-    switch (_tagType) {
+    switch (_tagType ?? (_selectedTagType == 1
+        ? 'sessionUuid'
+        : 'playerInfo')) {
       case 'sessionUuid':
         return Icons.key;
 
@@ -177,7 +190,6 @@ class _ReaderPageState extends State<ReaderPage> {
   void dispose() {
     _channel.setMethodCallHandler(null);
 
-    // Don't await this here because dispose() cannot be async.
     _channel.invokeMethod('stopReader');
 
     super.dispose();
@@ -218,14 +230,46 @@ class _ReaderPageState extends State<ReaderPage> {
                 style: theme.textTheme.headlineSmall,
               ),
 
-              const SizedBox(height: 12),
+              const SizedBox(height: 24),
+
+              // ----------------------------------------------------------
+              // TAG TYPE SELECTOR
+              // ----------------------------------------------------------
+
+              Text(
+                'Read',
+                style: theme.textTheme.titleMedium,
+              ),
+
+              const SizedBox(height: 8),
+
+              SegmentedButton<int>(
+                segments: const [
+                  ButtonSegment<int>(
+                    value: 1,
+                    icon: Icon(Icons.key),
+                    label: Text('Session UUID'),
+                  ),
+                  ButtonSegment<int>(
+                    value: 2,
+                    icon: Icon(Icons.person),
+                    label: Text('Player Info'),
+                  ),
+                ],
+                selected: {_selectedTagType},
+                onSelectionChanged: (selection) {
+                  _selectTagType(selection.first);
+                },
+              ),
+
+              const SizedBox(height: 24),
 
               Text(
                 _reading
                     ? 'Hold this phone against the NFC device...'
                     : _jsonText != null
                     ? 'NFC data received'
-                    : 'Press Start Reader and hold this phone against the HCE phone.',
+                    : 'Ready to read ${_selectedTagTitle()}.',
                 textAlign: TextAlign.center,
                 style: theme.textTheme.bodyLarge,
               ),
@@ -333,7 +377,9 @@ class _ReaderPageState extends State<ReaderPage> {
                   child: ElevatedButton.icon(
                     onPressed: _startReader,
                     icon: const Icon(Icons.contactless),
-                    label: const Text('Start NFC Reader'),
+                    label: Text(
+                      'Read ${_selectedTagTitle()}',
+                    ),
                   ),
                 )
               else

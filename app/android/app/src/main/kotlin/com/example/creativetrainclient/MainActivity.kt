@@ -18,165 +18,94 @@ class MainActivity : FlutterActivity() {
 
         private const val TAG = "NFC_READER"
 
-        // ============================================================
-        // TAG IDS
-        // ============================================================
-
         private const val TAG_SESSION_UUID = 0x01
         private const val TAG_PLAYER_INFO = 0x02
     }
 
     private var methodChannel: MethodChannel? = null
-
     private var nfcAdapter: NfcAdapter? = null
 
-    // ================================================================
-    // ACTIVITY
-    // ================================================================
+    override fun onCreate(savedInstanceState: Bundle?) {
+        super.onCreate(savedInstanceState)
 
-    override fun onCreate(
-        savedInstanceState: Bundle?
-    ) {
-        super.onCreate(
-            savedInstanceState
-        )
+        nfcAdapter = NfcAdapter.getDefaultAdapter(this)
 
-        nfcAdapter =
-            NfcAdapter.getDefaultAdapter(
-                this
-            )
-
-        Log.d(
-            TAG,
-            "MAIN ACTIVITY CREATED"
-        )
+        Log.d(TAG, "MAIN ACTIVITY CREATED")
     }
 
-    // ================================================================
-    // FLUTTER CHANNEL
-    // ================================================================
+    override fun configureFlutterEngine(flutterEngine: FlutterEngine) {
+        super.configureFlutterEngine(flutterEngine)
 
-    override fun configureFlutterEngine(
-        flutterEngine: FlutterEngine
-    ) {
+        Log.d(TAG, "REGISTERING METHOD CHANNEL: $CHANNEL")
 
-        super.configureFlutterEngine(
-            flutterEngine
+        methodChannel = MethodChannel(
+            flutterEngine.dartExecutor.binaryMessenger,
+            CHANNEL
         )
 
-        Log.d(
-            TAG,
-            "REGISTERING METHOD CHANNEL: $CHANNEL"
-        )
+        methodChannel?.setMethodCallHandler { call, result ->
 
-        methodChannel =
-            MethodChannel(
-                flutterEngine
-                    .dartExecutor
-                    .binaryMessenger,
-                CHANNEL
-            )
-
-        methodChannel?.setMethodCallHandler {
-                call,
-                result ->
-
-            Log.d(
-                TAG,
-                "METHOD CALLED: ${call.method}"
-            )
+            Log.d(TAG, "METHOD CALLED: ${call.method}")
 
             when (call.method) {
-
-                // ========================================================
-                // SESSION UUID
-                // ========================================================
 
                 "setSessionUuid" -> {
 
                     val sessionUuid =
-                        call.argument<String>(
-                            "sessionUuid"
-                        )
+                        call.argument<String>("sessionUuid")
 
                     if (sessionUuid == null) {
-
                         result.error(
                             "INVALID_ARGUMENT",
                             "sessionUuid is required",
                             null
                         )
-
                         return@setMethodCallHandler
                     }
 
-                    Log.d(
-                        TAG,
-                        "SETTING sessionUuid TAG"
-                    )
+                    Log.d(TAG, "SETTING sessionUuid TAG")
 
-                    NfcTagStore.setSessionUuid(
-                        sessionUuid
-                    )
+                    NfcTagStore.setSessionUuid(sessionUuid)
 
                     result.success(null)
                 }
 
                 "clearSessionUuid" -> {
 
-                    Log.d(
-                        TAG,
-                        "CLEARING sessionUuid TAG"
-                    )
+                    Log.d(TAG, "CLEARING sessionUuid TAG")
 
-                    NfcTagStore
-                        .clearSessionUuid()
+                    NfcTagStore.clearSessionUuid()
 
                     result.success(null)
                 }
 
-                // ========================================================
-                // PLAYER INFO
-                // ========================================================
-
                 "setPlayerInfo" -> {
 
                     val playerUuid =
-                        call.argument<String>(
-                            "playerUuid"
-                        )
+                        call.argument<String>("playerUuid")
 
                     val challenge =
-                        call.argument<String>(
-                            "challenge"
-                        )
+                        call.argument<String>("challenge")
 
                     if (playerUuid == null) {
-
                         result.error(
                             "INVALID_ARGUMENT",
                             "playerUuid is required",
                             null
                         )
-
                         return@setMethodCallHandler
                     }
 
                     if (challenge == null) {
-
                         result.error(
                             "INVALID_ARGUMENT",
                             "challenge is required",
                             null
                         )
-
                         return@setMethodCallHandler
                     }
 
-                    Log.d(
-                        TAG,
-                        "SETTING playerInfo TAG"
-                    )
+                    Log.d(TAG, "SETTING playerInfo TAG")
 
                     NfcTagStore.setPlayerInfo(
                         playerUuid,
@@ -188,67 +117,46 @@ class MainActivity : FlutterActivity() {
 
                 "clearPlayerInfo" -> {
 
-                    Log.d(
-                        TAG,
-                        "CLEARING playerInfo TAG"
-                    )
+                    Log.d(TAG, "CLEARING playerInfo TAG")
 
-                    NfcTagStore
-                        .clearPlayerInfo()
+                    NfcTagStore.clearPlayerInfo()
 
                     result.success(null)
                 }
 
-                // ========================================================
-                // CLEAR ALL
-                // ========================================================
-
                 "clearTags" -> {
 
-                    Log.d(
-                        TAG,
-                        "CLEARING ALL NFC TAGS"
-                    )
+                    Log.d(TAG, "CLEARING ALL NFC TAGS")
 
                     NfcTagStore.clearAll()
 
                     result.success(null)
                 }
 
-                // ========================================================
-                // HCE
-                // ========================================================
-
                 "startEmulator" -> {
 
-                    Log.d(
-                        TAG,
-                        "START EMULATOR REQUEST"
-                    )
+                    Log.d(TAG, "START EMULATOR REQUEST")
 
-                    // Android automatically manages HCE.
                     result.success(null)
                 }
 
                 "stopEmulator" -> {
 
-                    Log.d(
-                        TAG,
-                        "STOP EMULATOR REQUEST"
-                    )
+                    Log.d(TAG, "STOP EMULATOR REQUEST")
 
-                    // Android automatically manages HCE.
                     result.success(null)
                 }
 
-                // ========================================================
-                // READER
-                // ========================================================
-
                 "startReader" -> {
+                    readerTagType =
+                        call.argument<Int>("tagType") ?: 1
+
+                    Log.d(
+                        "NFC_READER",
+                        "START READER - TAG TYPE: $readerTagType"
+                    )
 
                     startReader()
-
                     result.success(null)
                 }
 
@@ -259,41 +167,21 @@ class MainActivity : FlutterActivity() {
                     result.success(null)
                 }
 
-                // ========================================================
-                // UNKNOWN
-                // ========================================================
-
-                else -> {
-
-                    result.notImplemented()
-                }
+                else -> result.notImplemented()
             }
         }
     }
 
-    // ================================================================
-    // START READER
-    // ================================================================
-
     private fun startReader() {
 
-        val adapter =
-            nfcAdapter
+        val adapter = nfcAdapter
 
         if (adapter == null) {
-
-            Log.e(
-                TAG,
-                "NFC ADAPTER NOT AVAILABLE"
-            )
-
+            Log.e(TAG, "NFC ADAPTER NOT AVAILABLE")
             return
         }
 
-        Log.d(
-            TAG,
-            "STARTING NFC READER"
-        )
+        Log.d(TAG, "STARTING NFC READER")
 
         adapter.enableReaderMode(
             this,
@@ -306,61 +194,26 @@ class MainActivity : FlutterActivity() {
         )
     }
 
-    // ================================================================
-    // STOP READER
-    // ================================================================
-
     private fun stopReader() {
 
-        Log.d(
-            TAG,
-            "STOPPING NFC READER"
-        )
+        Log.d(TAG, "STOPPING NFC READER")
 
-        nfcAdapter
-            ?.disableReaderMode(
-                this
-            )
+        nfcAdapter?.disableReaderMode(this)
     }
+    private fun handleTag(tag: Tag) {
+        Log.d("NFC_READER", "TAG DISCOVERED")
 
-    // ================================================================
-    // TAG DISCOVERED
-    // ================================================================
-
-    private fun handleTag(
-        tag: Tag
-    ) {
-
-        Log.d(
-            TAG,
-            "TAG DISCOVERED"
-        )
-
-        val isoDep =
-            IsoDep.get(tag)
+        val isoDep = IsoDep.get(tag)
 
         if (isoDep == null) {
-
-            Log.e(
-                TAG,
-                "TAG DOES NOT SUPPORT ISO-DEP"
-            )
-
+            Log.e("NFC_READER", "ISO-DEP NOT AVAILABLE")
             return
         }
 
         try {
-
             isoDep.connect()
 
-            Log.d(
-                TAG,
-                "ISO-DEP CONNECTED"
-            )
-
-            // ========================================================
-            // SELECT AID
-            // ========================================================
+            Log.d("NFC_READER", "ISO-DEP CONNECTED")
 
             val selectApdu = byteArrayOf(
                 0x00,
@@ -377,104 +230,87 @@ class MainActivity : FlutterActivity() {
                 0x00
             )
 
-            Log.d(
-                TAG,
-                "SENDING SELECT"
-            )
+            Log.d("NFC_READER", "SENDING SELECT")
 
-            val selectResponse =
-                isoDep.transceive(
-                    selectApdu
-                )
+            val selectResponse = isoDep.transceive(selectApdu)
 
             Log.d(
-                TAG,
-                "SELECT RESPONSE: " +
-                        selectResponse.toHex()
+                "NFC_READER",
+                "SELECT RESPONSE: ${selectResponse.toHex()}"
             )
 
-            if (
-                !selectResponse.endsWithStatus(
-                    0x90,
-                    0x00
-                )
-            ) {
-
+            if (!selectResponse.endsWithStatus(0x90, 0x00)) {
                 Log.e(
-                    TAG,
+                    "NFC_READER",
                     "SELECT FAILED"
                 )
-
                 return
             }
 
-            // ========================================================
-            // REQUEST SESSION UUID
-            // ========================================================
+            Log.d(
+                "NFC_READER",
+                "REQUESTING TAG: %02d".format(readerTagType)
+            )
 
-            val sessionUuid =
-                requestTag(
-                    isoDep,
-                    TAG_SESSION_UUID
+            val json = requestTag(
+                isoDep,
+                readerTagType
+            )
+
+            if (json == null) {
+                Log.e(
+                    "NFC_READER",
+                    "TAG REQUEST FAILED"
                 )
-
-            if (sessionUuid != null) {
-
-                Log.d(
-                    TAG,
-                    "SESSION UUID: $sessionUuid"
-                )
-
-                sendFlutterMessage(
-                    "sessionUuid",
-                    sessionUuid
-                )
+                return
             }
 
-            // ========================================================
-            // REQUEST PLAYER INFO
-            // ========================================================
+            when (readerTagType) {
+                1 -> {
+                    Log.d(
+                        "NFC_READER",
+                        "SESSION UUID: $json"
+                    )
 
-            val playerInfo =
-                requestTag(
-                    isoDep,
-                    TAG_PLAYER_INFO
-                )
+                    sendFlutterMessage(
+                        "sessionUuid",
+                        json
+                    )
+                }
 
-            if (playerInfo != null) {
+                2 -> {
+                    Log.d(
+                        "NFC_READER",
+                        "PLAYER INFO: $json"
+                    )
 
-                Log.d(
-                    TAG,
-                    "PLAYER INFO: $playerInfo"
-                )
+                    sendFlutterMessage(
+                        "playerInfo",
+                        json
+                    )
+                }
 
-                sendFlutterMessage(
-                    "playerInfo",
-                    playerInfo
-                )
+                else -> {
+                    Log.e(
+                        "NFC_READER",
+                        "UNKNOWN READER TAG TYPE: $readerTagType"
+                    )
+                }
             }
 
         } catch (e: Exception) {
-
             Log.e(
-                TAG,
+                "NFC_READER",
                 "NFC ERROR",
                 e
             )
-
         } finally {
-
             try {
                 isoDep.close()
             } catch (_: Exception) {
             }
         }
     }
-
-    // ================================================================
-    // REQUEST TAG
-    // ================================================================
-
     private fun requestTag(
         isoDep: IsoDep,
         tagType: Int
@@ -495,9 +331,7 @@ class MainActivity : FlutterActivity() {
         )
 
         val response =
-            isoDep.transceive(
-                apdu
-            )
+            isoDep.transceive(apdu)
 
         Log.d(
             TAG,
@@ -505,17 +339,9 @@ class MainActivity : FlutterActivity() {
                     response.toHex()
         )
 
-        if (
-            !response.endsWithStatus(
-                0x90,
-                0x00
-            )
-        ) {
+        if (!response.endsWithStatus(0x90, 0x00)) {
 
-            Log.e(
-                TAG,
-                "TAG REQUEST FAILED"
-            )
+            Log.e(TAG, "TAG REQUEST FAILED")
 
             return null
         }
@@ -525,14 +351,8 @@ class MainActivity : FlutterActivity() {
                 0,
                 response.size - 2
             )
-            .toString(
-                Charsets.UTF_8
-            )
+            .toString(Charsets.UTF_8)
     }
-
-    // ================================================================
-    // SEND MESSAGE TO FLUTTER
-    // ================================================================
 
     private fun sendFlutterMessage(
         type: String,
@@ -551,10 +371,6 @@ class MainActivity : FlutterActivity() {
         }
     }
 
-    // ================================================================
-    // DESTROY
-    // ================================================================
-
     override fun onDestroy() {
 
         stopReader()
@@ -562,13 +378,10 @@ class MainActivity : FlutterActivity() {
         super.onDestroy()
     }
 
-    // ================================================================
-    // BYTE HELPERS
-    // ================================================================
-
     private fun ByteArray.toHex(): String {
 
         return joinToString(" ") {
+
             "%02X".format(
                 it.toInt() and 0xFF
             )
@@ -587,17 +400,13 @@ class MainActivity : FlutterActivity() {
         sw2: Int
     ): Boolean {
 
-        if (size < 2) {
-            return false
-        }
+        if (size < 2) return false
 
         return (
-                this[size - 2].toInt()
-                        and 0xFF
+                this[size - 2].toInt() and 0xFF
                 ) == sw1 &&
                 (
-                        this[size - 1].toInt()
-                                and 0xFF
+                        this[size - 1].toInt() and 0xFF
                         ) == sw2
     }
 }

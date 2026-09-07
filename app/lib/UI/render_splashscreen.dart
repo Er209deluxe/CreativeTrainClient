@@ -39,7 +39,6 @@ class _AnimatedSplashPageState extends State<AnimatedSplashPage>
       lowerBound: 0.0,
       upperBound: 1.0,
     )..repeat(reverse: true);
-
     Future<void>.delayed(const Duration(milliseconds: 300), () {
       if (mounted) {
         setState(() {

@@ -1,3 +1,4 @@
+import 'package:creativetrainclient/Handler/NfcPeer.dart';
 import 'package:creativetrainclient/Handler/app_state.dart';
 import 'package:creativetrainclient/Handler/handle_buttons_clientconfig.dart';
 import 'package:creativetrainclient/Handler/handle_client_api_requests.dart';
@@ -22,31 +23,63 @@ class _RenderInactivesessionState extends State<RenderInactivesession> {
   void initState() {
     super.initState();
 
-    app_state.gameStartedNotifier.addListener(_onGameStarted);
+    _setupNfc();
+
+    app_state.gameStartedNotifier.addListener(
+      _onGameStarted,
+    );
   }
 
-  void _onGameStarted() {
+  Future<void> _setupNfc() async {
+    await NfcPeer.clear();
+
+    await NfcPeer.setSessionUuid(
+      app_state.getCurrentSession().sessionUuid,
+    );
+
+    debugPrint(
+      'NFC MODE: SESSION UUID',
+    );
+  }
+
+  Future<void> _onGameStarted() async {
     if (!mounted) return;
 
-    if (app_state.gameStartedNotifier.value) {
-      Navigator.of(context).pushReplacement(
-        CupertinoPageRoute(builder: (_) => const RenderActivesession()),
-      );
-      showDialog(
-        context: context,
-        builder: (BuildContext dialogContext) {
-          return ValueListenableBuilder<RoleWrapper?>(
-            valueListenable: app_state.roleNotifier,
-            builder: (context, role, _) {
-              return ErrorDialogM3E(
-                errorHeader: 'Your Role:',
-                errorText: role?.team.name ?? 'Unknown',
-              );
-            },
-          );
-        },
-      );
+    if (!app_state.gameStartedNotifier.value) {
+      return;
     }
+
+    // Game has started.
+    //
+    // Stop advertising the session UUID.
+    await NfcPeer.clearSessionUuid();
+
+    debugPrint(
+      'NFC MODE: GAME STARTED - SESSION UUID CLEARED',
+    );
+
+    if (!mounted) return;
+
+    Navigator.of(context).pushReplacement(
+      CupertinoPageRoute(
+        builder: (_) => const RenderActivesession(),
+      ),
+    );
+
+    showDialog(
+      context: context,
+      builder: (BuildContext dialogContext) {
+        return ValueListenableBuilder<RoleWrapper?>(
+          valueListenable: app_state.roleNotifier,
+          builder: (context, role, _) {
+            return ErrorDialogM3E(
+              errorHeader: 'Your Role:',
+              errorText: role?.team.name ?? 'Unknown',
+            );
+          },
+        );
+      },
+    );
   }
 
   @override
