@@ -9,6 +9,7 @@ import 'package:flutter/material.dart';
 import 'package:m3e_buttons/m3e_buttons.dart';
 
 import '../Handler/NfcPeer.dart';
+import '../main.dart';
 
 class RenderRegisterconfig extends StatefulWidget {
   const RenderRegisterconfig({super.key});
@@ -19,7 +20,7 @@ class RenderRegisterconfig extends StatefulWidget {
 }
 
 class _RenderRegisterconfigState
-    extends State<RenderRegisterconfig> {
+    extends State<RenderRegisterconfig> with RouteAware {
 
   final TextEditingController _playerName =
   TextEditingController();
@@ -33,11 +34,7 @@ class _RenderRegisterconfigState
   void initState() {
     super.initState();
 
-    NfcPeer.setMessageHandler(
-      _handleNfcMessage,
-    );
 
-    _startNfcReader();
   }
 
   Future<void> _startNfcReader() async {
@@ -111,7 +108,32 @@ class _RenderRegisterconfigState
     // data.playerUuid
     // data.challenge
   }
+  @override
+  void didChangeDependencies() {
+    super.didChangeDependencies();
+    // Subscribe to the route observer
+    routeObserver.subscribe(this, ModalRoute.of(context) as PageRoute);
+  }
 
+  @override
+  void didPush() {
+    // Runs when this page is first pushed onto the navigation stack
+    NfcPeer.setMessageHandler(
+      _handleNfcMessage,
+    );
+
+    _startNfcReader();
+  }
+
+  @override
+  void didPopNext() {
+    // Runs every time a top page is popped off and the user returns to this page
+    NfcPeer.setMessageHandler(
+      _handleNfcMessage,
+    );
+
+    _startNfcReader();
+  }
   @override
   void dispose() {
     NfcPeer.stopReader();

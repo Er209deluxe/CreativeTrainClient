@@ -7,6 +7,9 @@ import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:m3e_buttons/m3e_buttons.dart';
 
+import '../Handler/NfcPeer.dart';
+import '../main.dart';
+
 class HomePage extends StatefulWidget {
   const HomePage({super.key});
 
@@ -14,9 +17,26 @@ class HomePage extends StatefulWidget {
   State<HomePage> createState() => _HomePageState();
 }
 
-class _HomePageState extends State<HomePage> {
+class _HomePageState extends State<HomePage> with RouteAware {
   int? _selected;
+  @override
+  void didChangeDependencies() {
+    super.didChangeDependencies();
+    // Subscribe to the route observer
+    routeObserver.subscribe(this, ModalRoute.of(context) as PageRoute);
+  }
 
+  @override
+  void didPush() {
+    // Runs when this page is first pushed onto the navigation stack
+    NfcPeer.stopReader();
+  }
+
+  @override
+  void didPopNext() {
+    // Runs every time a top page is popped off and the user returns to this page
+    NfcPeer.stopReader();
+  }
   @override
   Widget build(BuildContext context) {
     return Scaffold(

@@ -11,6 +11,8 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:m3e_buttons/m3e_buttons.dart';
 
+import '../main.dart';
+
 class RenderInactivesession extends StatefulWidget {
   const RenderInactivesession({super.key});
 
@@ -18,18 +20,33 @@ class RenderInactivesession extends StatefulWidget {
   State<RenderInactivesession> createState() => _RenderInactivesessionState();
 }
 
-class _RenderInactivesessionState extends State<RenderInactivesession> {
-  @override
+class _RenderInactivesessionState extends State<RenderInactivesession> with RouteAware {  @override
   void initState() {
     super.initState();
 
-    NfcPeer.stopReader();
     app_state.gameStartedNotifier.addListener(
       _onGameStarted,
     );
   }
 
+  @override
+  void didChangeDependencies() {
+    super.didChangeDependencies();
+    // Subscribe to the route observer
+    routeObserver.subscribe(this, ModalRoute.of(context) as PageRoute);
+  }
 
+  @override
+  void didPush() {
+    // Runs when this page is first pushed onto the navigation stack
+    NfcPeer.stopReader();
+  }
+
+  @override
+  void didPopNext() {
+    // Runs every time a top page is popped off and the user returns to this page
+    NfcPeer.stopReader();
+  }
   Future<void> _onGameStarted() async {
     if (!mounted) return;
 

@@ -162,10 +162,11 @@ Future<bool> startSession(BuildContext context) async {
 }
 
 Future<bool> killPlayer(String ipAddress,String victimUuid,String itemUuid, BuildContext context) async {
-final killUrl = Uri.http(ipAddress, 'api/session/kill');
+  if(app_state.getChallenge()==null) return false;
+  final killUrl = Uri.http(ipAddress, 'api/session/kill');
 final killRequest = http.MultipartRequest('POST', killUrl)..fields['killerUuid'] = " ";
   killRequest.fields['sessionToken'] = app_state.getCurrentSession().token;
-  killRequest.fields['challenge'] = app_state.getChallenge();
+  killRequest.fields['challenge'] = app_state.getChallenge()!;
   killRequest.fields['victimUuid'] = victimUuid;
   killRequest.fields['itemUuid'] = itemUuid;
 
@@ -338,9 +339,8 @@ Future<bool> leaveSession(
       return false;
     }
 
-    app_state.inSession = false;
-    app_state.changeGameActivation(false);
 
+    app_state.removeCurrentSession();
     return true;
   } on SocketException catch (e) {
     print('Could not connect to server: $e');

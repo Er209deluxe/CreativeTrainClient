@@ -4,6 +4,9 @@ import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:m3e_buttons/m3e_buttons.dart';
 
+import '../Handler/NfcPeer.dart';
+import '../main.dart';
+
 class ClientConfigPage extends StatefulWidget {
   const ClientConfigPage({super.key});
 
@@ -11,9 +14,26 @@ class ClientConfigPage extends StatefulWidget {
   State<ClientConfigPage> createState() => _ClientConfigPageState();
 }
 
-class _ClientConfigPageState extends State<ClientConfigPage> {
+class _ClientConfigPageState extends State<ClientConfigPage> with RouteAware {
   int? _selected;
+  @override
+  void didChangeDependencies() {
+    super.didChangeDependencies();
+    // Subscribe to the route observer
+    routeObserver.subscribe(this, ModalRoute.of(context) as PageRoute);
+  }
 
+  @override
+  void didPush() {
+    // Runs when this page is first pushed onto the navigation stack
+    NfcPeer.stopReader();
+  }
+
+  @override
+  void didPopNext() {
+    // Runs every time a top page is popped off and the user returns to this page
+    NfcPeer.stopReader();
+  }
   @override
   Widget build(BuildContext context) {
     return Scaffold(
