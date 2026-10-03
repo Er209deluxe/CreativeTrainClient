@@ -151,23 +151,71 @@ function startStream() {
         );
 
      eventSource.addEventListener("sanityUpdate", (event) => {
-    const data = JSON.parse(event.data);
+    try {
+        const data = JSON.parse(event.data);
 
-    const sanityBar = document.getElementById("sanityBar");
-    sanityBar.style.color = "#ffffff";
-    const depressionBar = document.getElementById("depressionBar");
+        const sanityBar = document.getElementById("sanityBar");
+        const depressionBar = document.getElementById("depressionBar");
 
-    sanityBar.value = data.sanity;
+        if (!sanityBar || !depressionBar) {
+            return;
+        }
 
-    if (data.depression === 1) {
-        depressionBar.style.visibility = "hidden";
-        return;
+        // ---------------- SANITY ----------------
+
+        const sanity = Number(data.sanity);
+
+        sanityBar.max = 1;
+        sanityBar.value = Math.max(0, Math.min(1, sanity));
+
+        sanityBar.style.visibility = "visible";
+
+        // Colour based on sanity level
+        if (sanity > 0.66) {
+            sanityBar.style.accentColor = "#22c55e";
+        } else if (sanity > 0.33) {
+            sanityBar.style.accentColor = "#facc15";
+        } else {
+            sanityBar.style.accentColor = "#ef4444";
+        }
+
+        // ---------------- DEPRESSION ----------------
+
+        const depression = Number(data.depression);
+
+        // Your backend uses 1 to indicate that the depression
+        // bar should not be displayed.
+        if (depression === 1) {
+            depressionBar.style.visibility = "hidden";
+            depressionBar.value = 1;
+            return;
+        }
+
+        depressionBar.style.visibility = "visible";
+
+        depressionBar.max = 1;
+        depressionBar.value = Math.max(
+            0,
+            Math.min(1, depression)
+        );
+
+        depressionBar.style.accentColor = "#66013d";
+
+    } catch (error) {
+        console.error(
+            "Failed to process sanityUpdate:",
+            event.data,
+            error
+        );
     }
-
-    depressionBar.style.visibility = "visible";
-    depressionBar.style.color = "#66013d"; 
-    depressionBar.value = data.depression;
 });
+    
+    eventSource.addEventListener(
+        "failedTransfer",
+        (event) => {
+            alert(event.data);
+        }
+    );
     /* ---------- JOIN ---------- */
 
     eventSource.addEventListener(
@@ -237,6 +285,23 @@ function startStream() {
             }
         }
     );
+    eventSource.addEventListener(
+    "droppedItemsUpdate",
+    (event) => {
+        try {
+            const droppedItems = JSON.parse(event.data);
+
+            displayDroppedItems(droppedItems);
+        } catch (error) {
+            console.error(
+                "Failed to parse droppedItemsUpdate:",
+                error,
+                event.data
+            );
+        }
+    }
+);
+
       eventSource.addEventListener(
         "coinUpdate",
         (event) => {
@@ -302,7 +367,7 @@ function startStream() {
                         "sessionUuid"
                     );
 
-            }, 7000);
+            }, 3000);
         }
     );
 
@@ -448,6 +513,65 @@ function changeRole() {
             uploadChangeRole(victimUuid, challenge)
     });
 }
+function displayDroppedItems(droppedItems) {
+    const container =
+        document.getElementById("droppedItemsList");
+
+    if (!container) {
+        return;
+    }
+
+    container.innerHTML = "";
+
+    if (!droppedItems || droppedItems.length === 0) {
+        container.innerHTML =
+            "<p>No dropped items.</p>";
+        return;
+    }
+
+    droppedItems.forEach((dropped) => {
+        const item = dropped.item;
+
+        if (!item) {
+            return;
+        }
+
+        const div = document.createElement("div");
+        div.className = "dropped-item";
+
+        const name = document.createElement("span");
+        name.textContent = item.name;
+
+        const countdown = document.createElement("span");
+        countdown.textContent =
+            ` ⏱ ${dropped.countdown}s`;
+
+        const cooldown = document.createElement("span");
+
+        if (item.onCooldown) {
+            cooldown.textContent = " 🔴 On Cooldown";
+            cooldown.style.color = "#d90408";
+        } else {
+            cooldown.textContent = " 🟢 Available";
+            cooldown.style.color = "#02d926";
+        }
+
+        const dropOnDeath = document.createElement("span");
+
+        if (item.dropOnDeath) {
+            dropOnDeath.textContent =
+                " ☠️ Drops on Death";
+        }
+
+        div.appendChild(name);
+        div.appendChild(countdown);
+        div.appendChild(cooldown);
+        div.appendChild(dropOnDeath);
+
+        container.appendChild(div);
+    });
+}
+
 /* ---------------- STREAM STOP ---------------- */
 function completeQuest(){
     const playerUuid = sessionStorage.getItem("playerUuid");
@@ -489,49 +613,84 @@ async function loadInventory() {
     const inventoryData = await getInventory(false);
     const shopData = await getInventory(true);
 
-    if (!inventoryData || !shopData) return;
+    if (!inventoryData || !shopData) {
+        return;
+    }
 
-    const inventoryDiv = document.getElementById("Inventory");
-    const shopDiv = document.getElementById("Shop");
+    const inventoryDiv =
+        document.getElementById("Inventory");
 
-    if (!inventoryDiv || !shopDiv) return;
+    const shopDiv =
+        document.getElementById("Shop");
 
-    inventoryDiv.innerHTML = "<h2>Inventory</h2>";
-    shopDiv.innerHTML = "<h2>Shop</h2>";
+    if (!inventoryDiv || !shopDiv) {
+        return;
+    }
 
+    /*
+     * Only display actual items.
+     * Empty inventory slots are ignored.
+     */
+    inventoryDiv.innerHTML = "";
 
+    inventoryData.forEach((item) => {
 
-     inventoryData.forEach((item, index) => {
-        const div = document.createElement("div");
-        div.className = "inventory-slot";
+        if (!item) {
+            return;
+        }
 
-        div.textContent = item
-            ? `${item.name}`
-            : `Slot ${index + 1}: Empty`;
+        const div =
+            document.createElement("div");
 
-                div.onclick = async () => {
-            if (item && await useItem(item)) {
+        div.className =
+            "inventory-slot";
+
+        div.textContent =
+            item.name;
+
+        div.onclick = async () => {
+
+            if (await useItem(item)) {
                 await loadInventory();
             }
+
         };
+
         inventoryDiv.appendChild(div);
     });
 
-    shopData.forEach(item => {
-        const div = document.createElement("div");
-        div.className = "shop-item";
+    /*
+     * Shop
+     */
+    shopDiv.innerHTML = "";
 
-        div.textContent = `${item.name} - 🪙 ${item.price}`;
+    shopData.forEach((item) => {
+
+        if (!item) {
+            return;
+        }
+
+        const div =
+            document.createElement("div");
+
+        div.className =
+            "shop-item";
+
+        div.textContent =
+            `${item.name} - 🪙 ${item.price}`;
 
         div.onclick = async () => {
+
             if (await buyItem(item.itemUuid)) {
                 await loadInventory();
             }
+
         };
 
         shopDiv.appendChild(div);
     });
 }
+
 async function buyItem(item) {
     const playerUuid = sessionStorage.getItem("playerUuid");
     const sessionToken = sessionStorage.getItem("sessionToken");
@@ -552,7 +711,9 @@ async function buyItem(item) {
     return true;
 }
 async function useItem(item) {
-    if (!item) return false;
+    if (!item) {
+        return false;
+    }
 
     const tags = item.tags || [];
 
@@ -561,18 +722,436 @@ async function useItem(item) {
         const existingKillToken =
             sessionStorage.getItem("killToken");
 
-        // First click:
-        // No token -> open popup and start interaction
+        const existingKillItemUuid =
+            sessionStorage.getItem("killItemUuid");
+
+        // ------------------------------------------------
+        // No active kill -> start kill interaction
+        // ------------------------------------------------
         if (!existingKillToken) {
             return await openKillPopup(item);
         }
 
-        // Second click:
-        // Token exists -> actually perform kill
+        // ------------------------------------------------
+        // A kill is already active.
+        // Make sure the same weapon is being confirmed.
+        // ------------------------------------------------
+        if (existingKillItemUuid !== item.itemUuid) {
+            alert(
+                "You already have an active kill interaction."
+            );
+            return false;
+        }
+
+        // ------------------------------------------------
+        // Confirm kill
+        // ------------------------------------------------
         return await confirmKill();
     }
 
     console.log("Used item:", item.name);
+
+    return true;
+}
+function openTransferDropsPopup() {
+    return new Promise((resolve) => {
+
+        const overlay = document.createElement("div");
+
+        Object.assign(overlay.style, {
+            position: "fixed",
+            inset: "0",
+            background: "rgba(0,0,0,0.65)",
+            display: "flex",
+            alignItems: "center",
+            justifyContent: "center",
+            zIndex: "9999",
+            backdropFilter: "blur(4px)"
+        });
+
+        const box = document.createElement("div");
+
+        Object.assign(box.style, {
+            background: "#ffffff",
+            borderRadius: "16px",
+            padding: "28px",
+            width: "420px",
+            maxWidth: "90%",
+            boxShadow: "0 12px 30px rgba(0,0,0,0.3)",
+            display: "flex",
+            flexDirection: "column",
+            gap: "16px",
+            fontFamily: "Arial, sans-serif"
+        });
+
+        /* ---------- TITLE ---------- */
+
+        const title = document.createElement("h2");
+        title.textContent = "Item Transfer";
+        title.style.margin = "0";
+        title.style.textAlign = "center";
+        title.style.color = "#222";
+
+        const subtitle = document.createElement("p");
+        subtitle.textContent =
+            "Choose what you want to do and enter the other player's information.";
+        subtitle.style.margin = "0";
+        subtitle.style.textAlign = "center";
+        subtitle.style.color = "#666";
+
+        /* ---------- MODE SELECTOR ---------- */
+
+        const modeContainer = document.createElement("div");
+
+        Object.assign(modeContainer.style, {
+            display: "flex",
+            gap: "10px",
+            background: "#f1f1f1",
+            padding: "5px",
+            borderRadius: "10px"
+        });
+
+        const pickupLabel = document.createElement("label");
+        const pickupRadio = document.createElement("input");
+
+        pickupRadio.type = "radio";
+        pickupRadio.name = "transferMode";
+        pickupRadio.value = "pickup";
+        pickupRadio.checked = true;
+
+        pickupLabel.appendChild(pickupRadio);
+        pickupLabel.appendChild(
+            document.createTextNode(" Pick Up")
+        );
+
+        Object.assign(pickupLabel.style, {
+            flex: "1",
+            padding: "10px",
+            textAlign: "center",
+            borderRadius: "7px",
+            cursor: "pointer",
+            color: "#222",
+            fontWeight: "bold"
+        });
+
+        const transferLabel = document.createElement("label");
+        const transferRadio = document.createElement("input");
+
+        transferRadio.type = "radio";
+        transferRadio.name = "transferMode";
+        transferRadio.value = "transfer";
+
+        transferLabel.appendChild(transferRadio);
+        transferLabel.appendChild(
+            document.createTextNode(" Transfer")
+        );
+
+        Object.assign(transferLabel.style, {
+            flex: "1",
+            padding: "10px",
+            textAlign: "center",
+            borderRadius: "7px",
+            cursor: "pointer",
+            color: "#222",
+            fontWeight: "bold"
+        });
+
+        modeContainer.append(
+            pickupLabel,
+            transferLabel
+        );
+
+        /* ---------- DESCRIPTION ---------- */
+
+        const modeDescription = document.createElement("p");
+
+        modeDescription.textContent =
+            "Pick up items from a dead player.";
+
+        Object.assign(modeDescription.style, {
+            margin: "0",
+            textAlign: "center",
+            color: "#555",
+            fontSize: "14px"
+        });
+
+        /* ---------- UUID ---------- */
+
+        const uuidLabel = document.createElement("label");
+        uuidLabel.textContent = "Player UUID";
+        uuidLabel.style.fontWeight = "bold";
+        uuidLabel.style.color = "#222";
+
+        const uuidInput = document.createElement("input");
+
+        uuidInput.type = "text";
+        uuidInput.placeholder =
+            "Enter the other player's UUID";
+
+        Object.assign(uuidInput.style, inputStyle());
+        uuidInput.style.color = "#222";
+
+        /* ---------- CHALLENGE ---------- */
+
+        const challengeLabel = document.createElement("label");
+        challengeLabel.textContent = "Challenge";
+        challengeLabel.style.fontWeight = "bold";
+        challengeLabel.style.color = "#222";
+
+        const challengeInput = document.createElement("input");
+
+        challengeInput.type = "text";
+        challengeInput.placeholder =
+            "Enter current challenge";
+
+        Object.assign(challengeInput.style, inputStyle());
+        challengeInput.style.color = "#222";
+
+        /* ---------- BUTTONS ---------- */
+
+        const buttonRow = document.createElement("div");
+
+        Object.assign(buttonRow.style, {
+            display: "flex",
+            justifyContent: "flex-end",
+            gap: "12px",
+            marginTop: "8px"
+        });
+
+        const cancelBtn = document.createElement("button");
+        cancelBtn.textContent = "Cancel";
+
+        Object.assign(cancelBtn.style, {
+            padding: "10px 18px",
+            border: "none",
+            borderRadius: "8px",
+            background: "#d1d5db",
+            color: "#222",
+            cursor: "pointer",
+            fontWeight: "bold"
+        });
+
+        const submitBtn = document.createElement("button");
+        submitBtn.textContent = "Pick Up Items";
+
+        Object.assign(submitBtn.style, {
+            padding: "10px 18px",
+            border: "none",
+            borderRadius: "8px",
+            background: "#2563eb",
+            color: "white",
+            cursor: "pointer",
+            fontWeight: "bold"
+        });
+
+        /* ---------- UPDATE MODE ---------- */
+
+        function updateMode() {
+
+            const pickup = pickupRadio.checked;
+
+            if (pickup) {
+
+                submitBtn.textContent =
+                    "Pick Up Items";
+
+                submitBtn.style.background =
+                    "#2563eb";
+
+                modeDescription.textContent =
+                    "Pick up items from a dead player.";
+
+            } else {
+
+                submitBtn.textContent =
+                    "Transfer Items";
+
+                submitBtn.style.background =
+                    "#7c3aed";
+
+                modeDescription.textContent =
+                    "Give your dropped items to another living player.";
+            }
+        }
+
+        pickupRadio.addEventListener(
+            "change",
+            updateMode
+        );
+
+        transferRadio.addEventListener(
+            "change",
+            updateMode
+        );
+
+        /* ---------- SUBMIT ---------- */
+
+        submitBtn.onclick = async () => {
+
+            const otherPlayerUuid =
+                uuidInput.value.trim();
+
+            const challenge =
+                challengeInput.value.trim();
+
+            const pickup =
+                pickupRadio.checked;
+
+            if (
+                !otherPlayerUuid ||
+                !challenge
+            ) {
+                alert(
+                    "Please enter both the player UUID and the challenge."
+                );
+
+                return;
+            }
+
+            const playerUuid =
+                sessionStorage.getItem("playerUuid");
+
+            const sessionToken =
+                sessionStorage.getItem("sessionToken");
+
+            if (!playerUuid || !sessionToken) {
+
+                alert(
+                    "Missing session information."
+                );
+
+                return;
+            }
+
+            const params =
+                new URLSearchParams({
+                    playerUuid,
+                    sessionToken,
+                    challenge,
+                    victimUuid: otherPlayerUuid,
+                    pickup: pickup.toString(),
+                    ts: Date.now().toString()
+                });
+
+            const res =
+                await makePostRequest(
+                    `/api/session/transferDrops?${params.toString()}`,
+                    "POST"
+                );
+
+            if (!res.ok) {
+
+                alert(
+                    res.body ||
+                    "Failed to transfer items."
+                );
+
+                return;
+            }
+
+            /*
+             * The backend returns an empty response
+             * when everything was successful.
+             *
+             * If some items failed, it returns the
+             * explanation as the response body.
+             */
+
+            if (res.body && res.body.trim()) {
+
+                alert(res.body);
+
+            } else {
+
+                alert(
+                    pickup
+                        ? "Items picked up successfully!"
+                        : "Items transferred successfully!"
+                );
+            }
+
+            await loadInventory();
+
+            document.body.removeChild(overlay);
+
+            resolve(true);
+        };
+
+        /* ---------- CANCEL ---------- */
+
+        cancelBtn.onclick = () => {
+
+            document.body.removeChild(overlay);
+
+            resolve(false);
+        };
+
+        /* ---------- BUILD ---------- */
+
+        buttonRow.append(
+            cancelBtn,
+            submitBtn
+        );
+
+        box.append(
+            title,
+            subtitle,
+            modeContainer,
+            modeDescription,
+            uuidLabel,
+            uuidInput,
+            challengeLabel,
+            challengeInput,
+            buttonRow
+        );
+
+        overlay.appendChild(box);
+
+        document.body.appendChild(overlay);
+
+        uuidInput.focus();
+    });
+}
+
+
+async function pickupDroppedItems(victimUuid, challenge) {
+    const playerUuid = sessionStorage.getItem("playerUuid");
+    const sessionToken = sessionStorage.getItem("sessionToken");
+
+    if (!playerUuid || !sessionToken) {
+        alert("Missing session information.");
+        return false;
+    }
+
+    const params = new URLSearchParams({
+        playerUuid: playerUuid,
+        sessionToken: sessionToken,
+        challenge: challenge,
+        victimUuid: victimUuid,
+        ts: Date.now().toString()
+    });
+
+    const res = await makePostRequest(
+        `/api/session/pickupDrops?${params.toString()}`,
+        "POST"
+    );
+
+    if (!res.ok) {
+        alert(res.body || "Failed to pick up dropped items.");
+        return false;
+    }
+
+    // The endpoint returns a message when some items couldn't
+    // be picked up, otherwise the response body is empty.
+    if (res.body && res.body.trim()) {
+        alert(res.body);
+    } else {
+        alert("Dropped items picked up successfully!");
+    }
+
+    // Refresh the inventory after picking items up.
+    await loadInventory();
+
     return true;
 }
 
@@ -834,27 +1413,123 @@ function openActionPopup({
         uuidInput.focus();
     });
 }
-async function uploadKill(item, victimUuid, challenge) {
-    const playerUuid = sessionStorage.getItem("playerUuid");
+async function startKillInteraction(item, victimUuid, challenge) {
+    const killerUuid = sessionStorage.getItem("playerUuid");
     const sessionToken = sessionStorage.getItem("sessionToken");
+    const sessionUuid = sessionStorage.getItem("sessionUuid");
+
+    if (!killerUuid || !sessionToken || !sessionUuid) {
+        alert("Missing session information.");
+        return false;
+    }
+
+    if (!item || !item.itemUuid) {
+        alert("Invalid kill item.");
+        return false;
+    }
+
+    const params = new URLSearchParams({
+        killerUuid: killerUuid,
+        sessionToken: sessionToken,
+        challenge: challenge,
+        victimUuid: victimUuid,
+        itemUuid: item.itemUuid,
+        sessionUuid: sessionUuid,
+        ts: Date.now().toString()
+    });
 
     const res = await makePostRequest(
-        `/api/session/kill?killerUuid=${playerUuid}` +
-        `&sessionToken=${sessionToken}` +
-        `&itemUuid=${encodeURIComponent(item.itemUuid)}` +
-        `&victimUuid=${encodeURIComponent(victimUuid)}` +
-        `&challenge=${encodeURIComponent(challenge)}` +
-        `&ts=${Date.now()}`,
+        `/api/session/killInteraction?${params.toString()}`,
         "POST"
     );
 
     if (!res.ok) {
-        alert(res.body);
+        console.error(
+            "Kill interaction failed:",
+            res.status,
+            res.body
+        );
+
+        alert(res.body || "Failed to start kill interaction.");
         return false;
     }
 
+    const killToken = res.body.trim();
+
+    if (!killToken) {
+        alert("Server did not return a kill token.");
+        return false;
+    }
+
+    sessionStorage.setItem("killToken", killToken);
+
+    // Remember which item created the token.
+    sessionStorage.setItem(
+        "killItemUuid",
+        item.itemUuid
+    );
+
+    console.log("Kill interaction started.");
+
     return true;
 }
+
+
+async function confirmKill() {
+    const killerUuid = sessionStorage.getItem("playerUuid");
+    const sessionToken = sessionStorage.getItem("sessionToken");
+    const sessionUuid = sessionStorage.getItem("sessionUuid");
+    const killToken = sessionStorage.getItem("killToken");
+
+    if (!killerUuid || !sessionToken || !sessionUuid) {
+        alert("Missing session information.");
+        return false;
+    }
+
+    if (!killToken) {
+        alert("No active kill interaction.");
+        return false;
+    }
+
+    const params = new URLSearchParams({
+        killerUuid: killerUuid,
+        sessionToken: sessionToken,
+        sessionUuid: sessionUuid,
+        killToken: killToken,
+        ts: Date.now().toString()
+    });
+
+    const res = await makePostRequest(
+        `/api/session/kill?${params.toString()}`,
+        "POST"
+    );
+
+    if (!res.ok) {
+        console.error(
+            "Kill request failed:",
+            res.status,
+            res.body
+        );
+
+        alert(res.body || "Kill failed.");
+
+        // The token should not be reused after a failed attempt
+        // if the backend invalidates it.
+        sessionStorage.removeItem("killToken");
+        sessionStorage.removeItem("killItemUuid");
+
+        return false;
+    }
+
+    // Token is single-use.
+    sessionStorage.removeItem("killToken");
+    sessionStorage.removeItem("killItemUuid");
+
+    console.log("Kill successful.");
+
+    return true;
+}
+
 /* ---------------- TRANSITION ---------------- */
 
 function showTransition(
