@@ -3,15 +3,35 @@ package Creative.train.DataTypes.Wrappers;
 import Creative.train.DataTypes.Player;
 import Creative.train.GameLogic.Items.Weapon;
 
-public class KillInformation {
+public class DeathInformation {
     private final Player victim;
     private final Player killer;
     private final Weapon item;
     private long expireTime;
-    public KillInformation(Player killer, Player victim, Weapon item){
+    private final reason deathReason;
+
+    public enum reason{
+        kill,
+        depression,
+        failedItemTransfer
+    }
+
+    public DeathInformation(Player killer, Player victim, Weapon item){
         this.killer = killer;
         this.victim = victim;
         this.item = item;
+        deathReason = reason.kill;
+    }
+    public DeathInformation(Player victim,reason deathReason){
+        this.victim = victim;
+        killer = null;
+        item = null;
+
+        this.deathReason = deathReason;
+    }
+
+    public reason getDeathReason() {
+        return deathReason;
     }
 
     public void setExpireTime(long expireTime) {

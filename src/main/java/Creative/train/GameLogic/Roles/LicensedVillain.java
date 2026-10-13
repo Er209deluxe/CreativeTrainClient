@@ -1,6 +1,6 @@
 package Creative.train.GameLogic.Roles;
 
-import Creative.train.DataTypes.Wrappers.KillInformation;
+import Creative.train.DataTypes.Wrappers.DeathInformation;
 import Creative.train.GameLogic.RoleInfo;
 
 import java.util.UUID;
@@ -19,7 +19,7 @@ public class LicensedVillain extends Role{
 
 
     @Override
-    public void onDeath(KillInformation information){
+    public void onDeath(DeathInformation information){
         session.removePreventingNeutral(this);
     }
 }

@@ -1,6 +1,6 @@
 package Creative.train.GameLogic.Items;
 
-import Creative.train.DataTypes.Wrappers.KillInformation;
+import Creative.train.DataTypes.Wrappers.DeathInformation;
 import Creative.train.Managers.SessionManager;
 import Creative.train.Managers.ThreadManager;
 
@@ -20,7 +20,7 @@ public class Weapon extends Item{
         return System.currentTimeMillis() >= cooldownEnd;
     }
 
-    public void killAbility(KillInformation information) {
+    public void killAbility(DeathInformation information) {
         cooldownEnd = System.currentTimeMillis() + cooldownInSeconds * 1000L;
 
         ThreadManager.getScheduler().schedule(() -> {

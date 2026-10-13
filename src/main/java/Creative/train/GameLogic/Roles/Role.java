@@ -3,7 +3,7 @@ package Creative.train.GameLogic.Roles;
 import Creative.train.ConfigManagement.RoleDataManager;
 import Creative.train.ConfigManagement.Wrappers.RoleData;
 import Creative.train.DataTypes.Session;
-import Creative.train.DataTypes.Wrappers.KillInformation;
+import Creative.train.DataTypes.Wrappers.DeathInformation;
 import Creative.train.GameLogic.RoleInfo;
 import Creative.train.GameLogic.Items.Item;
 import Creative.train.Managers.SessionManager;
@@ -24,6 +24,7 @@ public abstract class Role {
     private final Map<UUID,Item>  itemShop = new HashMap<>();
     List<Item> baseInventory;
 
+    private final boolean canPickupGun;
     public Role(UUID sessionUuid,boolean endPreventingNeutral){
         session = SessionManager.getInstance().getSession(sessionUuid);
         RoleInfo roleInfo = getRoleInfo();
@@ -36,6 +37,7 @@ public abstract class Role {
         this.taskIncome = data.taskIncome;
         this.baseInventory = data.baseInventory;
 
+        this.canPickupGun = data.canPickupGun;
         switch (team){
             case NEUTRAL -> session.incrementAliveNeutrals();
             case CIVILIAN -> session.incrementAliveCivilians();
@@ -48,7 +50,7 @@ public abstract class Role {
         data.itemShop.forEach(item -> this.itemShop.put(item.getItemUuid(),  item));
     }
 
-    public abstract void onDeath(KillInformation information);
+    public abstract void onDeath(DeathInformation information);
 
     public int getTaskIncome() {
         return taskIncome;
@@ -75,6 +77,10 @@ public abstract class Role {
         }
 
         return info;
+    }
+
+    public boolean canPickupGun() {
+        return canPickupGun;
     }
 
     public String getName() {

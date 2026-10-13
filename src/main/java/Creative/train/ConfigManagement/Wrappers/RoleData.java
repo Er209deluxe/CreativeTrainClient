@@ -16,4 +16,5 @@ public class RoleData {
     public List<Item> itemShop;
     public List<Item> baseInventory;
     public boolean enabled=true;
+    public boolean canPickupGun;
 }

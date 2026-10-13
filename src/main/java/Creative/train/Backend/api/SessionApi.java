@@ -257,6 +257,46 @@ public class SessionApi {
             return ResponseEntity.status(HttpStatus.NOT_FOUND).body(e);
         }
         return ResponseEntity.ok().build();
+
+    }@PostMapping("/transferDrops")
+    public ResponseEntity<?> transferDrops(
+            @RequestParam UUID receiverUuid,
+            @RequestParam("sessionToken") String sessionToken,
+            @RequestParam String challenge,
+            @RequestParam UUID senderUuid)
+    {
+        if(receiverUuid.equals(senderUuid)) return ResponseEntity.status(HttpStatus.FORBIDDEN).body("Can't pick up your own items");
+        Player receiver = sessionManager.getPlayer(receiverUuid);
+
+        if (!receiver.isCorrectPass(sessionToken)) {
+            return ResponseEntity.status(HttpStatus.FORBIDDEN).body("Wrong token");
+        }
+
+        if (!receiver.isAlive()) {
+            return ResponseEntity.status(HttpStatus.FORBIDDEN).body("You are dead");
+        }
+
+        Player sender = sessionManager.getPlayer(senderUuid);
+
+        if (!sender.isCorrectChallenge(challenge)) {
+
+            return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body("Wrong challenge");
+        }
+
+
+        List<String> failedItems = sessionManager.transferDroppedItems(sender, receiver);
+        if (!failedItems.isEmpty()) {
+            String itemsJoined = String.join(",\n", failedItems);
+
+            String resultString = "The following items could not be picked up: \n" +
+                    itemsJoined + "\n\n" +
+                    "This can be due to the receiving player already having the item " +
+                    "or their role not being allowed to pick up the item.";
+
+            return ResponseEntity.ok().body(resultString);
+        }
+
+        return ResponseEntity.ok().build();
     }
 
     @PostMapping("/changeRole")
@@ -269,7 +309,7 @@ public class SessionApi {
 
         Player victim = sessionManager.getPlayer(victimUuid);
         if(victim.isAlive()) return ResponseEntity.status(HttpStatus.FORBIDDEN).body("victim is not dead");
-        if(!victim.isCorrectChallenge(challenge)&&!challenge.equals("bypass")) return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body("Wrong challenge");
+        if(!victim.isCorrectChallenge(challenge)) return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body("Wrong challenge");
 
         Role role = player.changeRole(victim.getRole().getRoleInfo().name());
         if(role==null) return ResponseEntity.status(HttpStatus.FORBIDDEN).body("You are not an amnesiac");

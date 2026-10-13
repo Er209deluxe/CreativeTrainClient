@@ -1,6 +1,6 @@
 package Creative.train.GameLogic.Roles;
 
-import Creative.train.DataTypes.Wrappers.KillInformation;
+import Creative.train.DataTypes.Wrappers.DeathInformation;
 import Creative.train.GameLogic.RoleInfo;
 import Creative.train.Managers.SessionManager;
 
@@ -17,7 +17,8 @@ public class Jester extends Role{
     }
 
     @Override
-    public void onDeath(KillInformation information){
+    public void onDeath(DeathInformation information){
+        if(information.getDeathReason().equals(DeathInformation.reason.kill)) return;
         if(information.getKiller()==null) return;
 
         if(information.getKiller().getRole().getRoleInfo().team().equals(Team.CIVILIAN)){

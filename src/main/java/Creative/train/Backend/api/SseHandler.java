@@ -2,6 +2,7 @@ package Creative.train.Backend.api;
 
 import Creative.train.DataTypes.Player;
 import Creative.train.DataTypes.Session;
+import Creative.train.DataTypes.Wrappers.DroppedItem;
 import Creative.train.DataTypes.Wrappers.SessionEndData;
 import Creative.train.GameLogic.Roles.Role;
 import Creative.train.Managers.SessionManager;
@@ -31,6 +32,7 @@ public class SseHandler {
 
         return emitter;
     }
+
     private void handleNewConnection(UUID playerUuid,SseEmitter emitter){
         Player player = SessionManager.getInstance().getPlayer(playerUuid);
         if (player == null) {
@@ -38,6 +40,25 @@ public class SseHandler {
             return;
         }
         player.setConnection(emitter);
+    }
+    public static void sendFailedTransfer(UUID playerUuid,List<String> failedItems){
+        StringBuilder resultString = new StringBuilder("The other player couldn't pick up the following items \n ");
+
+        for (String itemName : failedItems) {
+            resultString
+                    .append(itemName)
+                    .append(",\n ");
+        }
+
+        resultString.append(
+                "\n This can be due to the other player already having the item "
+                        + "or their role not being allowed to pick up the item."
+        );
+        sendPlayer(new ArrayList<>(List.of(playerUuid)),"failedTransfer",resultString);
+
+    }
+    public static void sendDroppedItems(UUID playerUuid, List<DroppedItem> droppedItemList){
+        sendPlayer(new ArrayList<>(List.of(playerUuid)),"droppedItemsUpdate",droppedItemList);
     }
     public static void sendSanityUpdate(UUID playerUuid,Map<String,Double> sanityData)
     {
