@@ -3,9 +3,10 @@ package Creative.train.Managers;
 import Creative.train.Backend.api.SseHandler;
 import Creative.train.DataTypes.Player;
 import Creative.train.DataTypes.Session;
+import Creative.train.DataTypes.Wrappers.DroppedItem;
 import Creative.train.GameLogic.Roles.Role;
 
-import java.util.ArrayList;
+import java.util.*;
 import java.util.concurrent.ScheduledFuture;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicInteger;
@@ -17,6 +18,7 @@ public class TimeManager {
     private final AtomicInteger passedSeconds;
     private final QuestManager questManager;
 
+    private final List<DroppedItem> expiringDroppedItems = new ArrayList<>();
     public TimeManager(Session session,QuestManager questManager) {
         this.session = session;
         this.questManager = questManager;
@@ -58,12 +60,21 @@ public class TimeManager {
                     handleSanity();
                     handleQuests(passedSeconds);
 
+                    for(DroppedItem item : expiringDroppedItems){
+                        item.decrementCountdown();
+                    }
                 }
 
             } catch (Exception e) {
                 e.printStackTrace();
             }
         }, 0, 1, TimeUnit.SECONDS);
+    }
+    public void addDecrementItem(DroppedItem item){
+        expiringDroppedItems.add(item);
+    }
+    public void removeDecrementItem(DroppedItem item){
+        expiringDroppedItems.remove(item);
     }
     private void renewChallenge(AtomicInteger seconds){
         if(seconds.get()%30!=0) return;

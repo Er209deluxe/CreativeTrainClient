@@ -1,5 +1,6 @@
 package Creative.train.GameLogic.Roles;
 
+import Creative.train.DataTypes.Player;
 import Creative.train.DataTypes.Wrappers.DeathInformation;
 import Creative.train.GameLogic.RoleInfo;
 

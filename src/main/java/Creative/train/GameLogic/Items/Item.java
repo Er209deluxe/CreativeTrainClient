@@ -22,6 +22,9 @@ public abstract class Item {
     protected UUID itemUuid;
     protected int price;
     protected String name;
+    protected boolean dropOnDeath;
+    protected boolean killerPickup=true;
+
     protected Item(String name,List<String> tags){
         this.name=name;
         itemUuid = UUID.randomUUID();
@@ -37,12 +40,22 @@ public abstract class Item {
             clone.price = this.price;
             clone.tags = this.tags != null ? List.copyOf(this.tags) : null;
             clone.itemUuid = UUID.randomUUID();
+            clone.dropOnDeath = this.dropOnDeath;
+            clone.killerPickup = this.killerPickup;
 
             return clone;
 
         } catch (Exception e) {
             throw new RuntimeException("Copy failed", e);
         }
+    }
+
+    public void setKillerPickup(boolean killerPickup) {
+        this.killerPickup = killerPickup;
+    }
+
+    public boolean canKillerPickup() {
+        return killerPickup;
     }
 
     public void setPrice(int price) {
@@ -57,6 +70,14 @@ public abstract class Item {
         return itemUuid;
     }
 
+    public void setDropOnDeath(boolean dropOnDeath) {
+        System.out.println("dropondeath: "+dropOnDeath);
+        this.dropOnDeath = dropOnDeath;
+    }
+
+    public boolean isDropOnDeath() {
+        return dropOnDeath;
+    }
 
     public void setItemUuid(UUID itemUuid) {
         this.itemUuid = itemUuid;

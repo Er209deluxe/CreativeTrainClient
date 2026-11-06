@@ -24,6 +24,7 @@ public abstract class Role {
     private final Map<UUID,Item>  itemShop = new HashMap<>();
     List<Item> baseInventory;
 
+    private final boolean canPickupGun;
     public Role(UUID sessionUuid,boolean endPreventingNeutral){
         session = SessionManager.getInstance().getSession(sessionUuid);
         RoleInfo roleInfo = getRoleInfo();
@@ -36,6 +37,7 @@ public abstract class Role {
         this.taskIncome = data.taskIncome;
         this.baseInventory = data.baseInventory;
 
+        this.canPickupGun = data.canPickupGun;
         switch (team){
             case NEUTRAL -> session.incrementAliveNeutrals();
             case CIVILIAN -> session.incrementAliveCivilians();
@@ -75,6 +77,10 @@ public abstract class Role {
         }
 
         return info;
+    }
+
+    public boolean canPickupGun() {
+        return canPickupGun;
     }
 
     public String getName() {

@@ -2,9 +2,11 @@ package Creative.train.DataTypes;
 
 import Creative.train.Backend.ExceptionTypes.UserAlreadyInSessionExcepion;
 import Creative.train.Backend.ExceptionTypes.UsernameAlreadyExistsException;
+import Creative.train.DataTypes.Wrappers.DeathInformation;
 import Creative.train.GameLogic.GeneralConfig;
 import Creative.train.GameLogic.Roles.LicensedVillain;
 import Creative.train.GameLogic.Roles.Role;
+import Creative.train.Managers.EncryptionManager;
 import Creative.train.Managers.QuestManager;
 import Creative.train.Managers.TimeManager;
 import Creative.train.Managers.SessionManager;
@@ -22,17 +24,30 @@ public class Session {
 
     private boolean active = false;
     private final UUID sessionId;
+
     private final Map<UUID,Player> playerMap = new HashMap<>();
+    private final Map<String, DeathInformation> killActions= new HashMap<>();
+
     private final UUID hostUuid;
 
     private TimeManager timeManager;
-    private QuestManager questManager;
 
     List<Role> endPreventingNeutrals = new ArrayList<>();
 
     public Session(UUID hostUuid){
         sessionId = UUID.randomUUID();
         this.hostUuid = hostUuid;
+    }
+    public void removeKillAction(String killToken){
+        killActions.remove(killToken);
+    }
+    public DeathInformation getKillAction(String killToken){
+        return killActions.get(killToken);
+    }
+    public String addKillAction(DeathInformation killInfo){
+        String killToken = EncryptionManager.generateNewToken();
+        killActions.put(killToken, killInfo);
+        return killToken;
     }
     public Collection<Player> getAllPlayers(){
         return playerMap.values();
@@ -130,8 +145,8 @@ public class Session {
     public void start(GeneralConfig generalConfig){
         active=true;
         this.generalConfig = generalConfig;
-        questManager = new QuestManager(this);
-        timeManager = new TimeManager(this,questManager);
+        QuestManager questManager = new QuestManager(this);
+        timeManager = new TimeManager(this, questManager);
         timeManager.startCountdown();
 
     }

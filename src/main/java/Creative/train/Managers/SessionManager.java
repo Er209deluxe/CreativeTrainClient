@@ -5,20 +5,17 @@ import Creative.train.Backend.ExceptionTypes.UserAlreadyInSessionExcepion;
 import Creative.train.Backend.api.SseHandler;
 import Creative.train.ConfigManagement.RoleLoader;
 import Creative.train.DataTypes.Player;
-import Creative.train.DataTypes.Wrappers.BasePlayerData;
-import Creative.train.DataTypes.Wrappers.DeathInformation;
-import Creative.train.DataTypes.Wrappers.PlayerData;
+import Creative.train.DataTypes.Wrappers.*;
 import Creative.train.DataTypes.Session;
-import Creative.train.DataTypes.Wrappers.SessionEndData;
 import Creative.train.GameLogic.GeneralConfig;
+import Creative.train.GameLogic.Items.Gun;
 import Creative.train.GameLogic.Items.Item;
 import Creative.train.GameLogic.Items.Weapon;
 import Creative.train.GameLogic.RoleAssigner;
+import Creative.train.GameLogic.Roles.LicensedVillain;
 import Creative.train.GameLogic.Roles.Role;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
-import org.springframework.http.HttpStatus;
-import org.springframework.http.ResponseEntity;
 
 import java.io.IOException;
 import java.util.*;
@@ -179,39 +176,93 @@ public class SessionManager {
         if(session==null) throw new NotFoundException("Session",sessionUuid);
         return getSession(sessionUuid).isActive();
     }
+
+    public List<String> transferDroppedItems(Player sender, Player receiver) {
+        Iterator<DroppedItem> iterator = sender.getItemDrops().iterator();
+        List<String> failedItems = new ArrayList<>();
+        while (iterator.hasNext()) {
+            DroppedItem droppedItem = iterator.next();
+            Item item = droppedItem.getItem();
+
+            if (item instanceof Gun && !receiver.getRole().canPickupGun()) {
+                failedItems.add(item.getName());
+                continue;
+            }
+
+            if (!receiver.hasItem(item.getClass()) && receiver.addItem(item)) {
+                getSession(sender.getSessionUUID()).getTimeManager().removeDecrementItem(droppedItem);
+                iterator.remove();
+                continue;
+            }
+            failedItems.add(item.getName());
+
+
+        }
+        if(!failedItems.isEmpty()){
+            SseHandler.sendFailedTransfer(sender.getPlayerId(),failedItems);
+        }
+        return failedItems;
+    }
+
     public void setPlayerDead(DeathInformation information){
         Player victim = information.getVictim();
-        victim.setAlive(false);
+        if(!victim.isAlive()) return;
+
+        victim.triggerDeath();
         victim.getRole().onDeath(information);
 
         SseHandler.sendDeathInfo(victim.getPlayerId());
 
         Session session = getSession(victim.getSessionUUID());
         session.decrementAlivePlayers(victim);
+
+        if(!information.getVictim().getRole().getTeam().equals(Role.Team.KILLER)) return;
         session.getTimeManager().changeRemainingSecondsBy
                 (session.getGeneralConfig().getIncrementTimerOnKillInSeconds());
     }
-    public ResponseEntity<?> killPlayer(Player killer, Player victim, UUID itemUuid) throws NotFoundException {
-        Session session = getSession(killer.getSessionUUID());
-        if(!isSessionActive(killer.getSessionUUID())) return ResponseEntity.status(HttpStatus.FORBIDDEN)
-                .body("Session is not active");
-        if(!killer.isAlive()) return ResponseEntity.status(HttpStatus.CONFLICT).body("You are not alive");
-        if(!victim.isAlive()) return ResponseEntity.status(HttpStatus.CONFLICT).body("Victim is already dead");
+    public String startKillAction(Player killer, Player victim, UUID itemUuid, UUID sessionUuid) throws Exception {
+        if(!isSessionActive(killer.getSessionUUID())) throw new Exception("Session is not active");
+        if(!killer.isAlive()) throw new Exception("You are not alive");
+        if(!victim.isAlive()) throw new Exception("Victim is already dead");
 
         Item item = killer.getItem(itemUuid);
-        if(item==null) return ResponseEntity.status(HttpStatus.CONFLICT).body("Item does not exist");
+        if(item==null) throw new Exception("Item does not exist");
 
-        if(item instanceof Weapon weapon){
-            DeathInformation information = new DeathInformation(killer,victim,weapon);
-
-            if(!weapon.killAbility(information)){
-             return ResponseEntity.status(HttpStatus.CONFLICT).body("Weapon is still on cooldown");
-            }
-            if(killer.getRole().getRoleInfo().team().equals(Role.Team.KILLER)) {
-                killer.changeCoins(session.getGeneralConfig().getKillReward());
-            }
-            return ResponseEntity.status(HttpStatus.OK).build();
+        if(!(item instanceof Weapon weapon)){
+            throw new Exception("Item is not a Weapon");
         }
-        return ResponseEntity.status(HttpStatus.CONFLICT).body("Item is not a Weapon");
+        DeathInformation information = new DeathInformation(killer,victim,weapon);
+        long expireTime = System.currentTimeMillis()+30*1000;
+        information.setExpireTime(expireTime);
+        if(!weapon.isOnCooldown()){
+            throw new Exception("Weapon is still on cooldown");
+        }
+        return getSession(sessionUuid).addKillAction(information);
+    }
+    public void killPlayer(UUID sessionUuid, String killToken) throws Exception {
+        Session session = getSession(sessionUuid);
+        DeathInformation deathInformation = session.getKillAction(killToken);
+        Player killer = deathInformation.getKiller();
+
+        if(deathInformation.getExpireTime()<System.currentTimeMillis()){
+            session.removeKillAction(killToken);
+            throw new Exception("kill has expired");
+        }
+        deathInformation.getItem().killAbility(deathInformation);
+        boolean isLicensedVillain = deathInformation.getKiller().getRole() instanceof LicensedVillain;
+        if(
+                deathInformation.getItem() instanceof Gun &&
+                deathInformation.getVictim().getRole().getTeam().equals(Role.Team.CIVILIAN) &&
+                !isLicensedVillain
+        )
+        {
+            DroppedItem droppedGun = new DroppedItem(killer, deathInformation.getItem(),session.getGeneralConfig().getGunTransferTimeInSeconds());
+            killer.dropItem(droppedGun);
+
+            return;
+        }
+        if(killer.getRole().getRoleInfo().team().equals(Role.Team.KILLER)) {
+            killer.changeCoins(session.getGeneralConfig().getKillReward());
+        }
     }
 }

@@ -18,6 +18,7 @@ public class Jester extends Role{
 
     @Override
     public void onDeath(DeathInformation information){
+        if(information.getDeathReason().equals(DeathInformation.reason.kill)) return;
         if(information.getKiller()==null) return;
 
         if(information.getKiller().getRole().getRoleInfo().team().equals(Team.CIVILIAN)){

@@ -6,8 +6,8 @@ import Creative.train.Backend.ExceptionTypes.NotFoundException;
 import Creative.train.Backend.api.SseHandler;
 import Creative.train.DataTypes.Wrappers.BasePlayerData;
 import Creative.train.DataTypes.Wrappers.DeathInformation;
+import Creative.train.DataTypes.Wrappers.DroppedItem;
 import Creative.train.DataTypes.Wrappers.PlayerData;
-import Creative.train.GameLogic.GeneralConfig;
 import Creative.train.GameLogic.Items.Item;
 import Creative.train.GameLogic.Quest;
 import Creative.train.GameLogic.Roles.Amnesiac;
@@ -24,7 +24,9 @@ public class Player {
     private final BasePlayerData baseData = new BasePlayerData();
     private final PlayerData data = new PlayerData();
 
+    private final List<DroppedItem> droppedItems = new ArrayList<>();
     private final Item[] inventory = new Item[9];
+
     private int coins=0;
     private Quest currentQuest;
 
@@ -37,7 +39,36 @@ public class Player {
         data.playerUuid = playerId;
         data.isHost = isHost;
         data.token = passwordHash;
-    }public boolean completeQuest(String questToken) {
+    }
+    public boolean hasItem(Class<? extends Item> itemType) {
+        for (Item item : inventory) {
+            if (itemType.isInstance(item)) {
+                return true;
+            }
+        }
+        return false;
+    }
+
+    public boolean dropItem(DroppedItem itemDrop) {
+        Item item = itemDrop.getItem();
+
+        for (int i = 0; i < inventory.length; i++) {
+            if (inventory[i] == item) {
+                inventory[i] = null;
+                droppedItems.add(itemDrop);
+                return true;
+            }
+        }
+
+        return false;
+    }
+
+
+    public List<DroppedItem> getItemDrops() {
+        return droppedItems;
+    }
+
+    public boolean completeQuest(String questToken) {
         if (currentQuest == null || !currentQuest.getQuestToken().equals(questToken)) {
             return false;
         }
@@ -102,7 +133,7 @@ public class Player {
         if(getBaseData().sanity<=0){
             updateSanity(getBaseData().sanity, getBaseData().depression-1);
             if(getBaseData().depression<=0){
-                DeathInformation information = new DeathInformation(null,this,null);
+                DeathInformation information = new DeathInformation(this, DeathInformation.reason.depression);
                 SessionManager.getInstance().setPlayerDead(information);
             }
             return;
@@ -145,8 +176,13 @@ public class Player {
         }
         return false;
     }
-    public void removeItem(int slot){
-        inventory[slot] = null;
+    public void removeItem(Item item){
+        for (int i=0;i<inventory.length;i++) {
+            if (inventory[i] != null && inventory[i].equals(item)) {
+                inventory[i] = null;
+                return;
+            }
+        }
     }
     public Item getItem(UUID itemUuid) {
         for (Item item : inventory) {
@@ -237,8 +273,21 @@ public class Player {
     public UUID getPlayerId() {
         return data.playerUuid;
     }
-    public void setAlive(boolean alive){
-        baseData.isAlive=alive;
+    public void triggerDeath() {
+        baseData.isAlive = false;
+
+        for (int i = 0; i < inventory.length; i++) {
+            Item item = inventory[i];
+
+            if (item != null && item.isDropOnDeath()) {
+                droppedItems.add(new DroppedItem(this, item));
+                inventory[i] = null;
+            }
+        }
+    }
+
+    public void setAlive(){
+        baseData.isAlive = true;
     }
 
     public boolean isAlive() {

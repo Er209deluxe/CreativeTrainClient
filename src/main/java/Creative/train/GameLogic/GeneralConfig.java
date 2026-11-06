@@ -9,6 +9,8 @@ public class GeneralConfig {
     private final int baseTimerMins;
     private final int baseTimerSecs;
 
+    private final int gunTransferTimeInSeconds;
+
     private final int incrementTimerOnKillInSeconds;
     private final int killReward;
     private final DepressionData depressionData;
@@ -20,7 +22,9 @@ public class GeneralConfig {
             @JsonProperty("baseTimerMins") int baseTimerMins,
             @JsonProperty("baseTimerSecs") int baseTimerSecs,
             @JsonProperty("killReward") int killReward,
-            @JsonProperty("incrementTimerOnKillInSeconds") int incrementTimerOnKillInSeconds
+            @JsonProperty("incrementTimerOnKillInSeconds") int incrementTimerOnKillInSeconds,
+            @JsonProperty("gunTransferTimeInSeconds") int gunTransferTimeInSeconds
+
     ) {
         this.depressionData = depressionData;
         this.passiveIncome = passiveIncome;
@@ -28,6 +32,7 @@ public class GeneralConfig {
         this.baseTimerSecs = baseTimerSecs;
         this.killReward = killReward;
         this.incrementTimerOnKillInSeconds = incrementTimerOnKillInSeconds;
+        this.gunTransferTimeInSeconds = gunTransferTimeInSeconds;
     }
 
     public int getIncrementTimerOnKillInSeconds() {
@@ -47,6 +52,10 @@ public class GeneralConfig {
 
     public boolean isDepressionKillingEnabled() {
         return depressionData!=null;
+    }
+
+    public int getGunTransferTimeInSeconds() {
+        return gunTransferTimeInSeconds;
     }
 
     public int getBaseDepression() {
