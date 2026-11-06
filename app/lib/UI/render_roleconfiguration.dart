@@ -1,6 +1,7 @@
 import 'dart:convert';
 
 import 'package:creativetrainclient/Handler/app_state.dart';
+import 'package:creativetrainclient/Handler/handle_roleconfiguration.dart';
 import 'package:creativetrainclient/UI/render_registerconfig.dart';
 import 'package:creativetrainclient/Wrappers/GeneralConfig.dart';
 import 'package:creativetrainclient/Wrappers/RoleConfigData.dart';
@@ -8,6 +9,7 @@ import 'package:creativetrainclient/configs/UI/standartm3edesign.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:m3e_buttons/m3e_buttons.dart';
+import 'package:creativetrainclient/Wrappers/ProfileWrapper.dart';
 
 import '../Handler/handle_client_api_requests.dart';
 
@@ -22,11 +24,18 @@ class RenderRoleconfiguration extends StatefulWidget {
 class _RenderRoleconfigurationState extends State<RenderRoleconfiguration> {
   String _section = 'roles';
   String _previousSection = 'roles';
-  String _profile = 'p1';
+  String _selectionProfileDropdown = 'p1';
+  late Map<String, dynamic> _profiles;
+  final _profileNameController = TextEditingController();
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
+      appBar: AppBar(
+        title: const Text('Role Configuration'),
+        backgroundColor: Colors.deepPurpleAccent,
+        foregroundColor: Colors.white,
+      ),
       body: Stack(
         fit: StackFit.expand,
         children: [
@@ -41,17 +50,6 @@ class _RenderRoleconfigurationState extends State<RenderRoleconfiguration> {
                   ),
                   child: Row(
                     children: [
-                      M3EButton(
-                        onPressed: () {
-                          Navigator.pop(context);
-                        },
-                        decoration: M3EButtonDecoration.styleFrom(
-                          backgroundColor: Colors.blueAccent,
-                        ),
-                        size: M3EButtonSize.custom(height: 65, width: 65),
-                        child: const Icon(Icons.arrow_back_ios, size: 30),
-                      ),
-                      const SizedBox(width: 10),
                       Expanded(
                         child: Align(
                           alignment: Alignment.centerLeft,
@@ -66,11 +64,21 @@ class _RenderRoleconfigurationState extends State<RenderRoleconfiguration> {
                           ),
                         ),
                       ),
+                      M3EButton(
+                        onPressed: () => resetCurrentConfig(context),
+                        decoration: M3EButtonDecoration.styleFrom(
+                          backgroundColor: Colors.blueAccent,
+                        ),
+                        size: M3EButtonSize.md,
+                        child: Text('Reset to default'),
+                      ),
+                      const SizedBox(width: 250),
                       _ProfileDropdown(
-                        value: _profile,
+                        value: _selectionProfileDropdown,
                         onChanged: (value) {
-                          setState(() => _profile = value);
+                          setState(() => _selectionProfileDropdown = value);
                         },
+                        profileNameController: _profileNameController,
                       ),
                     ],
                   ),
@@ -173,8 +181,13 @@ class _SectionToggleGroup extends StatelessWidget {
 class _ProfileDropdown extends StatelessWidget {
   final String value;
   final ValueChanged<String> onChanged;
+  final TextEditingController _profileNameController;
 
-  const _ProfileDropdown({required this.value, required this.onChanged});
+  const _ProfileDropdown({
+    required this.value,
+    required this.onChanged,
+    required this._profileNameController,
+  });
 
   @override
   Widget build(BuildContext context) {
@@ -229,7 +242,6 @@ class _RoleConfigEditorState extends State<_RoleConfigEditor> {
   int _selectedRole = 0;
   int _previousSelectedRole = 0;
 
-  // These come from /api/session/allRoles
   List<Map<String, dynamic>> _roles = [];
 
   @override
@@ -250,9 +262,8 @@ class _RoleConfigEditorState extends State<_RoleConfigEditor> {
     } catch (e) {
       if (!mounted) return;
 
-      ScaffoldMessenger.of(
-        context,
-      ).showSnackBar(SnackBar(content: Text('Failed to load roles: $e')));
+      ScaffoldMessenger.of(context)
+          .showSnackBar(SnackBar(content: Text('Failed to load roles: $e')));
     }
   }
 
@@ -542,12 +553,13 @@ class _ItemListEditor extends StatelessWidget {
   });
 
   void _addItem() {
-    if (showPrice) {
+    final isShop = items.any((item) => item is ShopItemConfig);
+
+    if (isShop) {
       items.add(ShopItemConfig('Knife', 10));
     } else {
       items.add(InventoryItem('Knife'));
     }
-
     onChanged();
   }
 

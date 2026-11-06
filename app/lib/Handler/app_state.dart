@@ -5,6 +5,8 @@ import 'package:creativetrainclient/Wrappers/RoleConfigData.dart';
 import 'package:flutter/cupertino.dart';
 import 'package:creativetrainclient/Handler/handle_client_api_requests.dart';
 import 'package:flutter/foundation.dart';
+import 'package:shared_preferences/shared_preferences.dart';
+
 import '../Wrappers/RoleWrapper.dart';
 import '../Wrappers/register_response.dart';
 
@@ -30,20 +32,25 @@ class app_state {
   static final ValueNotifier<String> winnerTeam = ValueNotifier("Unknown");
   static final ValueNotifier<String> reason = ValueNotifier("Unknown");
 
-  static final GeneralConfig _defaultGeneralConfig = GeneralConfig(10, 0, 60, 50, 50, DepressionData(100, 100));
-  static final ValueNotifier<GeneralConfig> generalConfig = ValueNotifier(_defaultGeneralConfig);
+  static GeneralConfig _createDefaultGeneralConfig() =>
+      GeneralConfig(10, 0, 60, 50, 50, DepressionData(100, 100));
 
-  static String? getChallenge(){
+  static final ValueNotifier<GeneralConfig> generalConfig = ValueNotifier(
+    _createDefaultGeneralConfig(),
+  );
+
+  final prefs = SharedPreferencesAsync();
+
+  static String? getChallenge() {
     return _challenge;
-}
-  static final RoleConfigData _roleConfigData = RoleConfigData([
+  }
+
+  static RoleConfigData _createDefaultRoleConfig() => RoleConfigData([
     RoleConfig(
       name: "Innocent",
       passiveIncome: true,
       taskIncome: 20,
-      baseInventory: [
-        InventoryItem("Food"),
-      ],
+      baseInventory: [InventoryItem("Food")],
       itemShop: [
         ShopItemConfig("Knife", 10),
         ShopItemConfig("Knife", 20),
@@ -56,21 +63,25 @@ class app_state {
       enabled: true,
       passiveIncome: true,
       taskIncome: 12,
-      itemShop: [
-        ShopItemConfig("Gun", 0),
-      ],
+      itemShop: [ShopItemConfig("Gun", 0)],
     ),
     RoleConfig(
       name: "Killer",
       enabled: true,
       passiveIncome: true,
       taskIncome: 12,
-      itemShop: [
-        ShopItemConfig("Gun", 0),
-      ],
+      itemShop: [ShopItemConfig("Gun", 0)],
     ),
   ]);
-  static final ValueNotifier<RoleConfigData> roleConfig = ValueNotifier(_roleConfigData);
+
+  static final ValueNotifier<RoleConfigData> roleConfig = ValueNotifier(
+    _createDefaultRoleConfig(),
+  );
+
+  static void resetConfigToDefaults() {
+    generalConfig.value = _createDefaultGeneralConfig();
+    roleConfig.value = _createDefaultRoleConfig();
+  }
 
   static void updateSessionEndData(Map<String, dynamic> json) {
     gameEndDataNotifier.value = json;
@@ -85,13 +96,13 @@ class app_state {
   }
 
   static void playerJoined(String name) {
-    if(_currentSession==null) return;
+    if (_currentSession == null) return;
     _currentSession!.addPlayer(name);
     playerListNotifier.value++;
   }
 
   static void playerLeft(String name) {
-    if(_currentSession==null) return;
+    if (_currentSession == null) return;
 
     _currentSession!.removePlayer(name);
     playerListNotifier.value++;
@@ -119,6 +130,10 @@ class app_state {
     return _role;
   }
 
+  //static ProfileWrapper? getProfile(pName) {
+  //return _profile;
+  //}
+
   static bool setIpAddress(String pIpAddress) {
     if (inSession) return false;
     _ipAddress = pIpAddress;
@@ -128,13 +143,15 @@ class app_state {
   static String? getIpAddress() {
     return _ipAddress;
   }
-  static void removeCurrentSession(){
+
+  static void removeCurrentSession() {
     NfcPeer.clear();
-    _challenge=null;
+    _challenge = null;
     inSession = false;
     changeGameActivation(false);
     _currentSession = null;
   }
+
   static Future<void> setCurrentSession(RegisterResponse sessionData) async {
     if (inSession) {
       return;
@@ -160,7 +177,7 @@ class app_state {
   }
 
   static void updateCoins(int coins) {
-    if(_currentSession==null) return;
+    if (_currentSession == null) return;
     coinsNotifier.value = coins;
     _currentSession!.setCoins(coins);
   }
